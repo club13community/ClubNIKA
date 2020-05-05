@@ -43,13 +43,13 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: ClubNIKA.elf
+all: ClubNIKAfirmware.elf
 
 # Tool invocations
-ClubNIKA.elf: $(OBJS) $(USER_OBJS) E:\EmbedProjects\ClubNIKA/LinkerScript.ld
+ClubNIKAfirmware.elf: $(OBJS) $(USER_OBJS) E:\git\ClubNIKAfirmware/LinkerScript.ld
 	@echo 'Building target: $@'
 	@echo 'Invoking: MCU GCC Linker'
-	arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -T"E:/EmbedProjects/ClubNIKA/LinkerScript.ld" -Wl,-Map=output.map -Wl,--gc-sections -o "ClubNIKA.elf" @"objects.list" $(USER_OBJS) $(LIBS) -lm
+	arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -T"E:/git/ClubNIKAfirmware/LinkerScript.ld" -Wl,-Map=output.map -Wl,--gc-sections -o "ClubNIKAfirmware.elf" @"objects.list" $(USER_OBJS) $(LIBS) -lm
 	@echo 'Finished building target: $@'
 	@echo ' '
 	$(MAKE) --no-print-directory post-build
@@ -61,8 +61,8 @@ clean:
 
 post-build:
 	-@echo 'Generating binary and Printing size information:'
-	arm-none-eabi-objcopy -O binary "ClubNIKA.elf" "ClubNIKA.bin"
-	arm-none-eabi-size "ClubNIKA.elf"
+	arm-none-eabi-objcopy -O binary "ClubNIKAfirmware.elf" "ClubNIKAfirmware.bin"
+	arm-none-eabi-size "ClubNIKAfirmware.elf"
 	-@echo ' '
 
 .PHONY: all clean dependents
