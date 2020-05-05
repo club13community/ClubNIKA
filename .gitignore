@@ -50,3 +50,11 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+#should be present
+!.settings/
+!.cproject
+!.project
+!ClubNIKA Debug Custom.cfg
+!LinkerScript.ld
+
