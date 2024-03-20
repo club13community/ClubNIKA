@@ -13,6 +13,14 @@
 #include "task.h"
 #include "message_buffer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 TaskHandle_t WiredSensorMonitor_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INC_WIREDSENSORMONITOR_H_ */

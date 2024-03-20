@@ -43,30 +43,41 @@ struct SupplySystemContext{
 } supSys_context;
 
 
-#define FLAG_OVERCURRENT12V_FAILURE		((uint32_t)(0x01<<0)) //timer freq. not defined;
-#define FLAG_12VALARM_ACTIVE			((uint32_t)(0x01<<5))
-#define FLAG_12VCHANNEL_ACTIVE			((uint32_t)(0x01<<6))
+//timer freq. not defined;
+#define FLAG_OVERCURRENT12V_FAILURE		((uint32_t)(0x01U<<0))
+#define FLAG_12VALARM_ACTIVE			((uint32_t)(0x01U<<5))
+#define FLAG_12VCHANNEL_ACTIVE			((uint32_t)(0x01U<<6))
 
-#define OVERCURRENT_PROT_STATE_BASE		4
-#define OVERCURRENT_PROT_STATE			((uint8_t)(0x0F<<OVERCURRENT_PROT_STATE_BASE)) //mask
-#define OVERCURRENT_PROT_SUBSTATE_BASE	0
-#define OVERCURRENT_PROT_SUBSTATE		((uint8_t)(0x0F<<OVERCURRENT_PROT_SUBSTATE_BASE)) //mask, for each state
+#define OVERCURRENT_PROT_STATE_BASE		(4U)
+//mask
+#define OVERCURRENT_PROT_STATE			(0x0FU<<OVERCURRENT_PROT_STATE_BASE)
+#define OVERCURRENT_PROT_SUBSTATE_BASE	(0U)
+//mask, for each state
+#define OVERCURRENT_PROT_SUBSTATE		(0x0FU<<OVERCURRENT_PROT_SUBSTATE_BASE)
 
-#define OVERCURRENT_PROT_OFF		((uint8_t)(0x00<<OVERCURRENT_PROT_STATE_BASE))
-#define OVERCURRENT_PROT_TRY1		((uint8_t)(0x01<<OVERCURRENT_PROT_STATE_BASE)) //disable 12V supply and alarm, wait 3sec, try to enable again
-#define OVERCURRENT_PROT_TRY2		((uint8_t)(0x02<<OVERCURRENT_PROT_STATE_BASE)) //disable 12V supply and alarm, wait 3sec, try to enable again
-#define OVERCURRENT_PROT_ON			((uint8_t)(0x03<<OVERCURRENT_PROT_STATE_BASE)) //disable 12V supply and alarm, wait 30sec, try to enable again
+#define OVERCURRENT_PROT_OFF		((uint8_t)(0x00U<<OVERCURRENT_PROT_STATE_BASE))
+//disable 12V supply and alarm, wait 3sec, try to enable again
+#define OVERCURRENT_PROT_TRY1		((uint8_t)(0x01U<<OVERCURRENT_PROT_STATE_BASE))
+//disable 12V supply and alarm, wait 3sec, try to enable again
+#define OVERCURRENT_PROT_TRY2		((uint8_t)(0x02U<<OVERCURRENT_PROT_STATE_BASE))
+//disable 12V supply and alarm, wait 30sec, try to enable again
+#define OVERCURRENT_PROT_ON			((uint8_t)(0x03U<<OVERCURRENT_PROT_STATE_BASE))
 
-#define OVERCURRENT_DETECT_OVERCURRENT		((uint8_t)0x01<<0)
-#define OVERCURRENT_DETECT_STATE			((uint8_t)0x03<<4) //mask
-#define OVERCURRENT_DETECT_OFF				((uint8_t)0x00<<4)
-#define OVERCURRENT_DETECT_DEBOUNCE			((uint8_t)0x01<<4)
-#define OVERCURRENT_DETECT_OBSERVE			((uint8_t)0x02<<4)
+#define OVERCURRENT_DETECT_OVERCURRENT		((uint8_t)0x01U<<0)
+//mask
+#define OVERCURRENT_DETECT_STATE			((uint8_t)0x03U<<4)
+#define OVERCURRENT_DETECT_OFF				((uint8_t)0x00U<<4)
+#define OVERCURRENT_DETECT_DEBOUNCE			((uint8_t)0x01U<<4)
+#define OVERCURRENT_DETECT_OBSERVE			((uint8_t)0x02U<<4)
 
-#define OVERCURRENT_DEBOUNCE_TIME	20		//20ms
-#define OVERCURRENT_OBSERVE_TIME	1*1000	//1sec
-#define OVERCURRENT_TRY_TIME		3*1000	//3sec
-#define OVERCURRENT_PROT_TIME		60*1000 //1min
+//20ms
+#define OVERCURRENT_DEBOUNCE_TIME	20U
+//1sec
+#define OVERCURRENT_OBSERVE_TIME	1*1000
+//3sec
+#define OVERCURRENT_TRY_TIME		3*1000
+//1min
+#define OVERCURRENT_PROT_TIME		60*1000
 
  /*
   * interrupt handlers

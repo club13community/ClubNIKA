@@ -132,7 +132,7 @@ void UARTExtension_initState(){
 }
 
 void UARTExtension_configPeripherals(){
-	GPIO_InitTypeDef pinInitStruct;
+
 	NVIC_InitTypeDef nvicInitStruct;
 	USART_InitTypeDef uartInitStruct;
 	DMA_InitTypeDef dmaInitStruct;
@@ -144,6 +144,7 @@ void UARTExtension_configPeripherals(){
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
 
 	//Config. pins
+	GPIO_InitTypeDef pinInitStruct;
 	//TX - PB10
 	pinInitStruct.GPIO_Pin=GPIO_Pin_10;
 	pinInitStruct.GPIO_Speed=GPIO_Speed_2MHz;

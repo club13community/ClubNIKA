@@ -172,12 +172,12 @@ void UserInterface_configPeripherals(){
 
 	TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
 	nvicInitStruct.NVIC_IRQChannel = TIM3_IRQn;
-	nvicInitStruct.NVIC_IRQChannelCmd = ENABLE;
+	nvicInitStruct.NVIC_IRQChannelCmd = DISABLE;
 	nvicInitStruct.NVIC_IRQChannelPreemptionPriority = USERINTERFACE_TIMER_PRIORITY;
 	nvicInitStruct.NVIC_IRQChannelSubPriority = 0;
 	NVIC_Init(&nvicInitStruct);
 
-	TIM_Cmd(TIM3, ENABLE);
+	//TIM_Cmd(TIM3, ENABLE);
 }
 
 void UserInterface_mainTask(void *pvParameters){

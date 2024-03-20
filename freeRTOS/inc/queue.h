@@ -719,7 +719,7 @@ BaseType_t xQueueGenericSend( QueueHandle_t xQueue, const void * const pvItemToQ
 	// ... Rest of task code.
  }
 
- // Task to peek the data from the queue.
+ // Task to peek_symbol the data from the queue.
  void vADifferentTask( void *pvParameters )
  {
  struct AMessage *pxRxedMessage;

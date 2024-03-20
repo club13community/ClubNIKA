@@ -15,7 +15,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "croutine.h"
-
+#include "timing.h"
 #include "ClockControl.h"
 #include "SupplySystem.h"
 #include "MessageRouter.h"
@@ -28,7 +28,6 @@
 #include "UARTExtension.h"
 #include "SPIExtension.h"
 #include "I2CExtension.h"
-
 #include "Message.h"
 
 struct TaskHandleRegister{
@@ -74,6 +73,7 @@ int main(void)
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
+	timing::configPeripherals();
 
 	MessageRouter_StartUpInit();
 	clearTaskHandleRegister();
@@ -104,7 +104,7 @@ int main(void)
 }
 
 
-void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer,
+extern "C" void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer,
                                     StackType_t **ppxIdleTaskStackBuffer,
                                     uint32_t *pulIdleTaskStackSize ){
 	static StaticTask_t xIdleTaskTCB;
@@ -115,7 +115,7 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer,
 	*pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
 }
 
-void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer,
+extern "C" void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer,
                                      StackType_t **ppxTimerTaskStackBuffer,
                                      uint32_t *pulTimerTaskStackSize ){
 	static StaticTask_t xTimerTaskTCB;
@@ -146,7 +146,7 @@ struct StackMonitorContext{
 	MessageBufferHandle_t msgIn, msgOut;
 } stkMon_context;
 
-void StackMonitor_mainTask(){
+void StackMonitor_mainTask(void * args){
 	while(1){
 		//update _unusedStack values
 		if(taskHandleRegister.clkCtrl_handle){

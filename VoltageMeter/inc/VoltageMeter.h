@@ -13,7 +13,16 @@
 #include "task.h"
 #include "message_buffer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void VoltageMeter_EndOfConversion_IH();
+
 TaskHandle_t VoltageMeter_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _VOLTAGEMETER_H_ */

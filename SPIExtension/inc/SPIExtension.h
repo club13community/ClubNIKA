@@ -13,9 +13,17 @@
 #include "task.h"
 #include "message_buffer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void SPIExtension_CommFinished_IH();
 
 TaskHandle_t SPIExtension_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* _SPIEXTENSION_H_ */

@@ -14,13 +14,14 @@
 #include "VoltageMeter.h"
 #include "SPIExtension.h"
 #include "UARTExtension.h"
+#include "timing.h"
 
-void SysTick_Handler(){
+extern "C" void SysTick_Handler(){
 	xPortSysTickHandler();
 }
 
 //used by SupplySystem
-void TIM2_IRQHandler(){
+extern "C" void TIM2_IRQHandler(){
 	if(SET == TIM_GetITStatus(TIM2, TIM_IT_CC1)){
 		SupplySystem_12VChannelsOvercurrent_Timer_IH();
 		TIM_ClearITPendingBit(TIM2, TIM_IT_CC1);
@@ -32,8 +33,12 @@ void TIM2_IRQHandler(){
 	}
 }
 
+extern "C" void TIM4_IRQHandler() {
+	timing::handleIrq();
+}
+
 //VoltageMeter, EOC
-void ADC3_IRQHandler(){
+extern "C" void ADC3_IRQHandler(){
 	if(SET == ADC_GetITStatus(ADC3, ADC_IT_EOC)){
 		VoltageMeter_EndOfConversion_IH();
 		ADC_ClearITPendingBit(ADC3, ADC_IT_EOC);
@@ -41,8 +46,12 @@ void ADC3_IRQHandler(){
 
 }
 
+extern "C" void USART2_IRQHandler() {
+	GSMService_UART_IH();
+}
+
 //UARTExtension, Rx
-void USART3_IRQHandler(){
+extern "C" void USART3_IRQHandler(){
 	if(SET == USART_GetITStatus(USART3, USART_IT_RXNE)){
 		UARTExtension_Rx_IH();
 		USART_ClearITPendingBit(USART3, USART_IT_RXNE);
@@ -50,7 +59,7 @@ void USART3_IRQHandler(){
 }
 
 //UARTExtension, TxComplete
-void DMA1_Channel2_IRQHandler(){
+extern "C" void DMA1_Channel2_IRQHandler(){
 	if(SET == DMA_GetITStatus(DMA1_IT_TC2)){
 		UARTExtension_TxComplete_IH();
 		DMA_ClearITPendingBit(DMA1_IT_TC2);
@@ -58,7 +67,7 @@ void DMA1_Channel2_IRQHandler(){
 }
 
 //SPIExtension, SPI comm. finished
-void DMA2_Channel1_IRQHandler(){
+extern "C" void DMA2_Channel1_IRQHandler(){
 	if(SET == DMA_GetITStatus(DMA2_IT_TC1)){
 		SPIExtension_CommFinished_IH();
 		DMA_ClearITPendingBit(DMA2_IT_TC1);
@@ -66,23 +75,9 @@ void DMA2_Channel1_IRQHandler(){
 }
 
 //WirelessInterface, SPI comm. finished
-void DMA1_Channel4_IRQHandler(){
+extern "C" void DMA1_Channel4_IRQHandler(){
 	if(SET == DMA_GetITStatus(DMA1_IT_TC4)){
 		WirelessInterface_CommFinished_IH();
 		DMA_ClearITPendingBit(DMA1_IT_TC4);
 	}
 }
-
-//UserInterface
-void TIM3_IRQHandler(){
-	if(SET == TIM_GetITStatus(TIM3, TIM_IT_CC1)){
-		UserInterface_Timer_IH();
-		TIM_ClearITPendingBit(TIM3, TIM_IT_CC1);
-	}
-
-	if(SET == TIM_GetITStatus(TIM3, TIM_IT_Update)){
-		UserInterface_Timer_IH();
-		TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
-	}
-}
-
