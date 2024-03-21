@@ -9,6 +9,7 @@
 #include "FreeRTOS.h"
 #include "SupplySystem.h"
 #include "GSMService.h"
+#include "sim900_driver.h"
 #include "WirelessInterface.h"
 #include "UserInterface.h"
 #include "VoltageMeter.h"
@@ -47,7 +48,11 @@ extern "C" void ADC3_IRQHandler(){
 }
 
 extern "C" void USART2_IRQHandler() {
-	GSMService_UART_IH();
+	sim900::handle_uart_interrupt();
+}
+
+extern "C" void DMA1_Channel7_IRQHandler() {
+	sim900::handle_dma_interrupt();
 }
 
 //UARTExtension, Rx

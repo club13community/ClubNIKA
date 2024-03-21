@@ -12,8 +12,6 @@ extern "C" {
 
 TaskHandle_t GSMService_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut);
 
-void GSMService_UART_IH();
-
 #ifdef __cplusplus
 }
 #endif

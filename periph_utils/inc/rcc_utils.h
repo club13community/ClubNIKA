@@ -73,3 +73,16 @@ inline void enable_periph_clock(GPIO_TypeDef * gpio) {
 	}
 	(void)RCC->APB2ENR;
 }
+
+inline void enable_periph_clock(DMA_TypeDef * dma) {
+	uint32_t enr;
+	if (dma == DMA1) {
+		enr = RCC_AHBENR_DMA1EN;
+	} else if (dma == DMA2) {
+		enr = RCC_AHBENR_DMA2EN;
+	} else {
+		throw std::exception();
+	}
+	RCC->AHBENR |= enr;
+	(void)RCC->AHBENR;
+}

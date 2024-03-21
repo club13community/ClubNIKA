@@ -28,3 +28,23 @@ inline IRQn_Type get_IRQn(USART_TypeDef * usart) {
 		default: throw std::exception();
 	}
 }
+
+inline IRQn_Type get_IRQn(DMA_Channel_TypeDef * dma_ch) {
+	switch ((uint32_t)dma_ch) {
+		case DMA1_Channel1_BASE: return DMA1_Channel1_IRQn;
+		case DMA1_Channel2_BASE: return DMA1_Channel2_IRQn;
+		case DMA1_Channel3_BASE: return DMA1_Channel3_IRQn;
+		case DMA1_Channel4_BASE: return DMA1_Channel4_IRQn;
+		case DMA1_Channel5_BASE: return DMA1_Channel5_IRQn;
+		case DMA1_Channel6_BASE: return DMA1_Channel6_IRQn;
+		case DMA1_Channel7_BASE: return DMA1_Channel7_IRQn;
+
+		case DMA2_Channel1_BASE: return DMA2_Channel1_IRQn;
+		case DMA2_Channel2_BASE: return DMA2_Channel2_IRQn;
+		case DMA2_Channel3_BASE: return DMA2_Channel3_IRQn;
+		case DMA2_Channel4_BASE:
+		case DMA2_Channel5_BASE: return DMA2_Channel4_5_IRQn;
+
+		default: throw std::exception();
+	}
+}

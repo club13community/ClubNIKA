@@ -58,29 +58,6 @@ uint8_t rx_ind = 0, tx_ind = 0, tx_len = 0;
 
 #define as_byte(x) (*(uint8_t *)&(x))
 
-void GSMService_UART_IH() {
-	/*if (USART_GetITStatus(UART, USART_IT_RXNE)) {
-		rx_buf[rx_ind++] = USART_ReceiveData(UART);
-		if (rx_ind >= 128) {
-			rx_ind = 0;
-		}
-	}
-	if (UART->SR & USART_SR_TXE) {
-		as_byte(UART->DR) = tx_buf[tx_ind];
-		tx_ind++;
-		tx_len--;
-		if (tx_len == 0) {
-			UART->CR1 &= ~USART_CR1_TXEIE;
-		}
-	}*/
-	sim900::handle_uart_interrupt();
-	/*buf=USART_ReceiveData(USART3);
-	DMA_Cmd(DMA1_Channel2, DISABLE);
-	DMA_SetCurrDataCounter(DMA1_Channel2, 4);
-	//USART_DMACmd(USART3, USART_DMAReq_Tx, ENABLE);
-	DMA_Cmd(DMA1_Channel2, ENABLE);*/
-}
-
 uint8_t is_write_done() {
 	return tx_len == 0;
 }
@@ -110,10 +87,27 @@ TaskHandle_t GSMService_registerInOS(MessageBufferHandle_t msgIn, MessageBufferH
 	return gsm_context.mainTask_handle;
 }
 
+static char get_product_cmd[20] = "ATI\r";
+static char get_imei[10] = "AT+GSN\r";
+
+static void emei_requested() {
+	__NOP();
+}
+
+static void product_requested() {
+	//sim900::send(get_imei, 7, emei_requested);
+	__NOP();
+}
+
+static void turned_on(bool ok) {
+	sim900::send(get_product_cmd, 4, product_requested);
+}
+
 TaskHandle_t GSMService_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut){
 	TaskHandle_t mainTask_handle;
 	GSMService_initState();
 	GSMService_configPeripherals();
 	mainTask_handle=GSMService_registerInOS(msgIn, msgOut);
+	sim900::turn_on(turned_on);
 	return mainTask_handle;
 }

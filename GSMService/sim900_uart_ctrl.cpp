@@ -3,10 +3,12 @@
 //
 #include <stdint.h>
 #include "config.h"
+#include "sim900_driver.h"
 #include "sim900_uart_ctrl.h"
 #include "stm32f10x_usart.h"
 #include "rcc_utils.h"
 #include "nvic_utils.h"
+#include "dma_utils.h"
 #include "sim900_power_ctrl.h"
 
 #define CHAR_0_PRESENT	0x01U
@@ -56,11 +58,12 @@ public:
 
 } rx_stream;
 
+static DMA_TypeDef * dma;
+static uint32_t dma_ifcr_ctcif;
+static void (* volatile tx_callback)();
+
 void sim900::init_uart_ctrl() {
 	GPIO_InitTypeDef pinInitStruct;
-	NVIC_InitTypeDef nvicInitStruct;
-	DMA_InitTypeDef dmaInitStruct;
-
 	// Tx pin
 	enable_periph_clock(TX_PORT);
 	pinInitStruct.GPIO_Pin=TX_PIN;
@@ -75,10 +78,10 @@ void sim900::init_uart_ctrl() {
 	pinInitStruct.GPIO_Speed=GPIO_Speed_2MHz;
 	GPIO_Init(RX_PORT, &pinInitStruct);
 
+	USART_InitTypeDef uartInitStruct;
 	// UART
 	enable_periph_clock(UART);
 	GPIO_PinRemapConfig(GPIO_Remap_USART2, ENABLE); // todo: impl. AFIO utils
-	USART_InitTypeDef uartInitStruct;
 	uartInitStruct.USART_BaudRate=57600;
 	uartInitStruct.USART_HardwareFlowControl=USART_HardwareFlowControl_None;
 	uartInitStruct.USART_Mode=USART_Mode_Rx | USART_Mode_Tx;
@@ -87,39 +90,54 @@ void sim900::init_uart_ctrl() {
 	uartInitStruct.USART_WordLength=USART_WordLength_8b;
 	USART_Init(UART, &uartInitStruct);
 	USART_ITConfig(UART, USART_IT_RXNE, ENABLE);
+	USART_DMACmd(UART, USART_DMAReq_Tx, ENABLE);
 
-	/*dmaInitStruct.DMA_Mode=DMA_Mode_Normal;
+	// DMA for transmitting
+	dma = get_DMA(DMA_CHANNEL);
+	dma_ifcr_ctcif = DMA_IFCR_CTCIF1 << (get_channel_index(DMA_CHANNEL) * 4);
+	enable_periph_clock(dma);
+	DMA_InitTypeDef dmaInitStruct = {0};
+	dmaInitStruct.DMA_Mode=DMA_Mode_Normal;
 	dmaInitStruct.DMA_DIR=DMA_DIR_PeripheralDST;
 	dmaInitStruct.DMA_M2M=DMA_M2M_Disable;
-	dmaInitStruct.DMA_Priority=DMA_Priority_High;
+	dmaInitStruct.DMA_Priority=DMA_PRIORITY;
 
-	dmaInitStruct.DMA_MemoryBaseAddr=(uint32_t)tx_buf;
 	dmaInitStruct.DMA_MemoryDataSize=DMA_MemoryDataSize_Byte;
 	dmaInitStruct.DMA_MemoryInc=DMA_MemoryInc_Enable;
 
-	dmaInitStruct.DMA_PeripheralBaseAddr=(uint32_t)&(USART3->DR);
+	dmaInitStruct.DMA_PeripheralBaseAddr=(uint32_t)&UART->DR;
 	dmaInitStruct.DMA_PeripheralDataSize=DMA_PeripheralDataSize_Byte;
 	dmaInitStruct.DMA_PeripheralInc=DMA_PeripheralInc_Disable;
 
-	dmaInitStruct.DMA_BufferSize=4;
+	DMA_Init(DMA_CHANNEL, &dmaInitStruct);
+	DMA_ITConfig(DMA_CHANNEL, DMA_IT_TC, ENABLE);
 
-	DMA_Init(DMA1_Channel2, &dmaInitStruct);
-	DMA_ITConfig(DMA1_Channel2, DMA_IT_TC, ENABLE);
-
-	USART_DMACmd(USART3, USART_DMAReq_Tx, ENABLE);*/
-
-	IRQn_Type irqn = get_IRQn(UART);
-	nvicInitStruct.NVIC_IRQChannel = irqn;
+	NVIC_InitTypeDef nvicInitStruct;
+	// Interrupt for receiving
+	nvicInitStruct.NVIC_IRQChannel = get_IRQn(UART);
 	nvicInitStruct.NVIC_IRQChannelCmd = ENABLE;
 	nvicInitStruct.NVIC_IRQChannelPreemptionPriority = UART_IRQ_PRIORITY;
 	nvicInitStruct.NVIC_IRQChannelSubPriority = 0;
 	NVIC_Init(&nvicInitStruct);
 
-	/*nvicInitStruct.NVIC_IRQChannel = DMA1_Channel2_IRQn;
+	// Interrupt for end of transmitting
+	nvicInitStruct.NVIC_IRQChannel = get_IRQn(DMA_CHANNEL);
 	nvicInitStruct.NVIC_IRQChannelCmd = ENABLE;
-	nvicInitStruct.NVIC_IRQChannelPreemptionPriority = EXTERNAL_UART_TX_PRIORITY;
+	nvicInitStruct.NVIC_IRQChannelPreemptionPriority = UART_IRQ_PRIORITY;
 	nvicInitStruct.NVIC_IRQChannelSubPriority = 0;
-	NVIC_Init(&nvicInitStruct);*/
+	NVIC_Init(&nvicInitStruct);
+}
+
+/** Does not check if module is turned on, does not check concurrent access.
+ * @param command '\r'-ended command, should not change before send is completed
+ * @param length takes into account tailing '\r'
+ * @param callback is invoked after transfer is completed
+ * */
+void sim900::send(char * command, uint16_t length, void (* callback)()) {
+	DMA_CHANNEL->CMAR = (uint32_t)command;
+	DMA_CHANNEL->CNDTR = length;
+	tx_callback = callback;
+	DMA_CHANNEL->CCR |= DMA_CCR1_EN;
 }
 
 void sim900::handle_uart_interrupt() {
@@ -135,4 +153,11 @@ void sim900::handle_uart_interrupt() {
 		char * message = rx_stream.get_message();
 		bool handled = sim900::handle_power_ctrl_message(message, length);
 	}
+}
+
+static volatile uint32_t ccr;
+void sim900::handle_dma_interrupt() {
+	DMA_CHANNEL->CCR &= ~DMA_CCR1_EN;
+	dma->IFCR = dma_ifcr_ctcif;
+	tx_callback();
 }
