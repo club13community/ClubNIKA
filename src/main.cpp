@@ -74,6 +74,7 @@ int main(void)
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
 	timing::configPeripherals();
+	timing::config_fine_timer();
 
 	MessageRouter_StartUpInit();
 	clearTaskHandleRegister();

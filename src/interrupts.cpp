@@ -34,6 +34,10 @@ extern "C" void TIM2_IRQHandler(){
 	}
 }
 
+extern "C" void TIM3_IRQHandler() {
+	timing::handle_fine_timer_interrupt();
+}
+
 extern "C" void TIM4_IRQHandler() {
 	timing::handleIrq();
 }

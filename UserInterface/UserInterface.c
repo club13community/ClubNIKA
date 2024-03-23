@@ -25,45 +25,7 @@ struct UserInterfaceContext{
 
 //TODO: implement with writes to registers
 void  activateKeyboardRow(uint8_t row){
-	//PC6 - R0; PC7 - R1; PD10 - R2; PD11 - R3
-	GPIO_InitTypeDef pinInitStruct;
-	//deactivate all
-	pinInitStruct.GPIO_Mode=GPIO_Mode_IPU;
-	pinInitStruct.GPIO_Pin=GPIO_Pin_6;
-	GPIO_Init(GPIOC, &pinInitStruct);
-	pinInitStruct.GPIO_Pin=GPIO_Pin_7;
-	GPIO_Init(GPIOC, &pinInitStruct);
 
-	pinInitStruct.GPIO_Pin=GPIO_Pin_10;
-	GPIO_Init(GPIOD, &pinInitStruct);
-	pinInitStruct.GPIO_Pin=GPIO_Pin_11;
-	GPIO_Init(GPIOD, &pinInitStruct);
-
-	//activate desired
-	pinInitStruct.GPIO_Mode=GPIO_Mode_Out_PP;
-	pinInitStruct.GPIO_Speed=GPIO_Speed_2MHz;
-	switch(row & 0x3){
-	case 0:
-		GPIO_ResetBits(GPIOC, GPIO_Pin_6);
-		pinInitStruct.GPIO_Pin=GPIO_Pin_6;
-		GPIO_Init(GPIOC, &pinInitStruct);
-		break;
-	case 1:
-		GPIO_ResetBits(GPIOC, GPIO_Pin_7);
-		pinInitStruct.GPIO_Pin=GPIO_Pin_7;
-		GPIO_Init(GPIOC, &pinInitStruct);
-		break;
-	case 2:
-		GPIO_ResetBits(GPIOD, GPIO_Pin_10);
-		pinInitStruct.GPIO_Pin=GPIO_Pin_10;
-		GPIO_Init(GPIOD, &pinInitStruct);
-		break;
-	case 3:
-		GPIO_ResetBits(GPIOD, GPIO_Pin_11);
-		pinInitStruct.GPIO_Pin=GPIO_Pin_11;
-		GPIO_Init(GPIOD, &pinInitStruct);
-		break;
-	}
 }
 
 //PD12-PD15 - C0-C3
@@ -90,6 +52,7 @@ void UserInterface_configPeripherals(){
 
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOE, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOE, ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
 
@@ -125,29 +88,7 @@ void UserInterface_configPeripherals(){
 	GPIO_ResetBits(GPIOE, GPIO_Pin_6); //for certainty
 	GPIO_Init(GPIOE, &pinInitStruct);
 
-	//Config. pins for keyboard
-	//PC6 - R0; PC7 - R1; PD10 - R2; PD11 - R3
-	pinInitStruct.GPIO_Mode=GPIO_Mode_IPU;
-	pinInitStruct.GPIO_Pin=GPIO_Pin_6;
-	GPIO_Init(GPIOC, &pinInitStruct);
-	pinInitStruct.GPIO_Pin=GPIO_Pin_7;
-	GPIO_Init(GPIOC, &pinInitStruct);
 
-	pinInitStruct.GPIO_Pin=GPIO_Pin_10;
-	GPIO_Init(GPIOD, &pinInitStruct);
-	pinInitStruct.GPIO_Pin=GPIO_Pin_11;
-	GPIO_Init(GPIOD, &pinInitStruct);
-
-	//PD12-PD15 - C0-C3
-	pinInitStruct.GPIO_Mode=GPIO_Mode_IN_FLOATING;
-	pinInitStruct.GPIO_Pin=GPIO_Pin_12;
-	GPIO_Init(GPIOD, &pinInitStruct);
-	pinInitStruct.GPIO_Pin=GPIO_Pin_13;
-	GPIO_Init(GPIOD, &pinInitStruct);
-	pinInitStruct.GPIO_Pin=GPIO_Pin_14;
-	GPIO_Init(GPIOD, &pinInitStruct);
-	pinInitStruct.GPIO_Pin=GPIO_Pin_15;
-	GPIO_Init(GPIOD, &pinInitStruct);
 
 	//Config. timer
 	int32_t tmrFreq=getPeripheralClockFrequencyKHz(TIM3_BASE);

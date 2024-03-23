@@ -52,7 +52,7 @@ private:
 	volatile uint16_t period;
 	volatile bool repeat;
 
-	inline void disable_channel() {
+	inline void disable() {
 		uint16_t dier;
 		do {
 			dier = __LDREXH((uint16_t *)&TIMER->DIER);
@@ -91,7 +91,7 @@ private:
 			callback();
 			set_next_moment(period);
 		} else {
-			disable_channel();
+			disable();
 			callback();
 		}
 	}
@@ -99,7 +99,7 @@ private:
 public:
 	/** May be used by callback */
 	void stop() override {
-		disable_channel();
+		disable();
 	}
 
 	void invoke_in_ms(uint16_t delayMs, CallbackPointer callback) override {
