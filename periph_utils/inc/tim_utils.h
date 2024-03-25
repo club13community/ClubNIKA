@@ -5,6 +5,4 @@
 #pragma once
 #include "stm32f10x.h"
 
-namespace utils {
-	uint32_t get_int_clock_frequency(TIM_TypeDef * tim);
-}
+uint32_t get_int_clock_frequency(TIM_TypeDef * tim);

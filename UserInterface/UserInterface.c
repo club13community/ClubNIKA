@@ -155,7 +155,7 @@ TaskHandle_t UserInterface_registerInOS(MessageBufferHandle_t msgIn, MessageBuff
 TaskHandle_t UserInterface_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut){
 	TaskHandle_t mainTask_handle;
 	UserInterface_initState();
-	UserInterface_configPeripherals();
+	//UserInterface_configPeripherals();
 	mainTask_handle=UserInterface_registerInOS(msgIn, msgOut);
 	return mainTask_handle;
 }

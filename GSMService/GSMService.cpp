@@ -108,6 +108,6 @@ TaskHandle_t GSMService_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_
 	GSMService_initState();
 	GSMService_configPeripherals();
 	mainTask_handle=GSMService_registerInOS(msgIn, msgOut);
-	sim900::turn_on(turned_on);
+	//sim900::turn_on(turned_on);
 	return mainTask_handle;
 }

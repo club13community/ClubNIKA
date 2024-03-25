@@ -13,7 +13,7 @@
 #define CR1_STOPPED 0U
 
 void timing::config_fine_timer() {
-	uint32_t int_clk = utils::get_int_clock_frequency(TIMER);
+	uint32_t int_clk = get_int_clock_frequency(TIMER);
 	uint32_t ratio = int_clk / 1000000U;
 	if (ratio == 0) {
 		throw std::exception();
@@ -45,12 +45,11 @@ void timing::config_fine_timer() {
 }
 
 typedef void (* SetterOfCCR)(TIM_TypeDef *, uint16_t);
-static void do_nothing() {}
 
 using namespace timing;
 
 template <SetterOfCCR set_CCRx, uint16_t TIM_SR_CCxIF, uint16_t TIM_DIER_CCxIE, uint16_t TIM_EGR_CCxG>
-class TimerChannel : public FineTimer {
+class FineTimerChannel : public FineTimer {
 	friend void timing::handle_fine_timer_interrupt();
 private:
 	enum Type : bool {SINGLE = false, REPETITIVE = true};
@@ -124,10 +123,10 @@ public:
 };
 
 namespace timing {
-	static TimerChannel timer_channel1 = TimerChannel<TIM_SetCompare1, TIM_SR_CC1IF, TIM_DIER_CC1IE, TIM_EGR_CC1G>();
-	static TimerChannel timer_channel2 = TimerChannel<TIM_SetCompare2, TIM_SR_CC2IF, TIM_DIER_CC2IE, TIM_EGR_CC2G>();
-	static TimerChannel timer_channel3 = TimerChannel<TIM_SetCompare3, TIM_SR_CC3IF, TIM_DIER_CC3IE, TIM_EGR_CC3G>();
-	static TimerChannel timer_channel4 = TimerChannel<TIM_SetCompare4, TIM_SR_CC4IF, TIM_DIER_CC4IE, TIM_EGR_CC4G>();
+	static FineTimerChannel timer_channel1 = FineTimerChannel<TIM_SetCompare1, TIM_SR_CC1IF, TIM_DIER_CC1IE, TIM_EGR_CC1G>();
+	static FineTimerChannel timer_channel2 = FineTimerChannel<TIM_SetCompare2, TIM_SR_CC2IF, TIM_DIER_CC2IE, TIM_EGR_CC2G>();
+	static FineTimerChannel timer_channel3 = FineTimerChannel<TIM_SetCompare3, TIM_SR_CC3IF, TIM_DIER_CC3IE, TIM_EGR_CC3G>();
+	static FineTimerChannel timer_channel4 = FineTimerChannel<TIM_SetCompare4, TIM_SR_CC4IF, TIM_DIER_CC4IE, TIM_EGR_CC4G>();
 }
 
 void timing::handle_fine_timer_interrupt() {

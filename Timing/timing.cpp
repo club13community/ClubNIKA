@@ -12,7 +12,7 @@
 
 /** Timer resolution is 250us(4kHz) or a little more if "internal clock"/4KHz has remainder */
 void timing::configPeripherals() {
-	uint32_t int_clk = utils::get_int_clock_frequency(TIMER);
+	uint32_t int_clk = get_int_clock_frequency(TIMER);
 	uint32_t ratio = ((int_clk<<1) + 4000U)/(4000U<<1); // int_clk/4kHz + 0.5
 
 	enable_periph_clock(TIMER);

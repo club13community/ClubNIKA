@@ -42,6 +42,14 @@ extern "C" void TIM4_IRQHandler() {
 	timing::handleIrq();
 }
 
+extern "C" void WWDG_IRQHandler() {
+	__NOP();
+}
+
+extern "C" void UsageFault_Handler() {
+	__NOP();
+}
+
 //VoltageMeter, EOC
 extern "C" void ADC3_IRQHandler(){
 	if(SET == ADC_GetITStatus(ADC3, ADC_IT_EOC)){
