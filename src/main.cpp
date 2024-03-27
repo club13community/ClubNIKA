@@ -29,6 +29,7 @@
 #include "SPIExtension.h"
 #include "I2CExtension.h"
 #include "Message.h"
+#include "flash.h"
 
 struct TaskHandleRegister{
 	TaskHandle_t stkMon_handle;
@@ -66,6 +67,12 @@ void clearTaskHandleRegister(){
 TaskHandle_t StackMonitor_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut);
 #endif
 
+volatile bool done = false;
+
+void do_done() {
+	done = true;
+}
+
 int main(void)
 {
 	SystemInit();
@@ -88,9 +95,28 @@ int main(void)
 	taskHandleRegister.wless_handle=WirelessInterface_Launch(getMessageBuffer_WirelessInterfaceDataIn(), getMessageBuffer_WirelessInterfaceDataOut());
 	taskHandleRegister.ui_handle=UserInterface_Launch(getMessageBuffer_UserInterfaceDataIn(), getMessageBuffer_UserInterfaceDataOut());
 	taskHandleRegister.sound_handle=SoundService_Launch(getMessageBuffer_SoundServiceDataIn(), getMessageBuffer_SoundServiceDataOut());
-	taskHandleRegister.uartExt_handle=UARTExtension_Launch(getMessageBuffer_UARTExtensionDataIn(), getMessageBuffer_UARTExtensionDataOut());
+	//taskHandleRegister.uartExt_handle=UARTExtension_Launch(getMessageBuffer_UARTExtensionDataIn(), getMessageBuffer_UARTExtensionDataOut());
 	taskHandleRegister.spiExt_handle=SPIExtension_Launch(getMessageBuffer_SPIExtensionDataIn(), getMessageBuffer_SPIExtensionDataOut());
 	taskHandleRegister.i2cExt_handle=I2CExtension_Launch(getMessageBuffer_I2CExtensionDataIn(), getMessageBuffer_I2CExtensionDataOut());
+
+	uint8_t mem[5] = {1, 2, 3, 4, 5};
+	uint8_t buf[5] = {0xA, 0xA, 0xA, 0xA, 0xA};
+	using namespace flash;
+	init();
+
+	done = false;
+	memory_to_buffer(0, Buffer::B2, do_done);
+	while (!done);
+
+	done = false;
+	read_memory({.page = 0, .byte = 0}, 4, mem, do_done);
+	while (!done);
+
+	done = false;
+	read_buffer(Buffer::B2, 0, 4, buf, do_done);
+	while(!done);
+
+	__NOP();
 
 	//wireless
 	//File system

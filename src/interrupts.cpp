@@ -76,12 +76,12 @@ extern "C" void USART3_IRQHandler(){
 }
 
 //UARTExtension, TxComplete
-extern "C" void DMA1_Channel2_IRQHandler(){
+/*extern "C" void DMA1_Channel2_IRQHandler(){
 	if(SET == DMA_GetITStatus(DMA1_IT_TC2)){
 		UARTExtension_TxComplete_IH();
 		DMA_ClearITPendingBit(DMA1_IT_TC2);
 	}
-}
+}*/
 
 //SPIExtension, SPI comm. finished
 extern "C" void DMA2_Channel1_IRQHandler(){

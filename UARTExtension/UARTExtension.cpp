@@ -199,11 +199,11 @@ void UARTExtension_configPeripherals(){
 
 	DMA_ITConfig(DMA1_Channel2, DMA_IT_TC, ENABLE);
 
-	nvicInitStruct.NVIC_IRQChannel = DMA1_Channel2_IRQn;
+	/*nvicInitStruct.NVIC_IRQChannel = DMA1_Channel2_IRQn;
 	nvicInitStruct.NVIC_IRQChannelCmd = ENABLE;
 	nvicInitStruct.NVIC_IRQChannelPreemptionPriority = UARTEXTENSION_TX_PRIORITY;
 	nvicInitStruct.NVIC_IRQChannelSubPriority = 0;
-	NVIC_Init(&nvicInitStruct);
+	NVIC_Init(&nvicInitStruct);*/
 
 	USART_Cmd(USART3, ENABLE);
 }
