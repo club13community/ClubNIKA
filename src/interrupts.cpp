@@ -39,7 +39,7 @@ extern "C" void TIM3_IRQHandler() {
 }
 
 extern "C" void TIM4_IRQHandler() {
-	timing::handleIrq();
+	timing::handle_coarse_timer_interrupt();
 }
 
 extern "C" void WWDG_IRQHandler() {

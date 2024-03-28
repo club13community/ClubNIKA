@@ -6,37 +6,39 @@
 #include <stdint.h>
 
 namespace timing {
-	typedef void (* CallbackPointer)();
+	typedef void (* Callback)();
 
-	class Timer {
+	/** Allows transitions between modes. Callback from prev. configuration still may be invoked once. */
+	class CoarseTimer {
 	public:
-		virtual void invoke_in_ms(uint16_t delayMs, CallbackPointer callback) = 0;
-		virtual void invoke_in_ticks(uint16_t delayMsDiv4, CallbackPointer callback) = 0;
-		virtual void every_ms_invoke(uint16_t periodMs, CallbackPointer callback) = 0;
-		virtual void every_ticks_invoke(uint16_t periodMsDiv4, CallbackPointer callback) = 0;
+		virtual void invoke_in_ms(uint16_t delayMs, Callback callback) = 0;
+		virtual void invoke_in_ticks(uint16_t delayMsDiv4, Callback callback) = 0;
+		virtual void every_ms_invoke(uint16_t periodMs, Callback callback) = 0;
+		virtual void every_ticks_invoke(uint16_t periodMsDiv4, Callback callback) = 0;
 		virtual void wait_ms(uint16_t delayMs) = 0;
 		virtual void wait_ticks(uint16_t delayMsDiv4) = 0;
 		virtual void stop() = 0;
 	};
 
+	/** Allows transitions between modes. Callback from prev. configuration still may be invoked once. */
 	class FineTimer {
 	public:
-		virtual void invoke_in_us(uint16_t delayUs, CallbackPointer callback) = 0;
-		virtual void every_us_invoke(uint16_t periodUs, CallbackPointer callback) = 0;
+		virtual void invoke_in_us(uint16_t delayUs, Callback callback) = 0;
+		virtual void every_us_invoke(uint16_t periodUs, Callback callback) = 0;
 		virtual void wait_us(uint16_t delayUs) = 0;
 		virtual void stop() = 0;
 
 	};
 
-	void configPeripherals();
+	void config_coarse_timer();
 	void config_fine_timer();
-	void handleIrq();
+	void handle_coarse_timer_interrupt();
 	void handle_fine_timer_interrupt();
 
-	extern Timer & timer1;
-	extern Timer & timer2;
-	extern Timer & timer3;
-	extern Timer & coarse_timer4;
+	extern CoarseTimer & coarse_timer1;
+	extern CoarseTimer & coarse_timer2;
+	extern CoarseTimer & coarse_timer3;
+	extern CoarseTimer & coarse_timer4;
 
 	extern FineTimer & fine_timer1;
 	extern FineTimer & fine_timer2;

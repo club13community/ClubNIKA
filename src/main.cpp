@@ -30,6 +30,7 @@
 #include "I2CExtension.h"
 #include "Message.h"
 #include "flash.h"
+#include "test.h"
 
 struct TaskHandleRegister{
 	TaskHandle_t stkMon_handle;
@@ -73,15 +74,20 @@ void do_done() {
 	done = true;
 }
 
-int main(void)
+extern "C" int main(void)
 {
 	SystemInit();
 	ClockControl_StartUpInit();
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
-	timing::configPeripherals();
+	timing::config_coarse_timer();
 	timing::config_fine_timer();
+
+	//test_timer_wait();
+	//test_timer_invoke_once();
+	//test_timer_invoke_repeatedly_and_stop();
+	//test_timer_start_blink_while_delay();
 
 	MessageRouter_StartUpInit();
 	clearTaskHandleRegister();

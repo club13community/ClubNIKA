@@ -23,7 +23,7 @@
 #define VBAT_DISCHARGE_PORT	GPIOD
 #define VBAT_DISCHARGE_PIN	GPIO_Pin_0
 
-#define TIMER (timing::timer3)
+#define TIMER (timing::coarse_timer3)
 
 // time in ms for VBAT settling after connecting to 4V
 #define VBAT_SETTIMG_TIME	300

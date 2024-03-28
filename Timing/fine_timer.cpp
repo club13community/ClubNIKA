@@ -7,6 +7,7 @@
 #include "tim_utils.h"
 #include "rcc_utils.h"
 #include "nvic_utils.h"
+#include "timer_channel.h"
 
 #define TIMER	FINE_TIMER
 #define CR1_RUNNING	TIM_CR1_CEN
@@ -44,107 +45,82 @@ void timing::config_fine_timer() {
 	TIMER->CR1 = CR1_RUNNING;
 }
 
-typedef void (* SetterOfCCR)(TIM_TypeDef *, uint16_t);
-
-using namespace timing;
-
-template <SetterOfCCR set_CCRx, uint16_t TIM_SR_CCxIF, uint16_t TIM_DIER_CCxIE, uint16_t TIM_EGR_CCxG>
-class FineTimerChannel : public FineTimer {
-	friend void timing::handle_fine_timer_interrupt();
-private:
-	enum Type : bool {SINGLE = false, REPETITIVE = true};
-	volatile CallbackPointer callback;
-	volatile uint16_t period;
-	volatile bool repeat;
-
-	inline void disable() {
-		uint32_t primask = __get_PRIMASK();
-		__set_PRIMASK(1U);
-		TIMER->DIER &= ~TIM_DIER_CCxIE;
-		__set_PRIMASK(primask);
-	}
-
-	inline void set_next_moment(uint16_t ticks) {
-		uint32_t primask = __get_PRIMASK();
-		__set_PRIMASK(1U);
-		TIMER->CR1 = CR1_STOPPED;
-		set_CCRx(TIMER, TIMER->CNT + ticks);
-		TIMER->SR = ~TIM_SR_CCxIF;
-		TIMER->CR1 = CR1_RUNNING;
-		__set_PRIMASK(primask);
-	}
-
-	inline void set_next_moment_and_enable(uint16_t ticks) {
-		uint32_t primask = __get_PRIMASK();
-		__set_PRIMASK(1U);
-		TIMER->CR1 = CR1_STOPPED;
-		set_CCRx(TIMER, TIMER->CNT + ticks);
-		TIMER->SR = ~TIM_SR_CCxIF;
-		TIMER->CR1 = CR1_RUNNING;
-		TIMER->DIER |= TIM_DIER_CCxIE;
-		__set_PRIMASK(primask);
-	}
-
-	inline void start(uint16_t ticks, CallbackPointer callback, Type type) {
-		this->callback = callback;
-		this->period = ticks + 1;
-		this->repeat = type;
-		set_next_moment_and_enable(ticks + 1);
-	}
-
-	inline void handle_interrupt() {
-		if (repeat) {
-			callback();
-			set_next_moment(period);
-		} else {
-			disable();
-			callback();
-		}
-	}
-
-public:
-	/** May be used by callback */
-	void stop() override {
-		disable();
-	}
-
-	void invoke_in_us(uint16_t delayUs, CallbackPointer callback) override {
-		start(delayUs, callback, SINGLE);
-	}
-
-	void every_us_invoke(uint16_t periodUs, CallbackPointer callback) override {
-		start(periodUs, callback, REPETITIVE);
-	}
-
-	void wait_us(uint16_t delayUs) override {
-		set_next_moment(delayUs);
-		while (!(TIMER->SR & TIM_SR_CCxIF));
-	}
-};
-
 namespace timing {
-	static FineTimerChannel timer_channel1 = FineTimerChannel<TIM_SetCompare1, TIM_SR_CC1IF, TIM_DIER_CC1IE, TIM_EGR_CC1G>();
-	static FineTimerChannel timer_channel2 = FineTimerChannel<TIM_SetCompare2, TIM_SR_CC2IF, TIM_DIER_CC2IE, TIM_EGR_CC2G>();
-	static FineTimerChannel timer_channel3 = FineTimerChannel<TIM_SetCompare3, TIM_SR_CC3IF, TIM_DIER_CC3IE, TIM_EGR_CC3G>();
-	static FineTimerChannel timer_channel4 = FineTimerChannel<TIM_SetCompare4, TIM_SR_CC4IF, TIM_DIER_CC4IE, TIM_EGR_CC4G>();
+
+	template <SetterOfCCR set_CCRx, uint16_t TIM_SR_CCxIF, uint16_t TIM_DIER_CCxIE>
+	class FineTimerChannel : public FineTimer, public TimerChannel<set_CCRx, TIM_SR_CCxIF, TIM_DIER_CCxIE>{
+		friend void timing::handle_fine_timer_interrupt();
+	public:
+		FineTimerChannel(TIM_TypeDef * tim) : TimerChannel<set_CCRx, TIM_SR_CCxIF, TIM_DIER_CCxIE>(tim) {}
+
+		void stop() override {
+			TimerChannel<set_CCRx, TIM_SR_CCxIF, TIM_DIER_CCxIE>::stop();
+		}
+
+		void invoke_in_us(uint16_t delayUs, Callback callback) override {
+			TimerChannel<set_CCRx, TIM_SR_CCxIF, TIM_DIER_CCxIE>::invoke_in_ticks(delayUs, callback);
+		}
+
+		void every_us_invoke(uint16_t periodUs, Callback callback) override {
+			TimerChannel<set_CCRx, TIM_SR_CCxIF, TIM_DIER_CCxIE>::every_ticks_invoke(periodUs, callback);
+		}
+
+		void wait_us(uint16_t delayUs) override {
+			TimerChannel<set_CCRx, TIM_SR_CCxIF, TIM_DIER_CCxIE>::wait_ticks(delayUs);
+		}
+	};
+
+	static FineTimerChannel timer_channel1 = FineTimerChannel<TIM_SetCompare1, TIM_SR_CC1IF, TIM_DIER_CC1IE>(TIMER);
+	static FineTimerChannel timer_channel2 = FineTimerChannel<TIM_SetCompare2, TIM_SR_CC2IF, TIM_DIER_CC2IE>(TIMER);
+	static FineTimerChannel timer_channel3 = FineTimerChannel<TIM_SetCompare3, TIM_SR_CC3IF, TIM_DIER_CC3IE>(TIMER);
+	static FineTimerChannel timer_channel4 = FineTimerChannel<TIM_SetCompare4, TIM_SR_CC4IF, TIM_DIER_CC4IE>(TIMER);
 }
 
 void timing::handle_fine_timer_interrupt() {
 	uint16_t dier = TIMER->DIER;
-	// reading SR after DIER prevents false invoking of callback when more priority ISR enables timer
 	uint16_t sr = TIMER->SR;
-	if (sr & TIM_SR_CC1IF && dier & TIM_DIER_CC1IE) {
-		timer_channel1.handle_interrupt();
+
+	// invoke callbacks
+	bool channel1 = sr & TIM_SR_CC1IF && dier & TIM_DIER_CC1IE;
+	if (channel1) {
+		timer_channel1.invoke_callback();
 	}
-	if (sr & TIM_SR_CC2IF && dier & TIM_DIER_CC2IE) {
-		timer_channel2.handle_interrupt();
+	bool channel2 = sr & TIM_SR_CC2IF && dier & TIM_DIER_CC2IE;
+	if (channel2) {
+		timer_channel2.invoke_callback();
 	}
-	if (sr & TIM_SR_CC3IF && dier & TIM_DIER_CC3IE) {
-		timer_channel3.handle_interrupt();
+	bool channel3 = sr & TIM_SR_CC3IF && dier & TIM_DIER_CC3IE;
+	if (channel3) {
+		timer_channel3.invoke_callback();
 	}
-	if (sr & TIM_SR_CC4IF && dier & TIM_DIER_CC4IE) {
-		timer_channel4.handle_interrupt();
+	bool channel4 = sr & TIM_SR_CC4IF && dier & TIM_DIER_CC4IE;
+	if (channel4) {
+		timer_channel4.invoke_callback();
 	}
+
+	// handle timeout
+	uint16_t clear_sr = 0xFFFF;
+	__disable_irq();
+	TIMER->CR1 &= ~TIM_CR1_CEN;
+	if (channel1) {
+		timer_channel1.handle_timeout();
+		clear_sr &= ~TIM_SR_CC1IF;
+	}
+	if (channel2) {
+		timer_channel2.handle_timeout();
+		clear_sr &= ~TIM_SR_CC2IF;
+	}
+	if (channel3) {
+		timer_channel3.handle_timeout();
+		clear_sr &= ~TIM_SR_CC3IF;
+	}
+	if (channel4) {
+		timer_channel4.handle_timeout();
+		clear_sr &= ~TIM_SR_CC4IF;
+	}
+	TIMER->SR = clear_sr;
+	TIMER->CR1 |= TIM_CR1_CEN;
+	__enable_irq();
 }
 
 namespace timing {
