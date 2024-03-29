@@ -31,6 +31,8 @@
 #include "Message.h"
 #include "flash.h"
 #include "test.h"
+#include "test_freertos.h"
+#include "UserInterface.h"
 
 struct TaskHandleRegister{
 	TaskHandle_t stkMon_handle;
@@ -89,23 +91,28 @@ extern "C" int main(void)
 	//test_timer_invoke_repeatedly_and_stop();
 	//test_timer_start_blink_while_delay();
 
+	flash::init();
+	gsm_service::init_periph();
+	sound_service::init_periph();
+	user_interface::init_periph();
+
 	MessageRouter_StartUpInit();
 	clearTaskHandleRegister();
 
-	taskHandleRegister.clkCtrl_handle=ClockControl_Launch(getMessageBuffer_ClockControlDataIn(), getMessageBuffer_ClockControlDataOut());
-	taskHandleRegister.supSys_handle=SupplySystem_Launch(getMessageBuffer_SupplySystemDataIn(), getMessageBuffer_SupplySystemDataOut());
-	taskHandleRegister.msg_handle=MessageRouter_Launch();
-	taskHandleRegister.wsens_handle=WiredSensorMonitor_Launch(getMessageBuffer_WiredSensorMonitorDataIn(), getMessageBuffer_WiredSensorMonitorDataOut());
-	taskHandleRegister.voltMet_handle=VoltageMeter_Launch(getMessageBuffer_VoltageMeterDataIn(), getMessageBuffer_VoltageMeterDataOut());
-	taskHandleRegister.gsm_handle=GSMService_Launch(getMessageBuffer_GSMServiceDataIn(), getMessageBuffer_GSMServiceDataOut());
-	taskHandleRegister.wless_handle=WirelessInterface_Launch(getMessageBuffer_WirelessInterfaceDataIn(), getMessageBuffer_WirelessInterfaceDataOut());
-	taskHandleRegister.ui_handle=UserInterface_Launch(getMessageBuffer_UserInterfaceDataIn(), getMessageBuffer_UserInterfaceDataOut());
-	taskHandleRegister.sound_handle=SoundService_Launch(getMessageBuffer_SoundServiceDataIn(), getMessageBuffer_SoundServiceDataOut());
+	ClockControl_Launch(getMessageBuffer_ClockControlDataIn(), getMessageBuffer_ClockControlDataOut());
+	SupplySystem_Launch(getMessageBuffer_SupplySystemDataIn(), getMessageBuffer_SupplySystemDataOut());
+	user_interface::start();
+	//taskHandleRegister.wsens_handle=WiredSensorMonitor_Launch(getMessageBuffer_WiredSensorMonitorDataIn(), getMessageBuffer_WiredSensorMonitorDataOut());
+	//taskHandleRegister.voltMet_handle=VoltageMeter_Launch(getMessageBuffer_VoltageMeterDataIn(), getMessageBuffer_VoltageMeterDataOut());
+	//taskHandleRegister.wless_handle=WirelessInterface_Launch(getMessageBuffer_WirelessInterfaceDataIn(), getMessageBuffer_WirelessInterfaceDataOut());
+	//taskHandleRegister.ui_handle=UserInterface_Launch(getMessageBuffer_UserInterfaceDataIn(), getMessageBuffer_UserInterfaceDataOut());
 	//taskHandleRegister.uartExt_handle=UARTExtension_Launch(getMessageBuffer_UARTExtensionDataIn(), getMessageBuffer_UARTExtensionDataOut());
-	taskHandleRegister.spiExt_handle=SPIExtension_Launch(getMessageBuffer_SPIExtensionDataIn(), getMessageBuffer_SPIExtensionDataOut());
-	taskHandleRegister.i2cExt_handle=I2CExtension_Launch(getMessageBuffer_I2CExtensionDataIn(), getMessageBuffer_I2CExtensionDataOut());
+	//taskHandleRegister.spiExt_handle=SPIExtension_Launch(getMessageBuffer_SPIExtensionDataIn(), getMessageBuffer_SPIExtensionDataOut());
+	//taskHandleRegister.i2cExt_handle=I2CExtension_Launch(getMessageBuffer_I2CExtensionDataIn(), getMessageBuffer_I2CExtensionDataOut());
 
-	uint8_t mem[5] = {1, 2, 3, 4, 5};
+	//taskHandleRegister.msg_handle=MessageRouter_Launch();
+
+	/*uint8_t mem[5] = {1, 2, 3, 4, 5};
 	uint8_t buf[5] = {0xA, 0xA, 0xA, 0xA, 0xA};
 	using namespace flash;
 	init();
@@ -122,7 +129,7 @@ extern "C" int main(void)
 	read_buffer(Buffer::B2, 0, 4, buf, do_done);
 	while(!done);
 
-	__NOP();
+	__NOP();*/
 
 	//wireless
 	//File system
@@ -130,7 +137,7 @@ extern "C" int main(void)
 	//timer task
 
 #ifdef DEBUG
-	taskHandleRegister.stkMon_handle=StackMonitor_Launch(getMessageBuffer_StackMonitorDataIn(), getMessageBuffer_StackMonitorDataOut());
+	//taskHandleRegister.stkMon_handle=StackMonitor_Launch(getMessageBuffer_StackMonitorDataIn(), getMessageBuffer_StackMonitorDataOut());
 #endif
 
 	vTaskStartScheduler();

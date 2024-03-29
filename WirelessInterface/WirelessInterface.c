@@ -186,7 +186,7 @@ TaskHandle_t WirelessInterface_registerInOS(MessageBufferHandle_t msgIn, Message
 TaskHandle_t WirelessInterface_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut){
 	TaskHandle_t mainTask_handle;
 	WirelessInterface_initState();
-	WirelessInterface_configPeripherals();
+	//WirelessInterface_configPeripherals();
 	mainTask_handle=WirelessInterface_registerInOS(msgIn, msgOut);
 	return mainTask_handle;
 }

@@ -56,6 +56,7 @@ void flash::init() {
 	TIMER.wait_us(POWER_ON_DELAY);
 	init_mosi_miso_sck();
 	init_spi();
+	// todo: check if ready
 	state = IDLE;
 }
 

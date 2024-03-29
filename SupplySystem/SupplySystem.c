@@ -444,14 +444,14 @@ TaskHandle_t SupplySystem_registerInOS(MessageBufferHandle_t msgIn, MessageBuffe
 	return supSys_context.mainTask_handle;
 }
 
-TaskHandle_t SupplySystem_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut){
+void SupplySystem_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut){
 	TaskHandle_t mainTask_handle;
 	SupplySystem_initState();
 	SupplySystem_configPeripherals();
-	mainTask_handle=SupplySystem_registerInOS(msgIn, msgOut);
+	//mainTask_handle=SupplySystem_registerInOS(msgIn, msgOut);
 	//TODO: for debug
 	enable12VChannel();
-	return mainTask_handle;
+	//return mainTask_handle;
 }
 
 

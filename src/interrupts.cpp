@@ -16,6 +16,7 @@
 #include "SPIExtension.h"
 #include "UARTExtension.h"
 #include "timing.h"
+#include "keyboard.h"
 
 extern "C" void SysTick_Handler(){
 	xPortSysTickHandler();
@@ -97,4 +98,9 @@ extern "C" void DMA1_Channel4_IRQHandler(){
 		WirelessInterface_CommFinished_IH();
 		DMA_ClearITPendingBit(DMA1_IT_TC4);
 	}
+}
+
+// keyboard
+extern "C" void EXTI15_10_IRQHandler() {
+	keyboard::exti_isr();
 }

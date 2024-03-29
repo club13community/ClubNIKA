@@ -5,22 +5,14 @@
  *      Author: MaxCm
  */
 
-#ifndef _SOUNDSERVICE_H_
-#define _SOUNDSERVICE_H_
+#pragma once
 
 #include <stdint.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "message_buffer.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-TaskHandle_t SoundService_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut);
-
-#ifdef __cplusplus
+namespace sound_service {
+	void init_periph();
 }
-#endif
 
-#endif /* _SOUNDSERVICE_H_ */

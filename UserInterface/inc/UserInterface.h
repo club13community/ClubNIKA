@@ -5,24 +5,10 @@
  *      Author: MaxCm
  */
 
-#ifndef _USERINTERFACE_H_
-#define _USERINTERFACE_H_
 
-#include <stdint.h>
-#include "FreeRTOS.h"
-#include "task.h"
-#include "message_buffer.h"
+#pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-TaskHandle_t UserInterface_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut);
-
-void UserInterface_Timer_IH();
-
-#ifdef __cplusplus
+namespace user_interface {
+	void init_periph();
+	void start();
 }
-#endif
-
-#endif /* _USERINTERFACE_H_ */

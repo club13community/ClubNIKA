@@ -227,7 +227,7 @@ void ClockControl_mainTask(void *pvParameters){
 	}
 }
 
-TaskHandle_t ClockControl_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut){
+void ClockControl_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut){
 	TaskHandle_t mainTask_handle;
 	static const char mainTask_name[configMAX_TASK_NAME_LEN]="ClockControl";
 	static StaticTask_t mainTask_TCB;
@@ -236,13 +236,13 @@ TaskHandle_t ClockControl_Launch(MessageBufferHandle_t msgIn, MessageBufferHandl
 	clkCtrl_context.msgIn=msgIn;
 	clkCtrl_context.msgOut=msgOut;
 
-	mainTask_handle=xTaskCreateStatic(ClockControl_mainTask,
+	/*mainTask_handle=xTaskCreateStatic(ClockControl_mainTask,
 			mainTask_name,
 			32, //mainTask_stackDepth
 			(void *)0,
 			1,
 			mainTask_stackBuffer,
-			&mainTask_TCB);
+			&mainTask_TCB);*/
 
-	return mainTask_handle;
+	//return mainTask_handle;
 }

@@ -62,7 +62,7 @@ namespace timing {
 		}
 
 		inline void disable_timeout_irq() {
-			tim->DIER = ~TIM_DIER_CCxIE;
+			tim->DIER &= ~TIM_DIER_CCxIE;
 		}
 
 		inline void schedule_timeout(uint16_t ticks) {

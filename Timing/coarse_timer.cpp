@@ -9,7 +9,6 @@
 #include "timer_channel.h"
 
 #define TIMER		TIMING_TIMER
-#define TIMER_IRQn_PRIORITY		3
 
 /** Timer resolution is 250us(4kHz) or a little more if "internal clock"/4KHz has remainder */
 void timing::config_coarse_timer() {
@@ -33,7 +32,7 @@ void timing::config_coarse_timer() {
 	TIM_OC4Init(TIMER, &oc_conf);
 
 	IRQn_Type irqn = get_IRQn(TIMER);
-	NVIC_SetPriority(irqn, TIMER_IRQn_PRIORITY);
+	NVIC_SetPriority(irqn, COARSE_TIMER_IRQ_PRIORITY);
 	NVIC_EnableIRQ(irqn);
 
 	TIM_Cmd(TIMER, ENABLE);

@@ -178,7 +178,6 @@ TaskHandle_t SPIExtension_registerInOS(MessageBufferHandle_t msgIn, MessageBuffe
 TaskHandle_t SPIExtension_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut){
 	TaskHandle_t mainTask_handle;
 	SPIExtension_initState();
-	SPIExtension_configPeripherals();
 	mainTask_handle=SPIExtension_registerInOS(msgIn, msgOut);
 	return mainTask_handle;
 }

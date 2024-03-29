@@ -18,7 +18,7 @@ extern "C" {
 
 void ClockControl_StartUpInit();
 
-TaskHandle_t ClockControl_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut);
+void ClockControl_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut);
 
 int32_t getPeripheralClockFrequencyKHz(uint32_t periphBaseAddr);
 

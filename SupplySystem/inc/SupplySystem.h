@@ -19,7 +19,7 @@ extern "C" {
 
 extern const char SupplySystem_mainTaskName[];
 
-TaskHandle_t SupplySystem_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut);
+void SupplySystem_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut);
 void SupplySystem_12VChannelsOvercurrent_IH();
 void SupplySystem_12VChannelsOvercurrent_Timer_IH();
 

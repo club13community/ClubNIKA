@@ -1,20 +1,12 @@
-#ifndef _GSMSERVICE_H_
-#define _GSMSERVICE_H_
+#pragma once
 
 #include <stdint.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "message_buffer.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-TaskHandle_t GSMService_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut);
 
-#ifdef __cplusplus
+namespace gsm_service {
+	void init_periph();
 }
-#endif
-
-
-#endif /* _GSMSERVICE_H_ */

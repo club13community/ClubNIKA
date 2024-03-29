@@ -42,7 +42,7 @@ void SoundService_initState() {
 
 }
 
-void SoundService_configPeripherals(){
+void sound_service::init_periph(){
 	speaker::initPeripherals();
 }
 
@@ -77,7 +77,7 @@ TaskHandle_t SoundService_registerInOS(MessageBufferHandle_t msgIn, MessageBuffe
 TaskHandle_t SoundService_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut){
 	TaskHandle_t mainTask_handle;
 	SoundService_initState();
-	SoundService_configPeripherals();
+
 	mainTask_handle=SoundService_registerInOS(msgIn, msgOut);
 
 	uint8_t real_step = p2p / (points / 2);

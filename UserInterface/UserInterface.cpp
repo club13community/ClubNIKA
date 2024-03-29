@@ -6,74 +6,18 @@
  */
 
 #include "UserInterface.h"
-#include "stm32f10x.h"
-#include "stm32f10x_rcc.h"
-#include "stm32f10x_gpio.h"
-#include "stm32f10x_tim.h"
-#include "IRQPriorityConfig.h"
-#include "ClockControl.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "lcd.h"
+#include "keyboard.h"
+#include "periph_allocation.h"
+#include "queue.h"
 
-struct UserInterfaceContext{
-	TaskHandle_t mainTask_handle;
-	MessageBufferHandle_t msgIn, msgOut;
-} ui_context;
-
-//TODO: implement with writes to registers
-void  activateKeyboardRow(uint8_t row){
-
-}
-
-//PD12-PD15 - C0-C3
-#define getKeyboardColumns() ((uint8_t)(~(GPIO_ReadInputData(GPIOD)>>12) & 0x0F))
-
-/*
- * Interrupt handlers
- */
-
-void UserInterface_Timer_IH(){
-
-}
-
-void UserInterface_initState(){
-
-
-}
-
-void UserInterface_configPeripherals(){
+void user_interface::init_periph() {
 	lcd::init();
+	keyboard::init_periph();
 }
 
-void UserInterface_mainTask(void *pvParameters){
-	//turnOnLED();
-	uint8_t col;
-	activateKeyboardRow(0);
-	while(1){
-		col=getKeyboardColumns();
-		taskYIELD();
-	}
-}
-
-TaskHandle_t UserInterface_registerInOS(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut){
-	//Save message channels
-	ui_context.msgIn=msgIn;
-	ui_context.msgOut=msgOut;
-
-	static const char mainTask_name[configMAX_TASK_NAME_LEN]="UserInterface";
-	static StaticTask_t mainTask_TCB;
-	static StackType_t mainTask_stackBuffer[32]; //length=mainTask_stackDepth
-
-	// Create tasks
-	ui_context.mainTask_handle=xTaskCreateStatic(UserInterface_mainTask,
-			mainTask_name,
-			32, //mainTask_stackDepth
-			(void *)0,
-			1,
-			mainTask_stackBuffer,
-			&mainTask_TCB);
-
-	return ui_context.mainTask_handle;
-}
 uint8_t bat[] = {
 		0b01110,
 		0b11111,
@@ -96,12 +40,11 @@ uint8_t sign[] = {
 		0b00100
 };
 
-TaskHandle_t UserInterface_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut){
-	TaskHandle_t mainTask_handle;
-	UserInterface_initState();
-	UserInterface_configPeripherals();
-	mainTask_handle=UserInterface_registerInOS(msgIn, msgOut);
+static TaskHandle_t service;
+static StackType_t service_stack[256];
+static StaticTask_t service_ctrl;
 
+static void service_ui(void * args) {
 	using namespace lcd;
 	display_on_off(Screen::ON, Cursor::OFF, Blinking::OFF);
 	set_cursor_on_line1(1);
@@ -121,5 +64,29 @@ TaskHandle_t UserInterface_Launch(MessageBufferHandle_t msgIn, MessageBufferHand
 	print("working");
 	backlight_on();
 
-	return mainTask_handle;
+	while(true) {
+		using keyboard::Button;
+		keyboard::ButtonEvent event;
+		if (xQueueReceive(keyboard::get_button_events(), &event, 0) == pdFALSE) {
+			taskYIELD();
+		} else {
+			set_cursor_on_line1(15);
+			char symb;
+			if (event.button >= Button::N0 && event.button <= Button::N9) {
+				symb = (uint8_t)event.button | 0x30U;
+			} else if (event.button >= Button::A && event.button <= Button::D) {
+				symb = (uint8_t)event.button - (uint8_t)Button::A + 0x41U;
+			} else if (event.button == Button::STAR) {
+				symb = '*';
+			} else {
+				symb = '#';
+			}
+			print(symb);
+		}
+	}
+}
+
+void user_interface::start() {
+	keyboard::start();
+	service = xTaskCreateStatic(service_ui, "ui service", 256, nullptr, TASK_NORMAL_PRIORITY, service_stack, &service_ctrl);
 }

@@ -27,39 +27,8 @@ void GSMService_initState(){
 
 }
 
-void GSMService_configPeripherals() {
+void gsm_service::init_periph() {
 	sim900::config_peripherals();
-
-	/*GPIO_InitTypeDef pinInitStruct;
-	// VBAT discharge port
-	enable_periph_clock(VBAT_DISCHARGE_PORT);
-	sim900::open_vbat(); // do not discharge
-	pinInitStruct.GPIO_Pin = VBAT_DISCHARGE_PIN;
-	pinInitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
-	pinInitStruct.GPIO_Speed = GPIO_Speed_2MHz;
-	GPIO_Init(VBAT_DISCHARGE_PORT, &pinInitStruct);
-
-	// VBAT switch
-	enable_periph_clock(VBAT_SW_PORT);
-	sim900::enable_vbat(); // on VBAT
-	pinInitStruct.GPIO_Pin = VBAT_SW_PIN;
-	pinInitStruct.GPIO_Mode = GPIO_Mode_Out_PP;
-	pinInitStruct.GPIO_Speed = GPIO_Speed_2MHz;
-	GPIO_Init(VBAT_SW_PORT, &pinInitStruct);*/
-
-
-}
-
-/*
- * Interrupt handler
- */
-static char rx_buf[128], tx_buf[128];
-uint8_t rx_ind = 0, tx_ind = 0, tx_len = 0;
-
-#define as_byte(x) (*(uint8_t *)&(x))
-
-uint8_t is_write_done() {
-	return tx_len == 0;
 }
 
 void GSMService_mainTask(void *pvParameters){
@@ -106,8 +75,6 @@ static void turned_on(bool ok) {
 TaskHandle_t GSMService_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut){
 	TaskHandle_t mainTask_handle;
 	GSMService_initState();
-	GSMService_configPeripherals();
 	mainTask_handle=GSMService_registerInOS(msgIn, msgOut);
-	//sim900::turn_on(turned_on);
 	return mainTask_handle;
 }
