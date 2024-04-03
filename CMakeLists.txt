@@ -52,16 +52,15 @@ endif ()
 
 include_directories(ApplicationLogic/inc ClockControl/inc fatfs/inc freeRTOS/inc freeRTOS/ARM_CM3 GSMService/inc I2CExtension/inc inc
         MessageRouter/inc SoundService/inc SPIExtension/inc SupplySystem/inc UARTExtension/inc UserInterface/inc
-        VoltageMeter/inc WiredSensorMonitor/inc WirelessInterface/inc Timing/inc Flash/inc
+        VoltageMeter/inc WiredZones/inc WirelessInterface/inc Timing/inc Flash/inc
         CMSIS/core CMSIS/device StdPeriph_Driver/inc periph_utils/inc)
 
 add_definitions(-DSTM32 -DSTM32F1 -DSTM32F103VETx -DDEBUG -DSTM32F10X_HD -DUSE_HAL_DRIVER -DUSE_STDPERIPH_DRIVER)
 
 file(GLOB_RECURSE SOURCES "ApplicationLogic/*.*" "CMSIS/*.*" "ClockControl/*.*" "GSMService/*.*" "I2CExtension/*.*"
         "MessageRouter/*.*" "SPIExtension/*.*" "SoundService/*.*" "StdPeriph_Driver/*.*" "SupplySystem/*.*"
-        "UARTExtension/*.*" "UserInterface/*.*" "VoltageMeter/*.*" "WiredSensorMonitor/*.*" "WirelessInterface/*.*"
-        "Flash/*.*"
-        "freeRTOS/*.*" "inc/*.*" "src/*.*" "startup/*.*" "Timing/*.*" "periph_utils/*.*")
+        "UARTExtension/*.*" "UserInterface/*.*" "VoltageMeter/*.*" "WiredZones/*.*" "WirelessInterface/*.*"
+        "Flash/*.*" "freeRTOS/*.*" "inc/*.*" "src/*.*" "startup/*.*" "Timing/*.*" "periph_utils/*.*")
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/LinkerScript.ld)
 

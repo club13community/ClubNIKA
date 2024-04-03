@@ -19,8 +19,8 @@
 #include "ClockControl.h"
 #include "SupplySystem.h"
 #include "MessageRouter.h"
-#include "WiredSensorMonitor.h"
-#include "VoltageMeter.h"
+#include "wired_zones.h"
+#include "voltage_meter.h"
 #include "GSMService.h"
 #include "WirelessInterface.h"
 #include "UserInterface.h"
@@ -31,7 +31,6 @@
 #include "Message.h"
 #include "flash.h"
 #include "test.h"
-#include "test_freertos.h"
 #include "UserInterface.h"
 
 struct TaskHandleRegister{
@@ -76,6 +75,7 @@ void do_done() {
 	done = true;
 }
 
+// float div = 170u, mult = 60u, sub = 75u
 extern "C" int main(void)
 {
 	SystemInit();
@@ -85,23 +85,69 @@ extern "C" int main(void)
 	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
 	timing::config_coarse_timer();
 	timing::config_fine_timer();
+	vmeter::init_periph();
 
 	//test_timer_wait();
 	//test_timer_invoke_once();
 	//test_timer_invoke_repeatedly_and_stop();
 	//test_timer_start_blink_while_delay();
 
+	/*RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
+	ADC1->SMPR1 = ADC_SMPR1_SMP17_2 | ADC_SMPR1_SMP17_1;
+	ADC1->SQR1 = 2U << 20;
+	ADC1->SQR3 = 17U | 16U << 5 | 17U << 10;
+	ADC1->JSQR = 17U << 5 | 16U << 10 | 17U << 15 | 2U << 20;
+	ADC1->CR1 = ADC_CR1_JDISCEN | ADC_CR1_DISCNUM_0;
+	ADC1->CR2 = ADC_CR2_TSVREFE | ADC_CR2_ADON
+			| ADC_CR2_JEXTTRIG | ADC_CR2_JEXTSEL_2 | ADC_CR2_JEXTSEL_1 | ADC_CR2_JEXTSEL_0;
+	for (uint8_t i = 0; i < 200; i++);*/
+
+	/*ADC1->CR2 = ADC1->CR2;
+	while ((ADC1->SR & (ADC_SR_JEOC | ADC_SR_EOC)) != ADC_SR_EOC);
+	ADC1->SR = ~ADC_SR_EOC;
+	uint16_t val1 = ADC1->DR;
+
+	ADC1->CR2 = ADC1->CR2;
+	while ((ADC1->SR & (ADC_SR_JEOC | ADC_SR_EOC)) != ADC_SR_EOC);
+	ADC1->SR = ~ADC_SR_EOC;
+	uint16_t val2 = ADC1->DR;
+
+	ADC1->CR2 = ADC1->CR2;
+	while ((ADC1->SR & (ADC_SR_JEOC | ADC_SR_EOC)) != ADC_SR_EOC);
+	ADC1->SR = ~ADC_SR_EOC;
+	uint16_t val3 = ADC1->DR;*/
+
+	/*ADC1->CR2 |= ADC_CR2_JSWSTART;
+	while ((ADC1->SR & (ADC_SR_JEOC | ADC_SR_EOC)) != (ADC_SR_EOC | ADC_SR_JEOC));
+	ADC1->SR = ~ADC_SR_EOC & ~ADC_SR_JEOC;
+	uint16_t val1 = ADC1->JDR1;
+
+	ADC1->CR2 |= ADC_CR2_JSWSTART;
+	while ((ADC1->SR & (ADC_SR_JEOC | ADC_SR_EOC)) != (ADC_SR_EOC | ADC_SR_JEOC));
+	ADC1->SR = ~ADC_SR_EOC & ~ADC_SR_JEOC;
+	uint16_t val2 = ADC1->JDR2;
+
+	ADC1->CR2 |= ADC_CR2_JSWSTART;
+	while ((ADC1->SR & (ADC_SR_JEOC | ADC_SR_EOC)) != (ADC_SR_EOC | ADC_SR_JEOC));
+	ADC1->SR = ~ADC_SR_EOC & ~ADC_SR_JEOC;
+	uint16_t val3 = ADC1->DR;
+
+	__NOP();*/
+
 	flash::init();
 	gsm_service::init_periph();
 	sound_service::init_periph();
 	user_interface::init_periph();
+	wired_zones::init_periph();
 
 	MessageRouter_StartUpInit();
 	clearTaskHandleRegister();
 
 	ClockControl_Launch(getMessageBuffer_ClockControlDataIn(), getMessageBuffer_ClockControlDataOut());
 	SupplySystem_Launch(getMessageBuffer_SupplySystemDataIn(), getMessageBuffer_SupplySystemDataOut());
+	vmeter::start();
 	user_interface::start();
+	wired_zones::start();
 	//taskHandleRegister.wsens_handle=WiredSensorMonitor_Launch(getMessageBuffer_WiredSensorMonitorDataIn(), getMessageBuffer_WiredSensorMonitorDataOut());
 	//taskHandleRegister.voltMet_handle=VoltageMeter_Launch(getMessageBuffer_VoltageMeterDataIn(), getMessageBuffer_VoltageMeterDataOut());
 	//taskHandleRegister.wless_handle=WirelessInterface_Launch(getMessageBuffer_WirelessInterfaceDataIn(), getMessageBuffer_WirelessInterfaceDataOut());

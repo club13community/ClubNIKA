@@ -12,11 +12,11 @@
 #include "sim900_driver.h"
 #include "WirelessInterface.h"
 #include "UserInterface.h"
-#include "VoltageMeter.h"
 #include "SPIExtension.h"
 #include "UARTExtension.h"
 #include "timing.h"
 #include "keyboard.h"
+#include "voltage_meter.h"
 
 extern "C" void SysTick_Handler(){
 	xPortSysTickHandler();
@@ -51,13 +51,9 @@ extern "C" void UsageFault_Handler() {
 	__NOP();
 }
 
-//VoltageMeter, EOC
-extern "C" void ADC3_IRQHandler(){
-	if(SET == ADC_GetITStatus(ADC3, ADC_IT_EOC)){
-		VoltageMeter_EndOfConversion_IH();
-		ADC_ClearITPendingBit(ADC3, ADC_IT_EOC);
-	}
-
+// ADC which measures battery voltage and sensor current of wired zones
+extern "C" void ADC3_IRQHandler() {
+	vmeter::isr();
 }
 
 extern "C" void USART2_IRQHandler() {

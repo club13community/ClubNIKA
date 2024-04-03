@@ -14,6 +14,10 @@
 #define DAC_TIMER				TIM7
 #define DAC_DMA					DMA2_Channel3
 
+// ADC which monitors battery and wired sensors
+#define VMETER_ADC				ADC3
+#define VMETER_ADC_TIMER		TIM8
+
 #define FLASH_SPI				SPI1
 #define FLASH_TX_DMA_CHANNEL	DMA1_Channel3
 #define FLASH_RX_DMA_CHANNEL	DMA1_Channel2
@@ -28,6 +32,7 @@
 // for EXTI
 #define KEYBOARD_IRQ_PRIORITY	13U
 
+#define VMETER_ADC_IRQ_PRIORITY	12U
 
 #define SIM900_UART_TX_DMA_PRIORITY	DMA_Priority_Low
 #define DAC_DMA_PRIORITY			DMA_Priority_Medium
