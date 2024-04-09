@@ -22,10 +22,10 @@ static const char battery = '\0', signal = '\1', card = '\2', U = '\3';
 
 void Desktop::activate() {
 	disp
-		.put_out_on_inactivity()
-		.light_up()
-		.clear()
-		.cursor(0, 0)
+			.put_out_on_inactivity()
+			.light_up()
+			.clear()
+			.set_cursor(0, 0)
 		.define(battery, symbol::battery)
 		.define(signal, symbol::signal_level)
 		.define(card, symbol::card)

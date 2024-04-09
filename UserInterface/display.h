@@ -16,8 +16,8 @@ namespace user_interface {
 		Display & put_out_on_inactivity();
 		Display & put_out_manually();
 		Display & clear();
-		Display & cursor(uint8_t line, uint8_t pos);
-		Display & move(int8_t offset);
+		Display & set_cursor(uint8_t line, uint8_t pos);
+		Display & move_cursor(int8_t offset);
 		Display & push_cursor();
 		Display & pop_cursor();
 		Display & define(char code, const uint8_t * bitmap);

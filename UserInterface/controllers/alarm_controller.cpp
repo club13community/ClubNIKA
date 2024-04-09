@@ -95,12 +95,12 @@ void AlarmController::handle(keyboard::Button button, keyboard::Event event) {
 void AlarmEnabler::activate() {
 	delay = 10; // todo load from config
 	disp
-	.put_out_on_inactivity() // todo: control manually
-	.light_up()
-	.clear()
-	.define('\1', symbol::ua_D).define('\2', symbol::ua_U)
-	.cursor(0, 0).print("\1O AKT\2B.")
-	.cursor(1, 3).print("A:BI\1MIHA");
+			.put_out_on_inactivity() // todo: control manually
+			.light_up()
+			.clear()
+			.define('\1', symbol::ua_D).define('\2', symbol::ua_U)
+			.set_cursor(0, 0).print("\1O AKT\2B.")
+			.set_cursor(1, 3).print("A:BI\1MIHA");
 	print_delay();
 }
 
@@ -129,7 +129,7 @@ void AlarmEnabler::print_delay() {
 		*dig-- = 0x30 | val % 10;
 		val /= 10;
 	} while (val);
-	disp.cursor(0, timer_pos).print(text);
+	disp.set_cursor(0, timer_pos).print(text);
 }
 
 /* --- disabling alarm --- */
@@ -143,16 +143,16 @@ void AlarmDisabler::activate() {
 	.define('\4', symbol::ua_L).define('\5', symbol::ua_MILD);
 	// 1st row
 	if (passw_len == PASSWORD_LENGTH) {
-		disp.cursor(0, 0).print("   C:B\1MKH\2T\1   ");
+		disp.set_cursor(0, 0).print("   C:B\1MKH\2T\1   ");
 	} else {
-		disp.cursor(0, 0).print("   AKT\1BOBAHA   ");
+		disp.set_cursor(0, 0).print("   AKT\1BOBAHA   ");
 	}
 	// 2nd row
-	disp.cursor(1, 0).print("\3APO\4\5:");
+	disp.set_cursor(1, 0).print("\3APO\4\5:");
 	if (passw_len > 0) {
-		disp.cursor(1, del_pos).print("A:").print(del);
+		disp.set_cursor(1, del_pos).print("A:").print(del);
 	}
-	disp.cursor(1, 8).print(passw);
+	disp.set_cursor(1, 8).print(passw);
 }
 
 void AlarmDisabler::handle(keyboard::Button button, keyboard::Event event) {
@@ -167,11 +167,11 @@ void AlarmDisabler::handle(keyboard::Button button, keyboard::Event event) {
 		disp.print(dig);
 		if (passw_len == 1) {
 			// show 'del'
-			disp.push_cursor().cursor(1, del_pos).print("A:").print(del).pop_cursor();
+			disp.push_cursor().set_cursor(1, del_pos).print("A:").print(del).pop_cursor();
 		}
 		if (passw_len == PASSWORD_LENGTH) {
 			// show 'enter'
-			disp.push_cursor().cursor(0, 0).print("   C:B\1MKH\2T\1   ").pop_cursor();
+			disp.push_cursor().set_cursor(0, 0).print("   C:B\1MKH\2T\1   ").pop_cursor();
 		}
 	} else if (button == Button::A && event == Event::CLICK) {
 		// delete digit
@@ -179,14 +179,14 @@ void AlarmDisabler::handle(keyboard::Button button, keyboard::Event event) {
 			return;
 		}
 		passw[--passw_len] = '\0';
-		disp.move(-1).print(' ').move(-1);
+		disp.move_cursor(-1).print(' ').move_cursor(-1);
 		if (passw_len == 0) {
 			// hide 'del'
-			disp.push_cursor().cursor(1, del_pos).print("   ").pop_cursor();
+			disp.push_cursor().set_cursor(1, del_pos).print("   ").pop_cursor();
 		}
 		if (passw_len == PASSWORD_LENGTH - 1) {
 			// hide 'enter'
-			disp.push_cursor().cursor(0, 0).print("   AKT\1BOBAHA   ").pop_cursor();
+			disp.push_cursor().set_cursor(0, 0).print("   AKT\1BOBAHA   ").pop_cursor();
 		}
 	} else if (button == Button::C && event == Event::CLICK) {
 		// enter password
@@ -201,10 +201,10 @@ void AlarmDisabler::handle(keyboard::Button button, keyboard::Event event) {
 
 void WrongPasswordNotifier::activate() {
 	disp
-	.clear()
-	.define('\1', symbol::ua_P).define('\2', symbol::ua_L).define('\3', symbol::ua_MILD)
-	.cursor(0, 1).print("HE\1PAB. \1APO\2\3")
-	.cursor(1, 6).print("C:OK");
+			.clear()
+			.define('\1', symbol::ua_P).define('\2', symbol::ua_L).define('\3', symbol::ua_MILD)
+			.set_cursor(0, 1).print("HE\1PAB. \1APO\2\3")
+			.set_cursor(1, 6).print("C:OK");
 }
 
 void WrongPasswordNotifier::handle(keyboard::Button button, keyboard::Event event) {

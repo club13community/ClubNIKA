@@ -31,7 +31,7 @@ namespace user_interface {
 				disp.define('\4', symbol::ua_P).define('\5', symbol::ua_Y);
 				disp[0] << phone_ind + 1 << ") " << "   \4\5CTO     ";
 			}
-			disp.cursor(1, 0);
+			disp.set_cursor(1, 0);
 		}
 
 	public:
@@ -99,14 +99,14 @@ using namespace user_interface;
 
 void PhoneConfigurer::activate() {
 	disp
-	.put_out_on_inactivity()
-	.light_up()
-	.clear()
-	.define(up, symbol::up)
-	.define(down, symbol::down)
-	.define(enter, symbol::enter)
-	.define(exit, symbol::exit)
-	.cursor(0, 0);
+			.put_out_on_inactivity()
+			.light_up()
+			.clear()
+			.define(up, symbol::up)
+			.define(down, symbol::down)
+			.define(enter, symbol::enter)
+			.define(exit, symbol::exit)
+			.set_cursor(0, 0);
 	// 1st row
 	if (phone_ind > 0) {
 		disp[0] << "A:" << up;
@@ -117,7 +117,7 @@ void PhoneConfigurer::activate() {
 	}
 	disp [9] << "C:" << enter << " D:" << exit;
 	// 2nd row
-	disp.cursor(1, 0);
+	disp.set_cursor(1, 0);
 	print_phone();
 }
 
@@ -132,11 +132,11 @@ void PhoneConfigurer::handle(keyboard::Button button, keyboard::Event event) {
 		print_phone();
 		if (phone_ind == 0) {
 			// hide 'up'
-			disp.push_cursor().cursor(0, up_pos).print("   ").pop_cursor();
+			disp.push_cursor().set_cursor(0, up_pos).print("   ").pop_cursor();
 		}
 		if (prev_ind == phones_num || prev_ind == MAX_PHONE_NUMBER - 1) {
 			// show 'down'
-			disp.push_cursor().cursor(0, down_pos).print("B:").print(down).pop_cursor();
+			disp.push_cursor().set_cursor(0, down_pos).print("B:").print(down).pop_cursor();
 		}
 	} else if (button == Button::B && event == Event::CLICK) {
 		// move down
@@ -147,11 +147,11 @@ void PhoneConfigurer::handle(keyboard::Button button, keyboard::Event event) {
 		print_phone();
 		if (phone_ind == phones_num || phone_ind == MAX_PHONE_NUMBER - 1) {
 			// hide 'down'
-			disp.push_cursor().cursor(0, down_pos).print("   ").pop_cursor();
+			disp.push_cursor().set_cursor(0, down_pos).print("   ").pop_cursor();
 		}
 		if (prev_ind == 0) {
 			// show 'up'
-			disp.push_cursor().cursor(0, up_pos).print("A:").print(up).pop_cursor();
+			disp.push_cursor().set_cursor(0, up_pos).print("A:").print(up).pop_cursor();
 		}
 	} else if (button == Button::C && event == Event::CLICK) {
 		// edit/add phone
@@ -211,16 +211,16 @@ void PhoneConfigurer::phone_moved(uint8_t old_index, uint8_t new_index) {
 
 void PhoneEditor::activate() {
 	disp
-	.put_out_on_inactivity()
-	.light_up()
-	.clear()
-	.define('\1', symbol::ua_U)
-	.define('\2', symbol::ua_D)
-	.define('\3', symbol::ua_L)
-	.define('\4', symbol::ua_P)
-	.define('\5', symbol::exit)
-	.cursor(0, 0).print("A:B\1\2A\3.  B:PE\2.")
-	.cursor(1, 0).print("C:\4PIOPIT.   D:\5");
+			.put_out_on_inactivity()
+			.light_up()
+			.clear()
+			.define('\1', symbol::ua_U)
+			.define('\2', symbol::ua_D)
+			.define('\3', symbol::ua_L)
+			.define('\4', symbol::ua_P)
+			.define('\5', symbol::exit)
+			.set_cursor(0, 0).print("A:B\1\2A\3.  B:PE\2.")
+			.set_cursor(1, 0).print("C:\4PIOPIT.   D:\5");
 }
 
 void PhoneEditor::handle(keyboard::Button button, keyboard::Event event) {
@@ -273,7 +273,7 @@ void NumberEditor::activate() {
 	disp.clear()
 			.define(ok, symbol::enter)
 			.define(cancel, symbol::exit)
-			.cursor(0, 1);
+			.set_cursor(0, 1);
 	// 1st row
 	if (phone_len != 0) {
 		disp[ok_pos] << "C:" << ok;
@@ -281,12 +281,12 @@ void NumberEditor::activate() {
 	}
 	disp[cancel_pos] << "D:" << cancel;
 	// 2nd row
-	disp.cursor(1, 0);
+	disp.set_cursor(1, 0);
 	if (edit) {
 		disp << phone_buf;
 	}
 	if (phone_len < MAX_PHONE_LENGTH) {
-		disp.print(cursor).move(-1);
+		disp.print(cursor).move_cursor(-1);
 	}
 }
 
@@ -304,12 +304,12 @@ void NumberEditor::handle(keyboard::Button button, keyboard::Event event) {
 		disp << digit;
 		if (phone_len < MAX_PHONE_LENGTH) {
 			// possible to add digit - show cursor
-			disp.print(cursor).move(-1);
+			disp.print(cursor).move_cursor(-1);
 		}
 		if (phone_len == 1) {
 			disp.push_cursor()
-			.cursor(0, del_pos).print("A:").print(del) // show 'delete'
-			.cursor(0, ok_pos).print("C:").print(ok) // show 'enter'
+					.set_cursor(0, del_pos).print("A:").print(del) // show 'delete'
+					.set_cursor(0, ok_pos).print("C:").print(ok) // show 'enter'
 			.pop_cursor();
 		}
 	} else if (button == Button::A && event == Event::CLICK) {
@@ -318,11 +318,11 @@ void NumberEditor::handle(keyboard::Button button, keyboard::Event event) {
 			return;
 		}
 		phone_buf[--phone_len] = '\0';
-		disp.print(' ').move(-2).print(cursor).move(-1);
+		disp.print(' ').move_cursor(-2).print(cursor).move_cursor(-1);
 		if (phone_len == 0) {
 			disp.push_cursor()
-			.cursor(0, del_pos).print("   ") // hide 'delete'
-			.cursor(0, ok_pos).print("   ") // hide 'ok'
+					.set_cursor(0, del_pos).print("   ") // hide 'delete'
+					.set_cursor(0, ok_pos).print("   ") // hide 'ok'
 			.pop_cursor();
 		}
 	} else if (button == Button::C && event == Event::CLICK) {
@@ -346,16 +346,16 @@ void NumberEditor::handle(keyboard::Button button, keyboard::Event event) {
 
 void PriorityEditor::activate() {
 	disp
-	.put_out_on_inactivity()
-	.light_up()
-	.clear()
-	.define('\1', symbol::enter)
-	.define('\2', symbol::exit)
-	.define('\3', symbol::ua_P)
-	.cursor(0, 0).print("  C:\1      D:\2  ")
-	.cursor(1, 0).print("\3PIOPITET:  ")
-	.cursor(1, prio_pos).print((int)priority)
-	.cursor(1, prio_pos);
+			.put_out_on_inactivity()
+			.light_up()
+			.clear()
+			.define('\1', symbol::enter)
+			.define('\2', symbol::exit)
+			.define('\3', symbol::ua_P)
+			.set_cursor(0, 0).print("  C:\1      D:\2  ")
+			.set_cursor(1, 0).print("\3PIOPITET:  ")
+			.set_cursor(1, prio_pos).print((int) priority)
+			.set_cursor(1, prio_pos);
 }
 
 void PriorityEditor::handle(keyboard::Button button, keyboard::Event event) {
@@ -363,7 +363,7 @@ void PriorityEditor::handle(keyboard::Button button, keyboard::Event event) {
 	if (button >= Button::N1 && button <= (Button)MAX_PHONE_NUMBER && event == Event::CLICK) {
 		// change priority
 		priority = (uint8_t)button;
-		disp.print((int)priority).cursor(1, prio_pos);
+		disp.print((int) priority).set_cursor(1, prio_pos);
 	} else if (button == Button::C && event == Event::CLICK) {
 		// ok
 		phone_editor.priority_changed(priority);

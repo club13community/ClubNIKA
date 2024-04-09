@@ -62,17 +62,17 @@ void DelayEditor::activate() {
 	// 1st line
 	inc_active = may_inc();
 	if (inc_active) {
-		disp.cursor(0, inc_pos).print("A:+");
+		disp.set_cursor(0, inc_pos).print("A:+");
 	}
 	dec_active = may_dec();
 	if (dec_active) {
-		disp.cursor(0, dec_pos).print("B:-");
+		disp.set_cursor(0, dec_pos).print("B:-");
 	}
 	disp
-	.cursor(0, 9).print("C:").print(ok)
-	.cursor(0, 13).print("D:").print(cancel);
+			.set_cursor(0, 9).print("C:").print(ok)
+			.set_cursor(0, 13).print("D:").print(cancel);
 	// 2nd line
-	disp.cursor(1, 0).print("3ATP.:");
+	disp.set_cursor(1, 0).print("3ATP.:");
 	print_delay();
 }
 
@@ -87,12 +87,12 @@ void DelayEditor::handle(keyboard::Button button, keyboard::Event event) {
 		print_delay();
 		if (!may_inc()) {
 			// hide inc
-			disp.push_cursor().cursor(0, inc_pos).print("   ").pop_cursor();
+			disp.push_cursor().set_cursor(0, inc_pos).print("   ").pop_cursor();
 			inc_active = false;
 		}
 		if (!dec_active) {
 			// show dec
-			disp.push_cursor().cursor(0, dec_pos).print("B:-").pop_cursor();
+			disp.push_cursor().set_cursor(0, dec_pos).print("B:-").pop_cursor();
 			dec_active = true;
 		}
 	} else if (button == Button::B && event == Event::CLICK) {
@@ -104,12 +104,12 @@ void DelayEditor::handle(keyboard::Button button, keyboard::Event event) {
 		print_delay();
 		if (!may_dec()) {
 			// hide dec
-			disp.push_cursor().cursor(0, dec_pos).print("   ").pop_cursor();
+			disp.push_cursor().set_cursor(0, dec_pos).print("   ").pop_cursor();
 			dec_active = false;
 		}
 		if (!inc_active) {
 			// show inc
-			disp.push_cursor().cursor(0, inc_pos).print("A:+").pop_cursor();
+			disp.push_cursor().set_cursor(0, inc_pos).print("A:+").pop_cursor();
 			inc_active = true;
 		}
 	} else if (button == Button::C && event == Event::CLICK) {
@@ -125,7 +125,7 @@ void DelayEditor::handle(keyboard::Button button, keyboard::Event event) {
 void DelayEditor::print_delay() {
 	uint8_t min = delay_s / 60, sec = delay_s % 60;
 	uint8_t blanks = 8;
-	disp.cursor(1, delay_pos);
+	disp.set_cursor(1, delay_pos);
 	if (min > 0) {
 		blanks -= print(min) - 3;
 		disp << "x" << v << ' ';

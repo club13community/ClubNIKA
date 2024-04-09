@@ -28,10 +28,10 @@ void ZoneViewer::activate() {
 	.define('\1', symbol::ua_U);
 
 	// show 'exit'
-	disp.cursor(0, 0);
+	disp.set_cursor(0, 0);
 	disp << "D:" << '\0';
 	// show zones
-	disp.cursor(1, 0);
+	disp.set_cursor(1, 0);
 	disp << "AKT\1BHI:12345678";
 }
 

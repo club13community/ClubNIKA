@@ -51,16 +51,16 @@ using namespace user_interface;
 
 void ZoneConfigurer::activate() {
 	disp
-	.put_out_on_inactivity()
-	.light_up()
-	.clear()
-	.define(up, symbol::up)
-	.define(down, symbol::down)
-	.define(enter, symbol::enter)
-	.define(exit, symbol::exit)
-	.define(U, symbol::ua_U)
-	.define(P, symbol::ua_P)
-	.cursor(0, 0);
+			.put_out_on_inactivity()
+			.light_up()
+			.clear()
+			.define(up, symbol::up)
+			.define(down, symbol::down)
+			.define(enter, symbol::enter)
+			.define(exit, symbol::exit)
+			.define(U, symbol::ua_U)
+			.define(P, symbol::ua_P)
+			.set_cursor(0, 0);
 	// show 1st row
 	if (zone != first_zone) {
 		disp[up_pos] << "A:" << up;
@@ -70,9 +70,9 @@ void ZoneConfigurer::activate() {
 	}
 	disp[9] << "C:" << enter << ' ' << "D:" << exit;
 	// show 2nd row
-	disp.cursor(1, 0);
+	disp.set_cursor(1, 0);
 	show_zone();
-	disp.cursor(1, 0);
+	disp.set_cursor(1, 0);
 }
 
 void ZoneConfigurer::handle(keyboard::Button button, keyboard::Event event) {
@@ -86,12 +86,12 @@ void ZoneConfigurer::handle(keyboard::Button button, keyboard::Event event) {
 		show_zone();
 		if (zone == first_zone) {
 			// hide 'up'
-			disp.cursor(0, up_pos).print("   ");
+			disp.set_cursor(0, up_pos).print("   ");
 		} else if (prev_zone == last_zone) {
 			// show 'down'
-			disp.cursor(0, down_pos).print("B:").print(down);
+			disp.set_cursor(0, down_pos).print("B:").print(down);
 		}
-		disp.cursor(1, 0);
+		disp.set_cursor(1, 0);
 	} else if (button == Button::B && event == Event::CLICK) {
 		// move down
 		if (zone == last_zone) {
@@ -101,12 +101,12 @@ void ZoneConfigurer::handle(keyboard::Button button, keyboard::Event event) {
 		show_zone();
 		if (zone == last_zone) {
 			// hide 'down'
-			disp.cursor(0, down_pos).print("   ");
+			disp.set_cursor(0, down_pos).print("   ");
 		} else if (prev_zone == first_zone) {
 			// show 'up'
-			disp.cursor(0, up_pos).print("A:").print(up);
+			disp.set_cursor(0, up_pos).print("A:").print(up);
 		}
-		disp.cursor(1, 0);
+		disp.set_cursor(1, 0);
 	} else if (button == Button::C && event == Event::CLICK) {
 		// change activation
 		uint8_t a = (uint8_t)activation[zone] + 1;
@@ -115,7 +115,7 @@ void ZoneConfigurer::handle(keyboard::Button button, keyboard::Event event) {
 		}
 		activation[zone] = (Activation)a;
 		show_activation();
-		disp.cursor(1, 0);
+		disp.set_cursor(1, 0);
 	} else if (button == Button::D && event == Event::CLICK) {
 		// exit
 		activate_previous();

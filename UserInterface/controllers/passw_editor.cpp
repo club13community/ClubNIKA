@@ -51,30 +51,30 @@ void PasswordEditor::activate_step() {
 	if (step == ENTER_OLD || step == ENTER_NEW) {
 		// full show menu on 1st line
 		if (len > 0) {
-			disp.cursor(0, del_pos).print("A:").print(del);
+			disp.set_cursor(0, del_pos).print("A:").print(del);
 		}
 		if (len == PASSWORD_LENGTH) {
-			disp.cursor(0, enter_pos).print("C:").print(enter);
+			disp.set_cursor(0, enter_pos).print("C:").print(enter);
 		}
-		disp.cursor(0, cancel_pos).print("D:").print(cancel);
+		disp.set_cursor(0, cancel_pos).print("D:").print(cancel);
 		// 2 common chars for 2nd line
-		disp.define('\2', symbol::ua_U).define('\3', symbol::ua_J).cursor(1, 0);
+		disp.define('\2', symbol::ua_U).define('\3', symbol::ua_J).set_cursor(1, 0);
 		// 2nd line
 		if (step == ENTER_OLD) {
 			disp.print("CTAP\2\3: ");
 		} else {
 			disp.print(" HOB\2\3: ");
 		}
-		disp.cursor(1, passw_pos).print(passw);
+		disp.set_cursor(1, passw_pos).print(passw);
 	} else {
 		// common chars
 		disp.define('\2', symbol::ua_P).define('\3', symbol::ua_L).define('\4', symbol::ua_MILD);
 		if (step == REPORT_WRONG_OLD) {
-			disp.cursor(0, 0).print("HE\2PAB. \2APO\3\4");
+			disp.set_cursor(0, 0).print("HE\2PAB. \2APO\3\4");
 		} else {
-			disp.cursor(0, 1).print("\2APO\3\4 3MIHEHO");
+			disp.set_cursor(0, 1).print("\2APO\3\4 3MIHEHO");
 		}
-		disp.cursor(1, 6).print("C:OK");
+		disp.set_cursor(1, 6).print("C:OK");
 	}
 }
 
@@ -102,11 +102,11 @@ void PasswordEditor::handle(keyboard::Button button, keyboard::Event event) {
 		disp.print(digit);
 		if (len == 1) {
 			// show 'delete'
-			disp.push_cursor().cursor(0, del_pos).print("A:").print(del).pop_cursor();
+			disp.push_cursor().set_cursor(0, del_pos).print("A:").print(del).pop_cursor();
 		}
 		if (len == PASSWORD_LENGTH) {
 			// show 'enter'
-			disp.push_cursor().cursor(0, enter_pos).print("C:").print(enter).pop_cursor();
+			disp.push_cursor().set_cursor(0, enter_pos).print("C:").print(enter).pop_cursor();
 		}
 	} else if (button == Button::A && event == Event::CLICK) {
 		// delete
@@ -117,14 +117,14 @@ void PasswordEditor::handle(keyboard::Button button, keyboard::Event event) {
 			return;
 		}
 		passw[--len] = '\0';
-		disp.move(-1).print(' ').move(-1);
+		disp.move_cursor(-1).print(' ').move_cursor(-1);
 		if (len == 0) {
 			// hide 'delete'
-			disp.push_cursor().cursor(0, del_pos).print("   ").pop_cursor();
+			disp.push_cursor().set_cursor(0, del_pos).print("   ").pop_cursor();
 		}
 		if (len == PASSWORD_LENGTH - 1) {
 			// hide 'enter'
-			disp.push_cursor().cursor(0, enter_pos).print("   ").pop_cursor();
+			disp.push_cursor().set_cursor(0, enter_pos).print("   ").pop_cursor();
 		}
 	} else if (button == Button::C && event == Event::CLICK) {
 		// enter

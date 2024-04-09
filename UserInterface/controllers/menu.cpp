@@ -52,14 +52,14 @@ using namespace user_interface;
 
 void Menu::activate() {
 	disp
-		.put_out_on_inactivity()
-		.light_up()
-		.clear()
-		.define(down, symbol::down)
-		.define(up, symbol::up)
-		.define(enter, symbol::enter)
-		.define(back, symbol::exit)
-		.cursor(0, 0);
+			.put_out_on_inactivity()
+			.light_up()
+			.clear()
+			.define(down, symbol::down)
+			.define(up, symbol::up)
+			.define(enter, symbol::enter)
+			.define(back, symbol::exit)
+			.set_cursor(0, 0);
 	// show 1st line
 	if (item != first_item) {
 		disp[up_pos] << "A:" << up;
@@ -69,9 +69,9 @@ void Menu::activate() {
 	}
 	disp[9] << "C:" << enter << ' ' << "D:" << back;
 	// show 2nd line
-	disp.cursor(1, 0);
+	disp.set_cursor(1, 0);
 	show_item();
-	disp.cursor(1, 0);
+	disp.set_cursor(1, 0);
 }
 
 void Menu::handle(keyboard::Button button, keyboard::Event event) {
@@ -85,12 +85,12 @@ void Menu::handle(keyboard::Button button, keyboard::Event event) {
 		show_item();
 		if (item == first_item) {
 			// hide 'up'
-			disp.cursor(0, up_pos).print("   ");
+			disp.set_cursor(0, up_pos).print("   ");
 		} else if (prev_item == last_item) {
 			// show 'down'
-			disp.cursor(0, down_pos).print("B:").print(down);
+			disp.set_cursor(0, down_pos).print("B:").print(down);
 		}
-		disp.cursor(1, 0);
+		disp.set_cursor(1, 0);
 	} else if (button == Button::B && event == Event::CLICK) {
 		// move down
 		if (item == last_item) {
@@ -100,12 +100,12 @@ void Menu::handle(keyboard::Button button, keyboard::Event event) {
 		show_item();
 		if (item == last_item) {
 			// hide 'down'
-			disp.cursor(0, down_pos).print("   ");
+			disp.set_cursor(0, down_pos).print("   ");
 		} else if (prev_item == first_item) {
 			// show 'up'
-			disp.cursor(0, up_pos).print("A:").print(up);
+			disp.set_cursor(0, up_pos).print("A:").print(up);
 		}
-		disp.cursor(1, 0);
+		disp.set_cursor(1, 0);
 	} else if (button == Button::C && event == Event::CLICK) {
 		// enter
 		switch (item) {

@@ -21,14 +21,14 @@ Display & Display::clear() {
 	return *this;
 }
 
-Display & Display::cursor(uint8_t line, uint8_t pos) {
+Display & Display::set_cursor(uint8_t line, uint8_t pos) {
 	lcd::set_cursor(line, pos);
 	return *this;
 }
 
-/** Moves cursor in row
+/** Moves set_cursor in row
  * @param offset -15..15 */
-Display & Display::move(int8_t offset) {
+Display & Display::move_cursor(int8_t offset) {
 	if (offset < -15) {
 		offset = -15;
 	} else if (offset > 15) {
