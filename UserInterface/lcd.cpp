@@ -120,7 +120,10 @@ void lcd::create_char(uint8_t code, const uint8_t * bitmap) {
 
 /** @param pos 0..15*/
 void lcd::set_position(uint8_t pos) {
-	set_ddram_addr((cursor_address & 0xF0U) | (pos & 0x0FU));
+	pos &= 0x0FU;
+	if (get_position() != pos) {
+		set_ddram_addr((cursor_address & 0xF0U) | pos);
+	}
 }
 
 /**
@@ -130,7 +133,10 @@ void lcd::set_position(uint8_t pos) {
 void lcd::set_cursor(uint8_t line, uint8_t pos) {
 	// line == 0 -> 0x00 | pos
 	// line == 1 -> 0x40 | pos
-	set_ddram_addr((line & 0x01U) << 6 | pos & 0x0FU);
+	uint8_t addr = (line & 0x01U) << 6 | pos & 0x0FU;
+	if (addr != cursor_address) {
+		set_ddram_addr(addr);
+	}
 }
 
 /** @returns 0 or 1 */
@@ -148,7 +154,10 @@ uint8_t lcd::get_cursor() {
 }
 
 void lcd::set_cursor(uint8_t addr) {
-	set_ddram_addr(addr & 0x4F);
+	addr &= 0x4F;
+	if (addr != cursor_address) {
+		set_ddram_addr(addr);
+	}
 }
 
 /** 0-terminated string */
