@@ -4,6 +4,7 @@
 
 #pragma once
 #include "stm32f10x.h"
+#include "FreeRTOSConfig.h"
 
 #define SIM900_UART				USART2
 #define SIM900_UART_TX_DMA		DMA1_Channel7
@@ -42,3 +43,8 @@
 #define TASK_NORMAL_PRIORITY		1U
 // detects what was pressed
 #define KEYBOARD_SERVICE_PRIORITY	2U
+
+#if configTIMER_TASK_PRIORITY <= KEYBOARD_SERVICE_PRIORITY || configTIMER_TASK_PRIORITY <= KEYBOARD_SERVICE_PRIORITY
+// highest priority guaranties that timer control commands are executed right after issuing
+#error "Timer task priority is not the highest"
+#endif

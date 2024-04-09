@@ -59,7 +59,7 @@ add_definitions(-DSTM32 -DSTM32F1 -DSTM32F103VETx -DDEBUG -DSTM32F10X_HD -DUSE_H
 
 file(GLOB_RECURSE SOURCES "ApplicationLogic/*.*" "CMSIS/*.*" "ClockControl/*.*" "GSMService/*.*" "I2CExtension/*.*"
         "MessageRouter/*.*" "SPIExtension/*.*" "SoundService/*.*" "StdPeriph_Driver/*.*" "SupplySystem/*.*"
-        "UARTExtension/*.*" "UserInterface/*.*" "VoltageMeter/*.*" "WiredZones/*.*" "WirelessInterface/*.*"
+        "UARTExtension/*.*" "UserInterface/*.*" "UserInterface/controllers/*.*" "VoltageMeter/*.*" "WiredZones/*.*" "WirelessInterface/*.*"
         "Flash/*.*" "freeRTOS/*.*" "inc/*.*" "src/*.*" "startup/*.*" "Timing/*.*" "periph_utils/*.*")
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/LinkerScript.ld)

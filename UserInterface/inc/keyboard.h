@@ -4,8 +4,6 @@
 
 #pragma once
 #include <stdint.h>
-#include "FreeRTOS.h"
-#include "queue.h"
 
 namespace keyboard {
 	enum class Button : uint8_t {N0 = 0, N1, N2, N3, N4, N5, N6, N7, N8, N9, A, B, C, D, STAR, POUND};
@@ -34,6 +32,5 @@ namespace keyboard {
 
 	void init_periph();
 	void start();
-	QueueHandle_t get_button_events();
 	void exti_isr();
 }

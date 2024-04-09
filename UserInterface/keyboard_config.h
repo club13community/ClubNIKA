@@ -16,4 +16,3 @@
 #define FAST_RELEASE_ms		1000U
 
 #define STACK_SIZE		128U
-#define QUEUE_LENGTH	3U

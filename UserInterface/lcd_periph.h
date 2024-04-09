@@ -133,9 +133,9 @@ namespace lcd {
 	}
 
 	inline uint8_t next_ddram_address(uint8_t addr) {
-		if (addr == 0x27) {
+		if (addr == 0x0F) {
 			return 0x40;
-		} else if (addr == 0x67) {
+		} else if (addr == 0x4F) {
 			return 0x00;
 		} else {
 			return addr + 1;

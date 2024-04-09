@@ -6,9 +6,9 @@
 #include "keyboard_config.h"
 #include "keyboard.h"
 #include "keyboard_periph.h"
+#include "ui_private.h"
 #include "FreeRTOS.h"
 #include "task.h"
-#include "queue.h"
 #include "timing.h"
 
 #define us_timer	timing::fine_timer1
@@ -185,10 +185,6 @@ void keyboard::exti_isr() {
 
 static volatile Key active_key;
 
-static uint8_t event_queue_data[QUEUE_LENGTH * sizeof (ButtonEvent)];
-static StaticQueue_t event_queue_ctrl;
-static QueueHandle_t event_queue;
-
 static const Button layout[4][4] = {
 		{Button::N1,   Button::N2, Button::N3,    Button::A},
 		{Button::N4,   Button::N5, Button::N6,    Button::B},
@@ -198,8 +194,8 @@ static const Button layout[4][4] = {
 
 static void add_active_key_event(Event event) {
 	Button button = layout[active_key.row][active_key.col];
-	ButtonEvent item = ButtonEvent(button, event);
-	xQueueSend(event_queue, &item, 0);
+	ButtonEvent buttonEvent = ButtonEvent(button, event);
+	user_interface::handle(buttonEvent);
 }
 
 static uint16_t samples[3], sample_count;
@@ -279,15 +275,10 @@ static void service_keyboard(void * args) {
 }
 
 void keyboard::start() {
-	event_queue = xQueueCreateStatic(QUEUE_LENGTH, sizeof (ButtonEvent), event_queue_data, &event_queue_ctrl);
 	service = xTaskCreateStatic(service_keyboard, "kb. serv.", STACK_SIZE, nullptr,
 								KEYBOARD_SERVICE_PRIORITY, service_stack, &service_ctrl);
 	state = State::WAIT_PRESS;
 	clear_exti_flags_for_all();
 	enable_exti_for_all();
 	select_all_rows();
-}
-
-QueueHandle_t keyboard::get_button_events() {
-	return event_queue;
 }
