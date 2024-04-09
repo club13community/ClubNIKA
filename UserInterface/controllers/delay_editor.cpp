@@ -3,7 +3,7 @@
 //
 #include "../display.h"
 #include "../controllers.h"
-#include "../custom_chars.h"
+#include "../symbols.h"
 
 static uint16_t old_delay = 120;
 

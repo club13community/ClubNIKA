@@ -3,7 +3,7 @@
 //
 #include "../controllers.h"
 #include "../display.h"
-#include "../custom_chars.h"
+#include "../symbols.h"
 
 static const char down = '\0', up = '\1', enter = '\2', back = '\3';
 

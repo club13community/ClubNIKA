@@ -3,7 +3,7 @@
 //
 #include "../display.h"
 #include "../controllers.h"
-#include "../custom_chars.h"
+#include "../symbols.h"
 #include <string.h>
 
 #define MAX_PHONE_LENGTH	11U

@@ -3,7 +3,7 @@
 //
 #include "../controllers.h"
 #include "../display.h"
-#include "../custom_chars.h"
+#include "../symbols.h"
 
 namespace user_interface {
 	class Desktop : public Controller {

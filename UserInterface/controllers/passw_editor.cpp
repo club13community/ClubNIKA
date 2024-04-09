@@ -1,7 +1,7 @@
 //
 // Created by independent-variable on 4/8/2024.
 //
-#include "../custom_chars.h"
+#include "../symbols.h"
 #include "../controllers.h"
 #include "../display.h"
 #include <string.h>
