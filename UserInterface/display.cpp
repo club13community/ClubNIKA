@@ -26,7 +26,7 @@ Display & Display::set_cursor(uint8_t line, uint8_t pos) {
 	return *this;
 }
 
-/** Moves set_cursor in row
+/** Moves cursor in row
  * @param offset -15..15 */
 Display & Display::move_cursor(int8_t offset) {
 	if (offset < -15) {
@@ -40,17 +40,17 @@ Display & Display::move_cursor(int8_t offset) {
 	} else if (position < 0) {
 		position = 0;
 	}
-	lcd::set_cursor(position);
+	lcd::set_position(position);
 	return *this;
 }
 
 Display & Display::push_cursor() {
-	cursor_stack = lcd::get_cursor_addr();
+	cursor_stack = lcd::get_cursor();
 	return *this;
 }
 
 Display & Display::pop_cursor() {
-	lcd::set_cursor_addr(cursor_stack);
+	lcd::set_cursor(cursor_stack);
 	return *this;
 }
 
@@ -100,7 +100,7 @@ Display & Display::print(int num) {
 }
 
 Display & Display::operator[](uint8_t pos) {
-	lcd::set_cursor(pos);
+	lcd::set_position(pos);
 	return *this;
 }
 
