@@ -1,10 +1,9 @@
 //
 // Created by independent-variable on 4/5/2024.
 //
-#include "../controller.h"
+#include "../controllers.h"
 #include "../display.h"
 #include "../custom_chars.h"
-#include "list.h"
 
 #define PASSWORD_LENGTH	4U
 

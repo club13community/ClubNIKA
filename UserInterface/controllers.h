@@ -27,4 +27,13 @@ namespace user_interface {
 		/** Invoked when user does not interact with UI and no other activity is reported for a long time */
 		virtual void on_ui_inactive() {}
 	};
+
+	extern Controller * const desktop;
+	extern Controller * const menu;
+	extern Controller * const zone_viewer;
+	extern Controller * const zone_configurer;
+	extern Controller * const phone_configurer;
+	extern Controller * const password_editor;
+	extern Controller * const delay_editor;
+	extern Controller * const alarm_controller;
 }

@@ -1,8 +1,7 @@
 //
 // Created by independent-variable on 4/5/2024.
 //
-#include "list.h"
-#include "../controller.h"
+#include "../controllers.h"
 #include "../display.h"
 #include "../custom_chars.h"
 

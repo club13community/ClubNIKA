@@ -16,10 +16,8 @@
 #include "event_groups.h"
 #include "semphr.h"
 #include "ui_private.h"
-#include "controller.h"
+#include "controllers.h"
 #include "display.h"
-#include "custom_chars.h"
-#include "controllers/list.h"
 
 void user_interface::init_periph() {
 	lcd::init();

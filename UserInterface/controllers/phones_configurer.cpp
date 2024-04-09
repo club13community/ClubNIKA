@@ -2,9 +2,8 @@
 // Created by independent-variable on 4/5/2024.
 //
 #include "../display.h"
-#include "../controller.h"
+#include "../controllers.h"
 #include "../custom_chars.h"
-#include "list.h"
 #include <string.h>
 
 #define MAX_PHONE_LENGTH	11U

@@ -2,9 +2,8 @@
 // Created by independent-variable on 4/8/2024.
 //
 #include "../display.h"
-#include "../controller.h"
+#include "../controllers.h"
 #include "../custom_chars.h"
-#include "list.h"
 
 static uint16_t old_delay = 120;
 
