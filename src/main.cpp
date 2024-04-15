@@ -192,7 +192,7 @@ extern "C" int main(void)
 
 extern "C" void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer,
                                     StackType_t **ppxIdleTaskStackBuffer,
-                                    uint32_t *pulIdleTaskStackSize ){
+                                    size_t *pulIdleTaskStackSize ){
 	static StaticTask_t xIdleTaskTCB;
 	static StackType_t uxIdleTaskStack[configMINIMAL_STACK_SIZE];
 

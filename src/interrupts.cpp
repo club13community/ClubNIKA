@@ -18,10 +18,6 @@
 #include "keyboard.h"
 #include "voltage_meter.h"
 
-extern "C" void SysTick_Handler(){
-	xPortSysTickHandler();
-}
-
 //used by SupplySystem
 extern "C" void TIM2_IRQHandler(){
 	if(SET == TIM_GetITStatus(TIM2, TIM_IT_CC1)){
