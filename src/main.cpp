@@ -32,6 +32,8 @@
 #include "flash.h"
 #include "test.h"
 #include "UserInterface.h"
+#include "ff.h"
+#include "ff_flash_driver.h"
 
 struct TaskHandleRegister{
 	TaskHandle_t stkMon_handle;
@@ -69,10 +71,26 @@ void clearTaskHandleRegister(){
 TaskHandle_t StackMonitor_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut);
 #endif
 
-volatile bool done = false;
+FATFS fatfs;
 
-void do_done() {
-	done = true;
+static TaskHandle_t test_task;
+static StaticTask_t test_task_ctrl;
+static StackType_t test_task_stack[1024];
+static FIL tst_file;
+
+static void do_test_task(void * args) {
+	FRESULT res;
+	res = f_mount(&fatfs, "0:", 1);
+	res = f_open(&tst_file, "0:test.txt", FA_READ);
+	TCHAR buf[20];
+	f_gets(buf, 20, &tst_file);
+	bool eof = f_eof(&tst_file);
+	f_close(&tst_file);
+	while(true);
+}
+
+static void create_test_task() {
+	test_task = xTaskCreateStatic(do_test_task, "test task", 1024, nullptr, 1U, test_task_stack, &test_task_ctrl);
 }
 
 // float div = 170u, mult = 60u, sub = 75u
@@ -91,48 +109,6 @@ extern "C" int main(void)
 	//test_timer_invoke_once();
 	//test_timer_invoke_repeatedly_and_stop();
 	//test_timer_start_blink_while_delay();
-
-	/*RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
-	ADC1->SMPR1 = ADC_SMPR1_SMP17_2 | ADC_SMPR1_SMP17_1;
-	ADC1->SQR1 = 2U << 20;
-	ADC1->SQR3 = 17U | 16U << 5 | 17U << 10;
-	ADC1->JSQR = 17U << 5 | 16U << 10 | 17U << 15 | 2U << 20;
-	ADC1->CR1 = ADC_CR1_JDISCEN | ADC_CR1_DISCNUM_0;
-	ADC1->CR2 = ADC_CR2_TSVREFE | ADC_CR2_ADON
-			| ADC_CR2_JEXTTRIG | ADC_CR2_JEXTSEL_2 | ADC_CR2_JEXTSEL_1 | ADC_CR2_JEXTSEL_0;
-	for (uint8_t i = 0; i < 200; i++);*/
-
-	/*ADC1->CR2 = ADC1->CR2;
-	while ((ADC1->SR & (ADC_SR_JEOC | ADC_SR_EOC)) != ADC_SR_EOC);
-	ADC1->SR = ~ADC_SR_EOC;
-	uint16_t val1 = ADC1->DR;
-
-	ADC1->CR2 = ADC1->CR2;
-	while ((ADC1->SR & (ADC_SR_JEOC | ADC_SR_EOC)) != ADC_SR_EOC);
-	ADC1->SR = ~ADC_SR_EOC;
-	uint16_t val2 = ADC1->DR;
-
-	ADC1->CR2 = ADC1->CR2;
-	while ((ADC1->SR & (ADC_SR_JEOC | ADC_SR_EOC)) != ADC_SR_EOC);
-	ADC1->SR = ~ADC_SR_EOC;
-	uint16_t val3 = ADC1->DR;*/
-
-	/*ADC1->CR2 |= ADC_CR2_JSWSTART;
-	while ((ADC1->SR & (ADC_SR_JEOC | ADC_SR_EOC)) != (ADC_SR_EOC | ADC_SR_JEOC));
-	ADC1->SR = ~ADC_SR_EOC & ~ADC_SR_JEOC;
-	uint16_t val1 = ADC1->JDR1;
-
-	ADC1->CR2 |= ADC_CR2_JSWSTART;
-	while ((ADC1->SR & (ADC_SR_JEOC | ADC_SR_EOC)) != (ADC_SR_EOC | ADC_SR_JEOC));
-	ADC1->SR = ~ADC_SR_EOC & ~ADC_SR_JEOC;
-	uint16_t val2 = ADC1->JDR2;
-
-	ADC1->CR2 |= ADC_CR2_JSWSTART;
-	while ((ADC1->SR & (ADC_SR_JEOC | ADC_SR_EOC)) != (ADC_SR_EOC | ADC_SR_JEOC));
-	ADC1->SR = ~ADC_SR_EOC & ~ADC_SR_JEOC;
-	uint16_t val3 = ADC1->DR;
-
-	__NOP();*/
 
 	flash::init();
 	gsm_service::init_periph();
@@ -181,7 +157,7 @@ extern "C" int main(void)
 	//File system
 	//idle task
 	//timer task
-
+	create_test_task();
 #ifdef DEBUG
 	//taskHandleRegister.stkMon_handle=StackMonitor_Launch(getMessageBuffer_StackMonitorDataIn(), getMessageBuffer_StackMonitorDataOut());
 #endif

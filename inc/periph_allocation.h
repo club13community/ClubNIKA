@@ -29,7 +29,7 @@
 #define SIM900_UART_IRQ_PRIORITY	3U
 // same for DMA and timer
 #define DAC_IRQ_PRIORITY	4U
-#define FLASH_IRQ_PRIORITY	1U
+#define FLASH_IRQ_PRIORITY	6U
 // for EXTI
 #define KEYBOARD_IRQ_PRIORITY	13U
 
