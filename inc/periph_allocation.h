@@ -23,6 +23,8 @@
 #define FLASH_TX_DMA_CHANNEL	DMA1_Channel3
 #define FLASH_RX_DMA_CHANNEL	DMA1_Channel2
 
+#define SD_DMA_CHANNEL			DMA2_Channel4
+
 #define FINE_TIMER_IRQ_PRIORITY		13U
 #define COARSE_TIMER_IRQ_PRIORITY	13U
 // same priority for UART and DMA(channel for TX) handlers
@@ -30,6 +32,9 @@
 // same for DMA and timer
 #define DAC_IRQ_PRIORITY	4U
 #define FLASH_IRQ_PRIORITY	6U
+
+#define SD_IRQ_PRIORITY			11U
+#define SD_DETECT_IRQ_PRIORITY	11U
 // for EXTI
 #define KEYBOARD_IRQ_PRIORITY	13U
 
@@ -39,6 +44,7 @@
 #define DAC_DMA_PRIORITY			DMA_Priority_Medium
 #define FLASH_TX_DMA_PRIORITY		DMA_Priority_Medium
 #define FLASH_RX_DMA_PRIORITY		DMA_Priority_High
+#define SD_DMA_PRIORITY				DMA_Priority_High
 
 #define TASK_NORMAL_PRIORITY		1U
 // detects what was pressed

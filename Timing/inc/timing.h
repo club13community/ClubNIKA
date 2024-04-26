@@ -11,11 +11,18 @@ namespace timing {
 	/** Allows transitions between modes. Callback from prev. configuration still may be invoked once. */
 	class CoarseTimer {
 	public:
+		static constexpr uint16_t MAX_DELAY_ms = 16383, MAX_DELAY_250us = 65534;
+		/** @param delayMs max value is 16383 */
 		virtual void invoke_in_ms(uint16_t delayMs, Callback callback) = 0;
+		/** @param delayMsDiv4 max value is 65534 */
 		virtual void invoke_in_ticks(uint16_t delayMsDiv4, Callback callback) = 0;
+		/** @param periodMs max value is 16383 */
 		virtual void every_ms_invoke(uint16_t periodMs, Callback callback) = 0;
+		/** @param delayMsDiv4 max value is 65534 */
 		virtual void every_ticks_invoke(uint16_t periodMsDiv4, Callback callback) = 0;
+		/** @param delayMs max value is 16383 */
 		virtual void wait_ms(uint16_t delayMs) = 0;
+		/** @param delayMsDiv4 max value is 65534 */
 		virtual void wait_ticks(uint16_t delayMsDiv4) = 0;
 		virtual void stop() = 0;
 	};
