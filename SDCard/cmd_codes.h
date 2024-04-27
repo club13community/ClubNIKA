@@ -16,3 +16,5 @@
 #define CMD7_SELECT_DESELECT_CARD	((uint8_t)7)
 #define ACMD6_SET_BUS_WIDTH			((uint8_t)6)
 #define ACMD42_SET_CLR_CARD_DETECT	((uint8_t)42)
+#define CMD24_WRITE_BLOCK		((uint8_t)24)
+#define CMD17_READ_SINGLE_BLOCK	((uint8_t)17)

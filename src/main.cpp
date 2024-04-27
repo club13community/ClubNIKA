@@ -36,6 +36,7 @@
 #include "ff_flash_driver.h"
 #include "sd.h"
 #include "sd_info.h"
+#include "../SDCard/cmd_execution.h"
 
 struct TaskHandleRegister{
 	TaskHandle_t stkMon_handle;
@@ -95,14 +96,32 @@ static void create_test_task() {
 	test_task = xTaskCreateStatic(do_test_task, "test task", 1024, nullptr, 1U, test_task_stack, &test_task_ctrl);
 }
 
+uint8_t sd_buf[512];
+
+static void card_read(sd::Error error) {
+	__NOP();
+}
+
+static void card_written(sd::Error error) {
+	bool ok = error == sd::NO_ERROR;
+	__NOP();
+}
+
 static void card_init(sd::Error error) {
 	bool ok = error == sd::NO_ERROR;
 	uint32_t cap_kb = sd::get_capacity_kb();
 	uint32_t cap_mb = sd::get_capacity_mb();
 	uint32_t cap_gb = sd::get_capacity_gb();
 	bool is_wp = sd::is_write_protected();
-	uint32_t cact = SDIO->STA & SDIO_STA_CMDACT;
-	__NOP();
+
+	/*for (uint16_t i = 0; i < 512; i++) {
+		sd_buf[i] = i;
+	}
+	sd::write_block(0, sd_buf, card_written);*/
+	for (uint16_t i = 0; i < 512; i++) {
+		sd_buf[i] = 0;
+	}
+	sd::read_block(0, sd_buf, card_read);
 }
 
 // float div = 170u, mult = 60u, sub = 75u

@@ -11,4 +11,6 @@
 namespace sd {
 	void init_periph();
 	void init_card(void (* callback)(Error));
+	void write_block(uint32_t block, uint8_t * buff, void (* callback)(Error));
+	void read_block(uint32_t block, uint8_t * buff, void (* callback)(Error));
 }

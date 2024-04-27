@@ -28,11 +28,14 @@ static void (* volatile irq_handler)(uint32_t sta);
 #define CMD_LONG_RESP	(SDIO_CMD_NIEN | SDIO_CMD_CPSMEN | SDIO_CMD_WAITRESP_1 | SDIO_CMD_WAITRESP_0)
 
 /** Enable "command sent" interrupt*/
-#define MASK_SEND_COMMAND	SDIO_MASK_CMDSENTIE
+#define MASK_FOR_COMMAND	SDIO_MASK_CMDSENTIE
 /** Enable "response received", "wrong CRC" and "no response" interrupts */
-#define MASK_WAIT_RESPONSE	(SDIO_MASK_CMDRENDIE | SDIO_MASK_CTIMEOUTIE | SDIO_MASK_CCRCFAILIE)
+#define MASK_FOR_RESPONSE	(SDIO_MASK_CMDRENDIE | SDIO_MASK_CTIMEOUTIE | SDIO_MASK_CCRCFAILIE)
+/** All used 'interrupt enable' flags */
+#define MASK_CMD_PATH		(MASK_FOR_COMMAND | MASK_FOR_RESPONSE)
+#define ICR_CMD_PATH		(SDIO_ICR_CMDSENTC | SDIO_ICR_CMDRENDC | SDIO_ICR_CTIMEOUTC | SDIO_ICR_CCRCFAILC)
 
-#define ICR_CMD_RELATED		(SDIO_ICR_CMDSENTC | SDIO_ICR_CMDRENDC | SDIO_ICR_CTIMEOUTC | SDIO_ICR_CCRCFAILC)
+#define MASK(mask)			(SDIO->MASK = SDIO->MASK & ~MASK_CMD_PATH | (mask))
 
 /** Handles R1 response: if no errors in CSR - invokes callback with CSR */
 static void r1_irq_handler(uint32_t sta) {
@@ -67,7 +70,7 @@ static void cmd55_irq_handler(uint32_t sta) {
 static void exe_cmd55(uint16_t rca) {
 	irq_handler = cmd55_irq_handler;
 
-	SDIO->MASK = MASK_WAIT_RESPONSE;
+	MASK(MASK_FOR_RESPONSE);
 	SDIO->ARG = (uint32_t)rca << 16;
 	SDIO->CMD = CMD_SHORT_RESP | CMD55_APP_CMD;
 }
@@ -81,7 +84,7 @@ void sd::exe_cmd0(DoneCallback on_done) {
 	success.callback = on_done;
 	irq_handler = cmd0_irq_handler;
 
-	SDIO->MASK = MASK_SEND_COMMAND;
+	MASK(MASK_FOR_COMMAND);
 	SDIO->ARG = 0;
 	SDIO->CMD = CMD_NO_RESP | CMD0_GO_IDLE_STATE;
 }
@@ -100,7 +103,7 @@ void sd::exe_cmd8(DoneCallback on_done, ErrorCallback on_error) {
 	error_callback = on_error;
 	irq_handler = cmd8_irq_handler;
 
-	SDIO->MASK = MASK_WAIT_RESPONSE;
+	MASK(MASK_FOR_RESPONSE);
 	SDIO->ARG = (1 << 8) | 0xAA; // 0xAA - check pattern
 	SDIO->CMD = CMD_SHORT_RESP | CMD8_SEND_IF_COND;
 }
@@ -113,7 +116,7 @@ static void acmd41_irq_handler(uint32_t sta) {
 static void do_exe_acmd41() {
 	irq_handler = acmd41_irq_handler;
 
-	SDIO->MASK = MASK_WAIT_RESPONSE;
+	MASK(MASK_FOR_RESPONSE);
 	SDIO->ARG = acmd_arg;
 	SDIO->CMD = CMD_SHORT_RESP | ACMD41_SD_SEND_OP_COND;
 }
@@ -136,7 +139,7 @@ void sd::exe_cmd2(uint8_t * cid_ptr, DoneCallback on_done, ErrorCallback on_erro
 	buffer = cid_ptr;
 	irq_handler = r2_irq_handler;
 
-	SDIO->MASK = MASK_WAIT_RESPONSE;
+	MASK(MASK_FOR_RESPONSE);
 	SDIO->ARG = 0;
 	SDIO->CMD = CMD_LONG_RESP | CMD2_ALL_SEND_CID;
 }
@@ -163,7 +166,7 @@ void sd::exe_cmd3(RCA_Consumer on_done, ErrorCallback on_error) {
 	error_callback = on_error;
 	irq_handler = cmd3_irq_handler;
 
-	SDIO->MASK = MASK_WAIT_RESPONSE;
+	MASK(MASK_FOR_RESPONSE);
 	SDIO->ARG = 0;
 	SDIO->CMD = CMD_SHORT_RESP | CMD3_SEND_RELATIVE_ADDR;
 }
@@ -181,7 +184,7 @@ void sd::exe_cmd13(uint16_t rca, CSR_Consumer on_done, ErrorCallback on_error) {
 	error_callback = on_error;
 	irq_handler = cmd13_irq_handler;
 
-	SDIO->MASK = MASK_WAIT_RESPONSE;
+	MASK(MASK_FOR_RESPONSE);
 	SDIO->ARG = (uint32_t)rca << 16;
 	SDIO->CMD = CMD_SHORT_RESP | CMD13_SEND_STATUS;
 }
@@ -194,7 +197,7 @@ void sd::exe_cmd9(uint16_t rca, uint8_t * csd_ptr, DoneCallback on_done, ErrorCa
 	buffer = csd_ptr;
 	irq_handler = r2_irq_handler;
 
-	SDIO->MASK = MASK_WAIT_RESPONSE;
+	MASK(MASK_FOR_RESPONSE);
 	SDIO->ARG = (uint32_t)rca << 16;
 	SDIO->CMD = CMD_LONG_RESP | CMD9_SEND_CSD;
 }
@@ -205,7 +208,7 @@ void sd::exe_cmd7(uint16_t rca, CSR_Consumer on_done, ErrorCallback on_error) {
 	error_callback = on_error;
 	irq_handler = r1_irq_handler;
 
-	SDIO->MASK = MASK_WAIT_RESPONSE;
+	MASK(MASK_FOR_RESPONSE);
 	SDIO->ARG = (uint32_t)rca << 16;
 	SDIO->CMD = CMD_SHORT_RESP | CMD7_SELECT_DESELECT_CARD;
 }
@@ -213,7 +216,7 @@ void sd::exe_cmd7(uint16_t rca, CSR_Consumer on_done, ErrorCallback on_error) {
 static void do_exe_acmd6() {
 	irq_handler = r1_irq_handler;
 
-	SDIO->MASK = MASK_WAIT_RESPONSE;
+	MASK(MASK_FOR_RESPONSE);
 	SDIO->ARG = acmd_arg;
 	SDIO->CMD = CMD_SHORT_RESP | ACMD6_SET_BUS_WIDTH;
 }
@@ -231,7 +234,7 @@ void sd::exe_acmd6(BusWidth width, CSR_Consumer on_done, ErrorCallback on_error)
 static void do_exe_acmd42() {
 	irq_handler = r1_irq_handler;
 
-	SDIO->MASK = MASK_WAIT_RESPONSE;
+	MASK(MASK_FOR_RESPONSE);
 	SDIO->ARG = acmd_arg;
 	SDIO->CMD = CMD_SHORT_RESP | ACMD42_SET_CLR_CARD_DETECT;
 }
@@ -246,21 +249,45 @@ void sd::exe_acmd42(DAT3_PullUp state, CSR_Consumer on_done, ErrorCallback on_er
 	exe_cmd55(0);
 }
 
+/** WRITE_BLOCK
+ * @param addr byte address for SC card, block address for HC/XC card */
+void sd::exe_cmd24(uint32_t addr, CSR_Consumer on_done, ErrorCallback on_error) {
+	success.csr_consumer = on_done;
+	error_callback = on_error;
+	irq_handler = r1_irq_handler;
+
+	MASK(MASK_FOR_RESPONSE);
+	SDIO->ARG = addr;
+	SDIO->CMD = CMD_SHORT_RESP | CMD24_WRITE_BLOCK;
+}
+
+/** READ_SINGLE_BLOCK
+ * @param addr byte address for SC card, block address for HC/XC card */
+void sd::exe_cmd17(uint32_t addr, CSR_Consumer on_done, ErrorCallback on_error) {
+	success.csr_consumer = on_done;
+	error_callback = on_error;
+	irq_handler = r1_irq_handler;
+
+	MASK(MASK_FOR_RESPONSE);
+	SDIO->ARG = addr;
+	SDIO->CMD = CMD_SHORT_RESP | CMD17_READ_SINGLE_BLOCK;
+}
+
 void sd::handle_cmd_irq(uint32_t sta) {
 	if (sta & SDIO_STA_CTIMEOUT) {
-		SDIO->ICR = ICR_CMD_RELATED;
+		SDIO->ICR = ICR_CMD_PATH;
 		error_callback(Error::NO_RESPONSE);
 		return;
 	}
 	// ACMD41 expects response R3 which does not contain valid CRC
 	if (sta & SDIO_STA_CCRCFAIL && irq_handler != acmd41_irq_handler) {
-		SDIO->ICR = ICR_CMD_RELATED;
+		SDIO->ICR = ICR_CMD_PATH;
 		error_callback(Error::RESP_CRC_ERROR);
 		return;
 	}
 	if (sta & SDIO_STA_CMDREND || sta & SDIO_STA_CMDSENT && irq_handler == cmd0_irq_handler
 			|| sta & SDIO_STA_CCRCFAIL && irq_handler == acmd41_irq_handler)  {
-		SDIO->ICR = ICR_CMD_RELATED;
+		SDIO->ICR = ICR_CMD_PATH;
 		irq_handler(sta);
 		return;
 	}

@@ -60,6 +60,7 @@ void sd::init_card(void (* callback)(Error)) {
 		throw std::exception();
 	}
 	uint16_t pwr_up_delay_250u = x74_clk_delay_250u > 4 ? x74_clk_delay_250u : 4;
+	use_1bit_dat();
 	en_sdio_clk();
 	constexpr timing::Callback invoke_cmd0 = []() {
 		exe_cmd0(cmd0_done);

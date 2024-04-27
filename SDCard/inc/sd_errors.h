@@ -34,7 +34,11 @@ namespace sd {
 		NO_RESPONSE = 32,
 		RESP_CRC_ERROR = 33,
 		NOT_SUPPORTED_VDD = 34,
-		NOT_SUPPORTED_CARD = 35
+		NOT_SUPPORTED_CARD = 35,
+		/** FIFO under/over ran */
+		FIFO_ERROR = 36,
+		DATA_TIMEOUT = 37,
+		DATA_CRC_ERROR = 38
 	};
 
 	constexpr Error NO_ERROR = Error(0xFFFF);

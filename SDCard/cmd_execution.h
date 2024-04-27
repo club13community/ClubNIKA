@@ -25,5 +25,7 @@ namespace sd {
 	void exe_cmd7(uint16_t rca, CSR_Consumer on_done, ErrorCallback on_error);
 	void exe_acmd6(BusWidth width, CSR_Consumer on_done, ErrorCallback on_error);
 	void exe_acmd42(DAT3_PullUp state, CSR_Consumer on_done, ErrorCallback on_error);
+	void exe_cmd24(uint32_t addr, CSR_Consumer on_done, ErrorCallback on_error);
+	void exe_cmd17(uint32_t addr, CSR_Consumer on_done, ErrorCallback on_error);
 	void handle_cmd_irq(uint32_t sta);
 }

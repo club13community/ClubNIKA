@@ -56,20 +56,20 @@ namespace sd {
 
 	inline uint32_t set_slow_clk() {
 		ClockConf clk_conf = get_clk_div(CLK_INIT_FREQ);
-		SDIO->CLKCR = clk_conf.clkcr | SDIO_CLKCR_CLKEN;
+		SDIO->CLKCR = SDIO->CLKCR & ~SDIO_CLKCR_BYPASS & ~SDIO_CLKCR_CLKDIV | clk_conf.clkcr;
 		return clk_conf.real_freq;
 	}
 
 	inline uint32_t set_fast_clk() {
 		ClockConf clk_conf = get_clk_div(CLK_APP_FREQ);
-		SDIO->CLKCR = clk_conf.clkcr | SDIO_CLKCR_CLKEN;
+		SDIO->CLKCR = SDIO->CLKCR & ~SDIO_CLKCR_BYPASS & ~SDIO_CLKCR_CLKDIV | clk_conf.clkcr;
 		return clk_conf.real_freq;
 	}
 
 	inline void init_sdio() {
 		RCC_AHBPeriphClockCmd(RCC_AHBPeriph_SDIO, ENABLE);
-		set_slow_clk();
-		SDIO->DCTRL = SDIO_DCTRL_SDIOEN;
+		SDIO->DTIMER = 0xFFFFFFFF; // todo: set realistic value
+		SDIO->CLKCR = SDIO_CLKCR_CLKEN | get_clk_div(CLK_INIT_FREQ).clkcr;
 
 		NVIC_InitTypeDef nvic_conf;
 		nvic_conf.NVIC_IRQChannel = SDIO_IRQn;
@@ -117,24 +117,16 @@ namespace sd {
 	inline void en_sdio_clk() {
 		SDIO->POWER = SDIO_POWER_PWRCTRL_1 | SDIO_POWER_PWRCTRL_0;
 		//and 7 HCLK periods delay
-		__NOP();
-		__NOP();
-		__NOP();
-		__NOP();
-		__NOP();
-		__NOP();
+		__NOP(); __NOP(); __NOP();
+		__NOP(); __NOP(); __NOP();
 		__NOP();
 	}
 
 	inline void dis_sdio_clk() {
 		SDIO->POWER = 0;
 		//and 7 HCLK periods delay
-		__NOP();
-		__NOP();
-		__NOP();
-		__NOP();
-		__NOP();
-		__NOP();
+		__NOP(); __NOP(); __NOP();
+		__NOP(); __NOP(); __NOP();
 		__NOP();
 	}
 
@@ -142,30 +134,33 @@ namespace sd {
 		return SDIO->POWER == (SDIO_POWER_PWRCTRL_1 | SDIO_POWER_PWRCTRL_0);
 	}
 
+	inline void use_1bit_dat() {
+		SDIO->CLKCR = SDIO->CLKCR & ~SDIO_CLKCR_WIDBUS;
+	}
+
 	inline void use_4bits_dat() {
 		SDIO->CLKCR = SDIO->CLKCR & ~SDIO_CLKCR_WIDBUS | SDIO_CLKCR_WIDBUS_0;
 	}
 
-	inline void tx_via_dma(uint8_t * buffer, uint16_t length) {
+	inline void tx_via_dma(uint32_t * buffer, uint16_t length) {
 		DMA_CHANNEL->CPAR = (uint32_t)&SDIO->FIFO;
 		DMA_CHANNEL->CMAR = (uint32_t)buffer;
 		DMA_CHANNEL->CNDTR = length;
-		DMA_CHANNEL->CCR = SD_DMA_PRIORITY | DMA_CCR1_MINC | DMA_CCR1_DIR | DMA_CCR1_EN;
+		DMA_CHANNEL->CCR = SD_DMA_PRIORITY | DMA_CCR1_MINC | DMA_CCR1_DIR | DMA_CCR1_EN
+				| DMA_CCR1_MSIZE_1 | DMA_CCR1_PSIZE_1;
 	}
 
-	inline void rx_via_dma(uint8_t * buffer, uint16_t length) {
+	inline void rx_via_dma(uint32_t * buffer, uint16_t length) {
 		DMA_CHANNEL->CPAR = (uint32_t)&SDIO->FIFO;
 		DMA_CHANNEL->CMAR = (uint32_t)buffer;
 		DMA_CHANNEL->CNDTR = length;
-		DMA_CHANNEL->CCR = SD_DMA_PRIORITY | DMA_CCR1_MINC | DMA_CCR1_EN;
+		DMA_CHANNEL->CCR = SD_DMA_PRIORITY | DMA_CCR1_MINC | DMA_CCR1_EN
+				| DMA_CCR1_MSIZE_1 | DMA_CCR1_PSIZE_1;
 	}
 
-	inline bool is_dma_tc() {
-		return DMA->ISR & DMA_ISR_TCIF;
-	}
-
-	inline void clear_dma_tc() {
-		DMA->IFCR = DMA_IFCR_CTCIF;
+	inline void stop_dma() {
+		DMA_CHANNEL->CCR = 0;
+		while (DMA_CHANNEL->CCR & DMA_CCR1_EN);
 	}
 
 	inline bool is_card_inserted() {
