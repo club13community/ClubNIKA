@@ -3,7 +3,7 @@
 //
 #include "sd_info.h"
 #include "sd_info_private.h"
-#include "sd_enums.h"
+#include "sd_types.h"
 
 namespace sd {
 	volatile CapacitySupport hcs;

@@ -18,3 +18,6 @@
 #define ACMD42_SET_CLR_CARD_DETECT	((uint8_t)42)
 #define CMD24_WRITE_BLOCK		((uint8_t)24)
 #define CMD17_READ_SINGLE_BLOCK	((uint8_t)17)
+#define CMD25_WRITE_MULTIPLE_BLOCK	((uint8_t)25)
+#define CMD18_READ_MULTIPLE_BLOCK	((uint8_t)18)
+#define CMD12_STOP_TRANSMISSION		((uint8_t)12)

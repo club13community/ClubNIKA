@@ -7,10 +7,11 @@
 
 #pragma once
 #include "sd_errors.h"
+#include "sd_callbacks.h"
 
 namespace sd {
 	void init_periph();
-	void init_card(void (* callback)(Error));
-	void write_block(uint32_t block, uint8_t * buff, void (* callback)(Error));
-	void read_block(uint32_t block, uint8_t * buff, void (* callback)(Error));
+	void init_card(Callback callback);
+	void write(uint32_t block_addr, uint32_t block_count, uint8_t * buff, DataCallback callback);
+	void read(uint32_t block_addr, uint32_t block_count, uint8_t * buff, DataCallback callback);
 }

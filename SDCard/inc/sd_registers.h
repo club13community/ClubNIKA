@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <bit>
 #include "sd_errors.h"
-#include "sd_enums.h"
+#include "sd_types.h"
 
 namespace sd {
 	class OCR_t {
@@ -62,7 +62,7 @@ namespace sd {
 		}
 
 		inline bool has_error(Error error) {
-			return (uint16_t)error < 32 && csr & 1U << (uint16_t)error;
+			return ((uint16_t)error < 32 && csr & 1U << (uint16_t)error) || (error == Error::NONE && error_flags() == 0);
 		}
 
 		inline uint32_t error_flags() {
@@ -144,7 +144,7 @@ namespace sd {
 			if (error_flags & 1U << (uint16_t)Error::AKE_SEQ_ERROR) {
 				return Error::AKE_SEQ_ERROR;
 			}
-			return NO_ERROR;
+			return Error::NONE;
 		}
 	};
 }

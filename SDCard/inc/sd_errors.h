@@ -37,9 +37,15 @@ namespace sd {
 		NOT_SUPPORTED_CARD = 35,
 		/** FIFO under/over ran */
 		FIFO_ERROR = 36,
+		/** Data was not received or programmed in time */
 		DATA_TIMEOUT = 37,
-		DATA_CRC_ERROR = 38
+		DATA_CRC_ERROR = 38,
+		/** No error, all ok */
+		NONE = 0xFFFF
 	};
 
-	constexpr Error NO_ERROR = Error(0xFFFF);
+	/** @returns true if response to command was received and valid so error is taken from response */
+	inline bool is_from_response(Error error) {
+		return (uint16_t)error <= 31 || error == Error::NONE;
+	}
 }
