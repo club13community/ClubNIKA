@@ -36,7 +36,7 @@
 #include "ff_flash_driver.h"
 #include "sd.h"
 #include "sd_info.h"
-#include "../SDCard/cmd_execution.h"
+#include "ff_sd_service.h"
 
 struct TaskHandleRegister{
 	TaskHandle_t stkMon_handle;
@@ -81,20 +81,7 @@ static StaticTask_t test_task_ctrl;
 static StackType_t test_task_stack[1024];
 static FIL tst_file;
 
-static void do_test_task(void * args) {
-	FRESULT res;
-	res = f_mount(&fatfs, "0:", 1);
-	res = f_open(&tst_file, "0:test.txt", FA_READ);
-	TCHAR buf[20];
-	f_gets(buf, 20, &tst_file);
-	bool eof = f_eof(&tst_file);
-	f_close(&tst_file);
-	while(true);
-}
 
-static void create_test_task() {
-	test_task = xTaskCreateStatic(do_test_task, "test task", 1024, nullptr, 1U, test_task_stack, &test_task_ctrl);
-}
 
 uint8_t sd_buf[512 * 2];
 
@@ -127,6 +114,36 @@ static void card_init(sd::Error error) {
 	sd::read(1, 2, sd_buf, card_read);
 }
 
+static void do_test_task(void * args) {
+	/*FRESULT res;
+	res = f_mount(&fatfs, "0:", 1);
+	res = f_open(&tst_file, "0:test.txt", FA_READ);
+	TCHAR buf[20];
+	f_gets(buf, 20, &tst_file);
+	bool eof = f_eof(&tst_file);
+	f_close(&tst_file);*/
+
+	while (true) {
+		while (!sd::is_card_present());
+		FRESULT res;
+		res = f_open(&tst_file, "1:test.txt", FA_READ);
+		TCHAR buf[20];
+		f_gets(buf, 20, &tst_file);
+		bool eof = f_eof(&tst_file);
+		f_close(&tst_file);
+		__NOP();
+		while (sd::is_card_present());
+	}
+
+	/*while (!sd::is_card_present());
+	sd::read((sd::get_capacity_kb() << 1), 1, sd_buf, card_read);
+	while(true);*/
+}
+
+static void create_test_task() {
+	test_task = xTaskCreateStatic(do_test_task, "test task", 1024, nullptr, 1U, test_task_stack, &test_task_ctrl);
+}
+
 // float div = 170u, mult = 60u, sub = 75u
 extern "C" int main(void)
 {
@@ -145,13 +162,10 @@ extern "C" int main(void)
 	//test_timer_start_blink_while_delay();
 
 	flash::init();
-	sd::init_periph();
 	gsm_service::init_periph();
 	sound_service::init_periph();
 	user_interface::init_periph();
 	wired_zones::init_periph();
-
-	sd::init_card(card_init);
 
 	MessageRouter_StartUpInit();
 	clearTaskHandleRegister();
@@ -161,6 +175,7 @@ extern "C" int main(void)
 	vmeter::start();
 	user_interface::start();
 	wired_zones::start();
+	sd::start();
 	//taskHandleRegister.wsens_handle=WiredSensorMonitor_Launch(getMessageBuffer_WiredSensorMonitorDataIn(), getMessageBuffer_WiredSensorMonitorDataOut());
 	//taskHandleRegister.voltMet_handle=VoltageMeter_Launch(getMessageBuffer_VoltageMeterDataIn(), getMessageBuffer_VoltageMeterDataOut());
 	//taskHandleRegister.wless_handle=WirelessInterface_Launch(getMessageBuffer_WirelessInterfaceDataIn(), getMessageBuffer_WirelessInterfaceDataOut());

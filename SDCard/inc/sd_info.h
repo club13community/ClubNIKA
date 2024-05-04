@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 namespace sd {
+	bool is_card_present();
 	uint32_t get_capacity_kb();
 	uint32_t get_capacity_mb();
 	uint32_t get_capacity_gb();

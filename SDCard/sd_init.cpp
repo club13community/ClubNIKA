@@ -1,21 +1,13 @@
 //
 // Created by independent-variable on 4/21/2024.
 //
-#include "sd.h"
-#include "stm32f10x.h"
+#include "sd_init.h"
 #include "periph.h"
 #include "timing.h"
 #include "cmd_execution.h"
 #include "sd_errors.h"
 #include "config.h"
 #include "sd_info_private.h"
-
-void sd::init_periph() {
-	init_sdio();
-	init_sdio_pins();
-	init_detect_pin();
-	init_dma();
-}
 
 using namespace sd;
 static uint8_t cid_cds_buff[16];
@@ -46,21 +38,14 @@ static void init_failed(Error error);
 
 void sd::init_card(void (* callback)(Error)) {
 	::callback = callback;
-	uint32_t freq = set_slow_clk() - 1;
-	if (freq == 0) {
-		throw std::exception();
-	}
-	uint32_t x74_clk_delay_250u = ((uint32_t)74000 * 4) / freq;
-	if (x74_clk_delay_250u > timing::CoarseTimer::MAX_DELAY_250us) {
-		throw std::exception();
-	}
-	uint16_t pwr_up_delay_250u = x74_clk_delay_250u > 4 ? x74_clk_delay_250u : 4;
+	uint32_t freq = set_slow_clk();
+	uint16_t pwr_up_delay = get_power_up_time_ms(freq);
 	use_1bit_dat();
 	en_sdio_clk();
 	constexpr timing::Callback invoke_cmd0 = []() {
 		exe_cmd0(cmd0_done);
 	};
-	TIMER.invoke_in_ticks(pwr_up_delay_250u, invoke_cmd0);
+	TIMER.invoke_in_ms(pwr_up_delay, invoke_cmd0);
 }
 
 /** Card reset, now it is in 'idle' state */
@@ -202,7 +187,8 @@ static void acmd6_done(CSR_t csr, Error error) {
 }
 
 static void init_done() {
-	set_fast_clk();
+	uint32_t freq = set_fast_clk();
+	set_read_write_timeout(freq);
 	callback(Error::NONE);
 }
 

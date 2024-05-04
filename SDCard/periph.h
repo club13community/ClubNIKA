@@ -24,8 +24,6 @@
 
 #define DMA				DMA2
 #define DMA_CHANNEL		SD_DMA_CHANNEL
-#define DMA_ISR_TCIF	DMA_ISR_TCIF4
-#define DMA_IFCR_CTCIF	DMA_IFCR_CTCIF4
 
 namespace sd {
 	struct ClockConf {
@@ -35,7 +33,8 @@ namespace sd {
 		uint32_t real_freq;
 	};
 
-	/** @returns value for CLKCR to achieve desired freq. */
+	/** @returns value for CLKCR to achieve desired freq. and real freq.(+/-0.5Hz)
+	 * @throws std::exception if real freq. < 10KHz */
 	inline ClockConf get_clk_div(uint32_t target_freq) {
 		RCC_ClocksTypeDef clk_conf;
 		RCC_GetClocksFreq(&clk_conf);
@@ -50,8 +49,38 @@ namespace sd {
 		if (scale > max_div) {
 			throw std::exception();
 		}
+		if (real_freq < 10000) {
+			throw std::exception();
+		}
 		uint32_t clkcr = scale < 2 ? SDIO_CLKCR_BYPASS : scale - 2;
 		return {.clkcr = clkcr, .real_freq = real_freq};
+	}
+
+	/**
+	 * @param clk_freq real CLK freq(+/- 0.5Hz)
+	 * @returns power-up time: max(1ms, 74 clocks), - in units of ms
+	 * @throws std::exception if clk_freq is less than 10kHz
+	 */
+	inline uint16_t get_power_up_time_ms(uint32_t clk_freq) {
+		if (clk_freq >= 80000) {
+			return 1;
+		} else if (clk_freq >= 40000) {
+			return 2;
+		} else if (clk_freq >= 20000) {
+			return 4;
+		} else if (clk_freq >= 10000) {
+			return 8;
+		} else {
+			throw std::exception();
+		}
+	}
+
+	/** Sets time during which card should send/program data
+	 * @param clk_freq real freq. of CLK in Hz(+/-0.5Hz) */
+	inline void set_read_write_timeout(uint32_t clk_freq) {
+		uint32_t clk_kHz = (2 * clk_freq + 1000) / (2 * 1000);
+		uint32_t time_clks = READ_WRITE_TIME_ms * clk_kHz;
+		SDIO->DTIMER = time_clks;
 	}
 
 	inline uint32_t set_slow_clk() {
@@ -68,7 +97,6 @@ namespace sd {
 
 	inline void init_sdio() {
 		RCC_AHBPeriphClockCmd(RCC_AHBPeriph_SDIO, ENABLE);
-		SDIO->DTIMER = 0xFFFFFFFF; // todo: set realistic value
 		SDIO->CLKCR = SDIO_CLKCR_CLKEN | get_clk_div(CLK_INIT_FREQ).clkcr;
 
 		NVIC_InitTypeDef nvic_conf;

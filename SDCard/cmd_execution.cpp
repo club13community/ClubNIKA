@@ -4,7 +4,7 @@
 #include "cmd_execution.h"
 #include "cmd_codes.h"
 #include "stm32f10x.h"
-#include "sd_registers.h"
+#include "card_registers.h"
 
 using namespace sd;
 

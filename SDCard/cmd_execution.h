@@ -5,7 +5,7 @@
 #pragma once
 #include <stdint.h>
 #include "sd_errors.h"
-#include "sd_registers.h"
+#include "card_registers.h"
 #include "sd_types.h"
 #include "sd_callbacks.h"
 

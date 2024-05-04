@@ -10,6 +10,7 @@
 #include "ff.h"			/* Obtains integer types */
 #include "diskio.h"		/* Declarations of disk functions */
 #include "ff_flash_driver.h"
+#include "ff_sd_driver.h"
 
 /* Definitions of physical drive number for each drive */
 #define DEV_FLASH	0
@@ -27,6 +28,8 @@ extern "C" DSTATUS disk_status (
 	switch (pdrv) {
 		case DEV_FLASH:
 			return flash::disk_status();
+		case DEV_SD:
+			return sd::disk_status();
 		default:
 			return STA_NOINIT;
 	}
@@ -43,6 +46,8 @@ extern "C" DSTATUS disk_initialize (
 	switch (pdrv) {
 		case DEV_FLASH:
 			return flash::disk_initialize();
+		case DEV_SD:
+			return sd::disk_initialize();
 		default:
 			return STA_NOINIT;
 	}
@@ -62,6 +67,8 @@ extern "C" DRESULT disk_read (
 	switch (pdrv) {
 		case DEV_FLASH:
 			return flash::disk_read(buff, sector, count);
+		case DEV_SD:
+			return sd::disk_read(buff, sector, count);
 		default:
 			return RES_PARERR;
 	}
@@ -83,6 +90,8 @@ extern "C" DRESULT disk_write (
 	switch (pdrv) {
 		case DEV_FLASH:
 			return flash::disk_write(buff, sector, count);
+		case DEV_SD:
+			return sd::disk_write(buff, sector, count);
 		default:
 			return RES_PARERR;
 	}
@@ -103,6 +112,8 @@ extern "C" DRESULT disk_ioctl (
 	switch (pdrv) {
 		case DEV_FLASH :
 			return flash::disk_ioctl(cmd, buff);
+		case DEV_SD:
+			return sd::disk_ioctl(cmd, buff);
 		default:
 			return RES_PARERR;
 	}

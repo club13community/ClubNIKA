@@ -34,7 +34,6 @@
 #define FLASH_IRQ_PRIORITY	6U
 
 #define SD_IRQ_PRIORITY			11U
-#define SD_DETECT_IRQ_PRIORITY	11U
 // for EXTI
 #define KEYBOARD_IRQ_PRIORITY	13U
 
@@ -48,7 +47,9 @@
 
 #define TASK_NORMAL_PRIORITY		1U
 // detects what was pressed
-#define KEYBOARD_SERVICE_PRIORITY	2U
+#define KEYBOARD_SERVICE_PRIORITY	3U
+// mounts and unmounts SD card
+#define SD_SERVICE_PRIORITY			2U
 
 #if configTIMER_TASK_PRIORITY <= KEYBOARD_SERVICE_PRIORITY || configTIMER_TASK_PRIORITY <= KEYBOARD_SERVICE_PRIORITY
 // highest priority guaranties that timer control commands are executed right after issuing

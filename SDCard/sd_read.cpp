@@ -5,7 +5,8 @@
 #include "cmd_execution.h"
 #include "data_exchange.h"
 #include "sd_info_private.h"
-#include "read_write_state.h"
+#include "sd_read_write_state.h"
+#include "sd_ctrl.h"
 #include "stm32f10x.h"
 
 using namespace sd;
@@ -38,17 +39,20 @@ static void read_done();
 static void read_failed(Error error);
 
 void sd::read(uint32_t block_addr, uint32_t block_count, uint8_t * buff, sd::DataCallback callback) {
+	Error error = start_operation();
+	if (error != Error::NONE) {
+		callback(0, error);
+	}
+	rw::block_address = block_addr;
+	rw::target_blocks = block_count;
+	rw::done_blocks = 0;
+	rw::buffer = buff;
+	rw::on_done = callback;
 	if (block_count > 0) {
-		rw::block_address = block_addr;
-		rw::target_blocks = block_count;
-		rw::done_blocks = 0;
-		rw::buffer = buff;
-		rw::on_done = callback;
-
 		rw::data_attempts = ATTEMPTS;
 		read_block(block_addr, buff);
 	} else {
-		callback(0, Error::NONE);
+		read_done();
 	}
 }
 
@@ -165,11 +169,13 @@ static void block_read_done() {
 }
 
 static void read_done() {
+	end_operation(Error::NONE);
 	rw::on_done(rw::done_blocks, Error::NONE);
 }
 
 static void read_failed(Error error) {
 	cancel_receive();
+	end_operation(error);
 	rw::on_done(rw::done_blocks, error);
 }
 

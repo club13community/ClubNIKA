@@ -11,4 +11,11 @@
 /** Approximate freq. Real freq. will be <= than this. */
 #define CLK_APP_FREQ	((uint32_t)6000000)
 #define CLK_INIT_FREQ	((uint32_t)400000)
-#define PROG_TIME_ms	200
+/** Time for card to 1) start sending requested block; 2) finish programming of received block */
+#define READ_WRITE_TIME_ms	200
+
+#define PRESENCE_CHECK_PERIOD_ms		20
+/** How many consequent checks, that card is inserted, should pass before card is assumed inserted */
+#define INSERTION_DEBOUNCE_SAMPLES		50
+/** How many consequent checks, that card is removed, should pass before card is assumed removed. */
+#define REMOVAL_DEBOUNCE_SAMPLES		50

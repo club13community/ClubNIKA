@@ -6,6 +6,7 @@
 #include "sd_types.h"
 
 namespace sd {
+	volatile bool card_present;
 	volatile CapacitySupport hcs;
 	volatile uint16_t RCA;
 	volatile uint32_t serial_number;
@@ -15,6 +16,10 @@ namespace sd {
 
 void sd::parse_CID(uint8_t * buff) {
 	serial_number;
+}
+
+bool sd::is_card_present() {
+	return card_present;
 }
 
 uint32_t sd::get_capacity_kb() {
@@ -33,6 +38,11 @@ uint32_t sd::get_capacity_gb() {
 
 bool sd::is_write_protected() {
 	return write_protected;
+}
+
+uint32_t sd::get_block_count() {
+	static_assert(block_len == 512);
+	return capacity_kb << 1; // 1kB = 2 blocks
 }
 
 static bool parse_CSD_v1(uint8_t * buff) {

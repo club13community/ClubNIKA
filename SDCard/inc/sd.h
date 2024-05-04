@@ -3,6 +3,7 @@
 // Limitations:
 // - does not support UC cards
 // - does not support cards, which use only 1 bit data bus
+// - does not support CLK speeds < 10KHz
 //
 
 #pragma once
@@ -11,7 +12,11 @@
 
 namespace sd {
 	void init_periph();
-	void init_card(Callback callback);
-	void write(uint32_t block_addr, uint32_t block_count, uint8_t * buff, DataCallback callback);
+	void start_periph();
+	void write(uint32_t block_addr, uint32_t block_count, const uint8_t * buff, DataCallback callback);
 	void read(uint32_t block_addr, uint32_t block_count, uint8_t * buff, DataCallback callback);
+	/* Provide implementation */
+	void on_card_inserted();
+	/* Provide implementation */
+	void on_card_removed();
 }

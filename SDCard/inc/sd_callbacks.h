@@ -4,7 +4,7 @@
 
 #pragma once
 #include "sd_errors.h"
-#include "sd_registers.h"
+#include "../card_registers.h"
 
 namespace sd {
 	typedef void (* Callback)(Error error);

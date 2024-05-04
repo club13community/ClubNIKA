@@ -40,6 +40,10 @@ namespace sd {
 		/** Data was not received or programmed in time */
 		DATA_TIMEOUT = 37,
 		DATA_CRC_ERROR = 38,
+		/** New operation was initiated while prev. is still running */
+		CONCURRENT_ACCESS = 39,
+		/** Card is not inserted */
+		NO_CARD = 40,
 		/** No error, all ok */
 		NONE = 0xFFFF
 	};

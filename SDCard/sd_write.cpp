@@ -5,8 +5,9 @@
 #include "cmd_execution.h"
 #include "data_exchange.h"
 #include "sd_info_private.h"
-#include "read_write_state.h"
+#include "sd_read_write_state.h"
 #include "periph.h"
+#include "sd_ctrl.h"
 
 using namespace sd;
 
@@ -25,18 +26,21 @@ static void block_write_done();
 static void write_done();
 static void write_failed(Error error);
 
-void sd::write(uint32_t block_addr, uint32_t block_count, uint8_t * buff, DataCallback callback) {
+void sd::write(uint32_t block_addr, uint32_t block_count, const uint8_t * buff, DataCallback callback) {
+	Error error = start_operation();
+	if (error != Error::NONE) {
+		callback(0, error);
+	}
+	rw::block_address = block_addr;
+	rw::target_blocks = block_count;
+	rw::done_blocks = 0;
+	rw::buffer = (uint8_t *)buff;
+	rw::on_done = callback;
 	if (block_count > 0) {
-		rw::block_address = block_addr;
-		rw::target_blocks = block_count;
-		rw::done_blocks = 0;
-		rw::buffer = buff;
-		rw::on_done = callback;
-
 		rw::data_attempts = ATTEMPTS;
 		write_block(block_addr);
 	} else {
-		callback(0, Error::NONE);
+		write_done();
 	}
 }
 
@@ -99,7 +103,7 @@ static void card_state_received(CSR_t csr, Error error) {
 static void data_sent(Error error) {
 	if (error == Error::NONE) {
 		// check status of programming
-		rw::status_attempts = PROG_TIME_ms;
+		rw::status_attempts = READ_WRITE_TIME_ms;
 		exe_cmd13(RCA, prog_status_received);
 	} else if (error == Error::DATA_CRC_ERROR) {
 		// try to write the same block again
@@ -153,10 +157,12 @@ static void block_write_done() {
 }
 
 static void write_done() {
+	end_operation(Error::NONE);
 	rw::on_done(rw::done_blocks, Error::NONE);
 }
 
 static void write_failed(Error error) {
+	end_operation(error);
 	rw::on_done(rw::done_blocks, error);
 }
 
