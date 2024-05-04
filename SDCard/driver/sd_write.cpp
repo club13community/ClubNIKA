@@ -1,10 +1,10 @@
 //
 // Created by independent-variable on 4/28/2024.
 //
-#include "sd.h"
+#include "sd_driver.h"
 #include "cmd_execution.h"
 #include "data_exchange.h"
-#include "sd_info_private.h"
+#include "sd_info.h"
 #include "sd_read_write_state.h"
 #include "periph.h"
 #include "sd_ctrl.h"

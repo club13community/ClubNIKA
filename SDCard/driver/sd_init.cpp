@@ -7,7 +7,7 @@
 #include "cmd_execution.h"
 #include "sd_errors.h"
 #include "config.h"
-#include "sd_info_private.h"
+#include "sd_info.h"
 
 using namespace sd;
 static uint8_t cid_cds_buff[16];

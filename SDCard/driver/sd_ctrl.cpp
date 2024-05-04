@@ -1,10 +1,11 @@
 //
 // Created by independent-variable on 5/1/2024.
 //
-#include "sd.h"
+#include "sd_driver.h"
+#include "sd_driver_callbacks.h"
 #include "sd_ctrl.h"
 #include "stm32f10x.h"
-#include "sd_info_private.h"
+#include "sd_info.h"
 #include "card_detection.h"
 #include "sd_init.h"
 #include "periph.h"
@@ -13,7 +14,8 @@ using namespace sd;
 
 static volatile bool op_ongoing;
 
-void sd::init_periph() {
+/** Inits peripherals and state. Does not need interrupts enabled. */
+void sd::init_driver() {
 	init_sdio();
 	init_sdio_pins();
 	init_detect_pin();
@@ -37,7 +39,7 @@ static inline void en_irq(uint32_t mask) {
 	__set_PRIMASK(mask);
 }
 
-void sd::start_periph() {
+void sd::start_driver() {
 	wait_insertion(card_inserted);
 }
 

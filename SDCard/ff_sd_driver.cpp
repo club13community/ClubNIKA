@@ -5,8 +5,7 @@
 #include "FreeRTOS.h"
 #include "event_groups.h"
 #include "periph_allocation.h"
-#include "sd.h"
-#include "sd_info_private.h"
+#include "sd_driver.h"
 #include "sd_errors.h"
 
 #if SD_IRQ_PRIORITY < configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY \
@@ -33,9 +32,9 @@ DSTATUS sd::disk_initialize () {
 }
 
 DSTATUS sd::disk_status () {
-	if (!card_present) {
+	if (!is_card_present()) {
 		return STA_NODISK;
-	} else if (write_protected) {
+	} else if (is_write_protected()) {
 		return STA_PROTECT;
 	} else {
 		return 0;

@@ -1,13 +1,13 @@
 //
 // Created by independent-variable on 5/4/2024.
 //
-#include "ff_sd_service.h"
+#include "sd_fs.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "event_groups.h"
 #include "periph_allocation.h"
-#include "sd.h"
-#include "sd_info.h"
+#include "sd_driver.h"
+#include "sd_driver_callbacks.h"
 #include "ff_sd_driver.h"
 #include "drives.h"
 
@@ -35,7 +35,7 @@ void sd::on_card_removed() {
 
 static void serve_mounting(void * arg) {
 	using namespace sd;
-	start_periph();
+	start_driver();
 	const BaseType_t clear_on_exit = pdTRUE, wait_for_any = pdFALSE;
 	EventBits_t bits;
 	while (true) {
@@ -55,8 +55,9 @@ static void serve_mounting(void * arg) {
 	}
 }
 
+/** Prepares everything for file system operations on SD card. Operations will start after FreeRTOS planner starts */
 void sd::start() {
-	init_periph();
+	init_driver();
 	init_disk_driver();
 	events = xEventGroupCreateStatic(&events_ctrl);
 	mount_task = xTaskCreateStatic(serve_mounting, "SD service", MOUNT_TASK_STACK_DEPTH, nullptr, SD_SERVICE_PRIORITY,

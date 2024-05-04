@@ -1,5 +1,6 @@
 //
 // Created by independent-variable on 5/4/2024.
+// Impl. methods for FatFs
 //
 
 #pragma once

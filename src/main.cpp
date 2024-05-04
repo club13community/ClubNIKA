@@ -34,9 +34,8 @@
 #include "UserInterface.h"
 #include "ff.h"
 #include "ff_flash_driver.h"
-#include "sd.h"
-#include "sd_info.h"
-#include "ff_sd_service.h"
+#include "sd_driver.h"
+#include "sd_fs.h"
 
 struct TaskHandleRegister{
 	TaskHandle_t stkMon_handle;
