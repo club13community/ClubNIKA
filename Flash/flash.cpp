@@ -51,13 +51,18 @@ static volatile uint16_t count;
 static volatile uint8_t ctrl[5];
 static volatile State state;
 
+static void read_status();
+
+/** Initializes peripherals and state.
+ * Interrupts should be enabled(timer is used for power-on delay, SPI is used to check that fash is ready) */
 void flash::init() {
 	init_cs();
 	TIMER.wait_us(POWER_ON_DELAY);
 	init_mosi_miso_sck();
 	init_spi();
-	// todo: check if ready
-	state = IDLE;
+	state = POWER_UP_CHECK;
+	read_status();
+	while (state != IDLE);
 }
 
 void flash::read_memory(MemoryAddress address, uint16_t length, uint8_t * destination, Callback callback) {
@@ -141,7 +146,16 @@ void flash::dma_isr() {
 	clear_rx_dma_tc();
 
 	State current = const_cast<State &>(state);
-	if (current == READ_COMMAND) {
+	if (current == POWER_UP_CHECK) {
+		cs_deselect();
+		uint8_t status = ctrl[1];
+		if (status & STATUS_RDY) {
+			cs_delay();
+			state = IDLE;
+		} else {
+			TIMER.invoke_in_us(STATUS_RECHECK_DELAY, read_status);
+		}
+	} else if (current == READ_COMMAND) {
 		state = READ_DATA;
 		enable_rx_dma(data, count, MemInc::YES);
 		enable_tx_dma(ctrl, count, MemInc::NO); // just to gen. clk.

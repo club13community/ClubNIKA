@@ -114,15 +114,16 @@ static void card_init(sd::Error error) {
 }
 
 static void do_test_task(void * args) {
-	/*FRESULT res;
-	res = f_mount(&fatfs, "0:", 1);
-	res = f_open(&tst_file, "0:test.txt", FA_READ);
+	FRESULT res;
+	res = f_mount(&fatfs, "/flash", 1);
+	res = f_open(&tst_file, "/flash/test.txt", FA_READ);
 	TCHAR buf[20];
 	f_gets(buf, 20, &tst_file);
 	bool eof = f_eof(&tst_file);
-	f_close(&tst_file);*/
+	f_close(&tst_file);
+	while(true);
 
-	while (true) {
+	/*while (true) {
 		while (!sd::is_card_present());
 		FRESULT res;
 		res = f_open(&tst_file, "1:test.txt", FA_READ);
@@ -132,7 +133,7 @@ static void do_test_task(void * args) {
 		f_close(&tst_file);
 		__NOP();
 		while (sd::is_card_present());
-	}
+	}*/
 
 	/*while (!sd::is_card_present());
 	sd::read((sd::get_capacity_kb() << 1), 1, sd_buf, card_read);
