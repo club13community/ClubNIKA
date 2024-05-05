@@ -384,7 +384,7 @@ PRIORITY THAN THIS! (higher priorities are lower numeric values. */
  * are used by trace and visualisation functions and tools.  Set to 0 to exclude
  * the additional information from the structures. Defaults to 0 if left
  * undefined. */
-#define configUSE_TRACE_FACILITY                0
+#define configUSE_TRACE_FACILITY                1
 
 /* Set to 1 to include the vTaskList() and vTaskGetRunTimeStats() functions in
  * the build.  Set to 0 to exclude these functions from the build.  These two
@@ -392,6 +392,9 @@ PRIORITY THAN THIS! (higher priorities are lower numeric values. */
  * otherwise not exist - hence they are kept separate.  Defaults to 0 if left
  * undefined. */
 #define configUSE_STATS_FORMATTING_FUNCTIONS    0
+
+/* Adds begin-end addresses of a task's stack in TaskStatus_t struct. */
+#define configRECORD_STACK_HIGH_ADDRESS			1
 
 /******************************************************************************/
 /* Co-routine related definitions. ********************************************/

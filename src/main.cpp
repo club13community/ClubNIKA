@@ -36,6 +36,7 @@
 #include "ff_flash_driver.h"
 #include "sd_driver.h"
 #include "sd_fs.h"
+#include "stack_monitor.h"
 
 struct TaskHandleRegister{
 	TaskHandle_t stkMon_handle;
@@ -212,7 +213,7 @@ extern "C" int main(void)
 	//timer task
 	create_test_task();
 #ifdef DEBUG
-	//taskHandleRegister.stkMon_handle=StackMonitor_Launch(getMessageBuffer_StackMonitorDataIn(), getMessageBuffer_StackMonitorDataOut());
+	start_stack_monitor();
 #endif
 
 	vTaskStartScheduler();
@@ -243,88 +244,8 @@ extern "C" void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBu
 
 #ifdef DEBUG
 
-struct StackMonitorContext{
-	UBaseType_t stkMon_unusedStack;
-	UBaseType_t clkCtrl_unusedStack;
-	UBaseType_t supSys_unusedStack;
-	UBaseType_t msg_unusedStack;
-	UBaseType_t wsens_unusedStack;
-	UBaseType_t voltMet_unusedStack;
-	UBaseType_t gsm_unusedStack;
-	UBaseType_t wless_unusedStack;
-	UBaseType_t ui_unusedStack;
-	UBaseType_t sound_unusedStack;
-	UBaseType_t uartExt_unusedStack;
-	UBaseType_t spiExt_unusedStack;
-	UBaseType_t i2cExt_unusedStack;
 
-	MessageBufferHandle_t msgIn, msgOut;
-} stkMon_context;
 
-void StackMonitor_mainTask(void * args){
-	while(1){
-		//update _unusedStack values
-		if(taskHandleRegister.clkCtrl_handle){
-			stkMon_context.clkCtrl_unusedStack=uxTaskGetStackHighWaterMark(taskHandleRegister.clkCtrl_handle);
-		}
-		if(taskHandleRegister.supSys_handle){
-			stkMon_context. supSys_unusedStack=uxTaskGetStackHighWaterMark(taskHandleRegister.supSys_handle);
-		}
-		if(taskHandleRegister.msg_handle){
-			stkMon_context. msg_unusedStack=uxTaskGetStackHighWaterMark(taskHandleRegister.msg_handle);
-		}
-		if(taskHandleRegister.wsens_handle){
-			stkMon_context. wsens_unusedStack=uxTaskGetStackHighWaterMark(taskHandleRegister.wsens_handle);
-		}
-		if(taskHandleRegister.voltMet_handle){
-			stkMon_context. voltMet_unusedStack=uxTaskGetStackHighWaterMark(taskHandleRegister.voltMet_handle);
-		}
-		if(taskHandleRegister.gsm_handle){
-			stkMon_context. gsm_unusedStack=uxTaskGetStackHighWaterMark(taskHandleRegister.gsm_handle);
-		}
-		if(taskHandleRegister.wless_handle){
-			stkMon_context. wless_unusedStack=uxTaskGetStackHighWaterMark(taskHandleRegister.wless_handle);
-		}
-		if(taskHandleRegister.ui_handle){
-			stkMon_context. ui_unusedStack=uxTaskGetStackHighWaterMark(taskHandleRegister.ui_handle);
-		}
-		if(taskHandleRegister.sound_handle){
-			stkMon_context. sound_unusedStack=uxTaskGetStackHighWaterMark(taskHandleRegister.sound_handle);
-		}
-		if(taskHandleRegister.uartExt_handle){
-			stkMon_context. uartExt_unusedStack=uxTaskGetStackHighWaterMark(taskHandleRegister.uartExt_handle);
-		}
-		if(taskHandleRegister.spiExt_handle){
-			stkMon_context. spiExt_unusedStack=uxTaskGetStackHighWaterMark(taskHandleRegister.spiExt_handle);
-		}
-		if(taskHandleRegister.i2cExt_handle){
-			stkMon_context. i2cExt_unusedStack=uxTaskGetStackHighWaterMark(taskHandleRegister.i2cExt_handle);
-		}
-		//check own stack
-		stkMon_context.stkMon_unusedStack=uxTaskGetStackHighWaterMark(taskHandleRegister.stkMon_handle);
-		taskYIELD();
-	}
-}
 
-TaskHandle_t StackMonitor_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut){
-	TaskHandle_t mainTask_handle;
-	static const char mainTask_name[configMAX_TASK_NAME_LEN]="StackMonitor";
-	static StaticTask_t mainTask_TCB;
-	static StackType_t mainTask_stackBuffer[128]; //length=mainTask_stackDepth
-
-	stkMon_context.msgIn=msgIn;
-	stkMon_context.msgOut=msgOut;
-
-	// Create task
-	mainTask_handle=xTaskCreateStatic(StackMonitor_mainTask,
-			mainTask_name,
-			128, //mainTask_stackDepth
-			(void *)0,
-			1,
-			mainTask_stackBuffer,
-			&mainTask_TCB);
-
-	return mainTask_handle;
-}
 
 #endif //DEBUG
