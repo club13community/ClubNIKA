@@ -6,6 +6,8 @@
 #include "diskio.h"
 
 namespace flash {
+	void init_disk_driver();
+
 	DSTATUS disk_initialize();
 
 	DSTATUS disk_status();

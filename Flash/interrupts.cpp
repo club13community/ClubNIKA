@@ -6,3 +6,7 @@
 extern "C" void DMA1_Channel2_IRQHandler() {
 	flash::dma_isr();
 }
+
+extern "C" void SPI1_IRQHandler() {
+	flash::spi_isr();
+}

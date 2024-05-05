@@ -114,6 +114,7 @@ static void card_init(sd::Error error) {
 }
 
 static void do_test_task(void * args) {
+	flash::init_disk_driver();
 	FRESULT res;
 	res = f_mount(&fatfs, "/flash", 1);
 	res = f_open(&tst_file, "/flash/test.txt", FA_READ);

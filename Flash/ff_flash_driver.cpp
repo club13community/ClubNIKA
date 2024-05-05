@@ -11,27 +11,27 @@
 #error FatFs driver of Flash uses FreeRTOS API
 #endif
 
-static EventGroupHandle_t events = nullptr;
+static EventGroupHandle_t events;
 static StaticEventGroup_t events_ctrl;
-#define ALL_DONE	(1U<<0)
+#define RW_DONE			(1U << 0)
+#define RW_FAILED		(1U << 1)
+#define ALL_RW_EVENTS	(RW_DONE | RW_FAILED)
+
+void flash::init_disk_driver() {
+	events = xEventGroupCreateStatic(&events_ctrl);
+}
 
 DSTATUS flash::disk_initialize () {
-	events = xEventGroupCreateStatic(&events_ctrl);
-	xEventGroupSetBits(events, ALL_DONE);
 	return 0; // already initialized
 }
 
 DSTATUS flash::disk_status () {
-	if (events == nullptr) {
-		return STA_NOINIT;
-	} else {
-		return 0; // all ok
-	}
+	return 0; // all ok
 }
 
-static void set_all_done() {
+static void set_all_done(bool success) {
 	BaseType_t ptw = pdFALSE;
-	xEventGroupSetBitsFromISR(events, ALL_DONE, &ptw);
+	xEventGroupSetBitsFromISR(events, success ? RW_DONE : RW_FAILED, &ptw);
 	portYIELD_FROM_ISR(ptw);
 }
 
@@ -39,48 +39,64 @@ static volatile flash::PageAddress page;
 static volatile uint8_t * data;
 static volatile uint16_t page_count;
 
-static void read_page() {
-	flash::PageAddress p = page;
-	uint8_t * d = (uint8_t *)data;
-	page += 1;
-	data += 512;
-	bool all_done = --page_count == 0;
-	flash::read_memory({.page = p, .byte = 0}, 512, d, all_done ? set_all_done : read_page);
+static void read_page(bool prev_success) {
+	if (prev_success) {
+		flash::PageAddress p = page;
+		uint8_t * d = (uint8_t *) data;
+		page += 1;
+		data += 512;
+		bool all_done = --page_count == 0;
+		flash::read_memory({.page = p, .byte = 0}, 512, d, all_done ? set_all_done : read_page);
+	} else {
+		set_all_done(false);
+	}
 }
 
 DRESULT flash::disk_read (BYTE* buff, DWORD sector, UINT count) {
-	xEventGroupClearBits(events, ALL_DONE);
 	page = sector;
 	data = buff;
 	page_count = count;
-	read_page();
-	const BaseType_t dont_clear_on_exit = pdFALSE, wait_all = pdTRUE;
-	while ((xEventGroupWaitBits(events, ALL_DONE, dont_clear_on_exit, wait_all, portMAX_DELAY) & ALL_DONE) != ALL_DONE);
-	return RES_OK;
+	read_page(true);
+	const BaseType_t clear_on_exit = pdTRUE, wait_any = pdFALSE;
+	EventBits_t bits;
+	do {
+		bits = xEventGroupWaitBits(events, ALL_RW_EVENTS, clear_on_exit, wait_any, portMAX_DELAY);
+	} while (bits == 0);
+	return bits & RW_DONE ? RES_OK : RES_ERROR;
 }
-static void data_to_buffer();
+static void data_to_buffer(bool prev_success);
 
-static void buffer_to_memory() {
-	uint16_t p = page;
-	page += 1;
-	data += 512;
-	bool all_done = --page_count == 0;
-	flash::erase_and_program(flash::Buffer::B1, p, all_done ? set_all_done : data_to_buffer);
+static void buffer_to_memory(bool prev_success) {
+	if (prev_success) {
+		uint16_t p = page;
+		page += 1;
+		data += 512;
+		bool all_done = --page_count == 0;
+		flash::erase_and_program(flash::Buffer::B1, p, all_done ? set_all_done : data_to_buffer);
+	} else {
+		set_all_done(false);
+	}
 }
 
-static void data_to_buffer() {
-	flash::write_buffer(flash::Buffer::B1, 0, 512, (uint8_t *)data, buffer_to_memory);
+static void data_to_buffer(bool prev_success) {
+	if (prev_success) {
+		flash::write_buffer(flash::Buffer::B1, 0, 512, (uint8_t *) data, buffer_to_memory);
+	} else {
+		set_all_done(false);
+	}
 }
 
 DRESULT flash::disk_write (const BYTE* buff, DWORD sector, UINT count) {
-	xEventGroupClearBits(events, ALL_DONE);
 	page = sector;
 	data = (uint8_t *)buff;
 	page_count = count;
-	data_to_buffer();
-	const BaseType_t dont_clear_on_exit = pdFALSE, wait_all = pdTRUE;
-	while ((xEventGroupWaitBits(events, ALL_DONE, dont_clear_on_exit, wait_all, portMAX_DELAY) & ALL_DONE) != ALL_DONE);
-	return RES_OK;
+	data_to_buffer(true);
+	const BaseType_t clear_on_exit = pdTRUE, wait_any = pdFALSE;
+	EventBits_t bits;
+	do {
+		bits = xEventGroupWaitBits(events, ALL_RW_EVENTS, clear_on_exit, wait_any, portMAX_DELAY);
+	} while (bits == 0);
+	return bits & RW_DONE ? RES_OK : RES_ERROR;
 }
 
 DRESULT flash::disk_ioctl (BYTE cmd, void* buff) {

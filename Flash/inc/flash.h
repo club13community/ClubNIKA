@@ -1,12 +1,15 @@
 //
 // Created by independent-variable on 3/26/2024.
+// Driver for basic operations with flash
+// Limitations:
+// - APBx clock should be >= 1MHz and <= 48MHz
 //
 
 #pragma once
 #include <stdint.h>
 
 namespace flash {
-	typedef void (* Callback)();
+	typedef void (* Callback)(bool success);
 
 	enum class Buffer {B1, B2};
 

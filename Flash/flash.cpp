@@ -167,7 +167,7 @@ void flash::dma_isr() {
 		state = IDLE;
 		cs_deselect();
 		cs_delay();
-		on_done();
+		on_done(true);
 	} else if (current == BUFFER_MEMORY_COMMAND) {
 		state = BUFFER_MEMORY_EXEC;
 		cs_deselect();
@@ -176,15 +176,29 @@ void flash::dma_isr() {
 		state = ERASE_AND_PROGRAM_EXEC;
 		cs_deselect();
 		TIMER.invoke_in_us(ERASE_AND_PROGRAM_DELAY, switch_to_checking);
-	} else if (current == BUFFER_MEMORY_CHECK || current == ERASE_AND_PROGRAM_CHECK) {
+	} else if (current == BUFFER_MEMORY_CHECK || current == ERASE_AND_PROGRAM_CHECK
+				|| current == READY_AFTER_ERROR_CHECK) {
 		cs_deselect();
 		uint8_t status = ctrl[1];
 		if (status & STATUS_RDY) {
 			state = IDLE;
 			cs_delay();
-			on_done();
+			on_done(current != READY_AFTER_ERROR_CHECK);
 		} else {
 			TIMER.invoke_in_us(STATUS_RECHECK_DELAY, read_status);
 		}
 	}
+}
+
+void flash::spi_isr() {
+	cs_deselect();
+	cs_delay();
+	disable_spi();
+	disable_tx_dma();
+	disable_rx_dma();
+	wait_spi_disabled();
+	empty_spi_rx_fifo(); // also clears 'overrun flag'
+	enable_spi();
+	state = READY_AFTER_ERROR_CHECK;
+	read_status();
 }
