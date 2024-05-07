@@ -17,7 +17,7 @@ namespace rec {
 static rec::LogBuffer buffer;
 static char message[MAX_MESSAGE_LENGTH + 2]; // message + "\n\0"
 
-#define STACK_SIZE	128
+#define STACK_SIZE	256U
 static StackType_t stack[STACK_SIZE];
 static StaticTask_t task_ctrl;
 

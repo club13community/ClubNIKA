@@ -16,7 +16,7 @@ static EventGroupHandle_t events;
 #define CARD_INSERTED	(1U << 0)
 #define CARD_REMOVED	(1U << 1)
 
-#define MOUNT_TASK_STACK_DEPTH		128
+#define MOUNT_TASK_STACK_DEPTH		256U
 static StackType_t mount_task_stack[MOUNT_TASK_STACK_DEPTH];
 static StaticTask_t mount_task_ctrl;
 static TaskHandle_t mount_task;

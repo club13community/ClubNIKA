@@ -46,79 +46,9 @@ static StaticTask_t test_task_ctrl;
 static StackType_t test_task_stack[1024];
 static FIL tst_file;
 
-uint8_t sd_buf[512 * 2];
-
-static void card_read(uint32_t block_count, sd::Error error) {
-	__NOP();
-}
-
-static void card_written(uint32_t block_count, sd::Error error) {
-	bool ok = error == sd::Error::NONE;
-	__NOP();
-}
-
-static void card_init(sd::Error error) {
-	bool ok = error == sd::Error::NONE;
-	uint32_t cap_kb = sd::get_capacity_kb();
-	uint32_t cap_mb = sd::get_capacity_mb();
-	uint32_t cap_gb = sd::get_capacity_gb();
-	bool is_wp = sd::is_write_protected();
-
-	/*for (uint16_t i = 0; i < 512; i++) {
-		sd_buf[i] = 3;
-	}
-	for (uint16_t i = 512; i < 512 * 2; i++) {
-		sd_buf[i] = 4;
-	}
-	sd::write(1, 2, sd_buf, card_written);*/
-	for (uint16_t i = 0; i < 512 * 2; i++) {
-		sd_buf[i] = 0;
-	}
-	sd::read(1, 2, sd_buf, card_read);
-}
 
 static void do_test_task(void * args) {
-	/*FRESULT res;
-	while (!sd::is_card_present());
-	res = f_open(&tst_file, "/sd/t.txt", FA_OPEN_APPEND | FA_WRITE);
-	UINT wr;
-	res = f_write(&tst_file, "2222", 4, &wr);
-	//res = f_close(&tst_file);*/
-	uint8_t i = 0;
-	while (true) {
-		rec::log("Message {0}", {rec::s(i++)});
-		vTaskDelay(pdMS_TO_TICKS(1000));
-	}
-	/*flash::init_disk_driver();
-	FRESULT res;
-	res = f_mount(&fatfs, "/flash", 1);
-	res = f_open(&tst_file, "/flash/test.txt", FA_READ);
-	TCHAR buf[20];
-	f_gets(buf, 20, &tst_file);
-	bool eof = f_eof(&tst_file);
-	f_close(&tst_file);
-	while(true);*/
-
-	/*while (true) {
-		while (!sd::is_card_present());
-		FRESULT res;
-		res = f_open(&tst_file, "/sd/test.txt", FA_READ);
-		TCHAR buf[20];
-		UINT len;
-		res = f_read(&tst_file, buf, 3, &len);
-		f_unmount("/sd");
-		res = f_open(&tst_file, "/sd/test.txt", FA_READ); // FR_NOT_ENABLED
-		res = f_read(&tst_file, buf, 3, &len); // FR_INVALID_OBJECT
-
-		bool eof = f_eof(&tst_file);
-		f_close(&tst_file);
-		__NOP();
-		while (sd::is_card_present());
-	}*/
-
-	/*while (!sd::is_card_present());
-	sd::read((sd::get_capacity_kb() << 1), 1, sd_buf, card_read);
-	while(true);*/
+	while(true);
 }
 
 static void create_test_task() {
@@ -167,25 +97,6 @@ extern "C" int main(void)
 
 	//taskHandleRegister.msg_handle=MessageRouter_Launch();
 
-	/*uint8_t mem[5] = {1, 2, 3, 4, 5};
-	uint8_t buf[5] = {0xA, 0xA, 0xA, 0xA, 0xA};
-	using namespace flash;
-	init();
-
-	done = false;
-	memory_to_buffer(0, Buffer::B2, do_done);
-	while (!done);
-
-	done = false;
-	read_memory({.page = 0, .byte = 0}, 4, mem, do_done);
-	while (!done);
-
-	done = false;
-	read_buffer(Buffer::B2, 0, 4, buf, do_done);
-	while(!done);
-
-	__NOP();*/
-
 	//wireless
 	//File system
 	//idle task
@@ -220,11 +131,3 @@ extern "C" void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBu
 	*ppxTimerTaskStackBuffer = uxTimerTaskStack;
 	*pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
 }
-
-#ifdef DEBUG
-
-
-
-
-
-#endif //DEBUG
