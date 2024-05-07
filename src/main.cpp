@@ -37,51 +37,14 @@
 #include "sd_driver.h"
 #include "sd_fs.h"
 #include "stack_monitor.h"
-
-struct TaskHandleRegister{
-	TaskHandle_t stkMon_handle;
-	TaskHandle_t clkCtrl_handle;
-	TaskHandle_t supSys_handle;
-	TaskHandle_t msg_handle;
-	TaskHandle_t wsens_handle;
-	TaskHandle_t voltMet_handle;
-	TaskHandle_t gsm_handle;
-	TaskHandle_t wless_handle;
-	TaskHandle_t ui_handle;
-	TaskHandle_t sound_handle;
-	TaskHandle_t uartExt_handle;
-	TaskHandle_t spiExt_handle;
-	TaskHandle_t i2cExt_handle;
-} taskHandleRegister;
-
-void clearTaskHandleRegister(){
-	taskHandleRegister.stkMon_handle=0;
-	taskHandleRegister.clkCtrl_handle=0;
-	taskHandleRegister.supSys_handle=0;
-	taskHandleRegister.msg_handle=0;
-	taskHandleRegister.wsens_handle=0;
-	taskHandleRegister.voltMet_handle=0;
-	taskHandleRegister.gsm_handle=0;
-	taskHandleRegister.wless_handle=0;
-	taskHandleRegister.ui_handle=0;
-	taskHandleRegister.sound_handle=0;
-	taskHandleRegister.uartExt_handle=0;
-	taskHandleRegister.spiExt_handle=0;
-	taskHandleRegister.i2cExt_handle=0;
-}
-
-#ifdef DEBUG
-TaskHandle_t StackMonitor_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut);
-#endif
-
-FATFS fatfs;
+#include "logging.h"
+#include "../Logging/Buffer.h"
+#include "drives.h"
 
 static TaskHandle_t test_task;
 static StaticTask_t test_task_ctrl;
 static StackType_t test_task_stack[1024];
 static FIL tst_file;
-
-
 
 uint8_t sd_buf[512 * 2];
 
@@ -115,7 +78,18 @@ static void card_init(sd::Error error) {
 }
 
 static void do_test_task(void * args) {
-	flash::init_disk_driver();
+	/*FRESULT res;
+	while (!sd::is_card_present());
+	res = f_open(&tst_file, "/sd/t.txt", FA_OPEN_APPEND | FA_WRITE);
+	UINT wr;
+	res = f_write(&tst_file, "2222", 4, &wr);
+	//res = f_close(&tst_file);*/
+	uint8_t i = 0;
+	while (true) {
+		rec::log("Message {0}", {rec::s(i++)});
+		vTaskDelay(pdMS_TO_TICKS(1000));
+	}
+	/*flash::init_disk_driver();
 	FRESULT res;
 	res = f_mount(&fatfs, "/flash", 1);
 	res = f_open(&tst_file, "/flash/test.txt", FA_READ);
@@ -123,14 +97,19 @@ static void do_test_task(void * args) {
 	f_gets(buf, 20, &tst_file);
 	bool eof = f_eof(&tst_file);
 	f_close(&tst_file);
-	while(true);
+	while(true);*/
 
 	/*while (true) {
 		while (!sd::is_card_present());
 		FRESULT res;
-		res = f_open(&tst_file, "1:test.txt", FA_READ);
+		res = f_open(&tst_file, "/sd/test.txt", FA_READ);
 		TCHAR buf[20];
-		f_gets(buf, 20, &tst_file);
+		UINT len;
+		res = f_read(&tst_file, buf, 3, &len);
+		f_unmount("/sd");
+		res = f_open(&tst_file, "/sd/test.txt", FA_READ); // FR_NOT_ENABLED
+		res = f_read(&tst_file, buf, 3, &len); // FR_INVALID_OBJECT
+
 		bool eof = f_eof(&tst_file);
 		f_close(&tst_file);
 		__NOP();
@@ -170,7 +149,6 @@ extern "C" int main(void)
 	wired_zones::init_periph();
 
 	MessageRouter_StartUpInit();
-	clearTaskHandleRegister();
 
 	ClockControl_Launch(getMessageBuffer_ClockControlDataIn(), getMessageBuffer_ClockControlDataOut());
 	SupplySystem_Launch(getMessageBuffer_SupplySystemDataIn(), getMessageBuffer_SupplySystemDataOut());
@@ -178,6 +156,7 @@ extern "C" int main(void)
 	user_interface::start();
 	wired_zones::start();
 	sd::start();
+	rec::start();
 	//taskHandleRegister.wsens_handle=WiredSensorMonitor_Launch(getMessageBuffer_WiredSensorMonitorDataIn(), getMessageBuffer_WiredSensorMonitorDataOut());
 	//taskHandleRegister.voltMet_handle=VoltageMeter_Launch(getMessageBuffer_VoltageMeterDataIn(), getMessageBuffer_VoltageMeterDataOut());
 	//taskHandleRegister.wless_handle=WirelessInterface_Launch(getMessageBuffer_WirelessInterfaceDataIn(), getMessageBuffer_WirelessInterfaceDataOut());
@@ -233,7 +212,7 @@ extern "C" void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuff
 
 extern "C" void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer,
                                      StackType_t **ppxTimerTaskStackBuffer,
-                                     uint32_t *pulTimerTaskStackSize ){
+                                     size_t *pulTimerTaskStackSize ){
 	static StaticTask_t xTimerTaskTCB;
 	static StackType_t uxTimerTaskStack[configTIMER_TASK_STACK_DEPTH];
 

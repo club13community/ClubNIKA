@@ -54,6 +54,7 @@ include_directories(ApplicationLogic/inc ClockControl/inc fatfs/inc freeRTOS/inc
         MessageRouter/inc SoundService/inc SPIExtension/inc SupplySystem/inc UARTExtension/inc UserInterface/inc
         VoltageMeter/inc WiredZones/inc WirelessInterface/inc Timing/inc Flash/inc
         SDCard/inc SDCard/driver/inc
+        Logging/inc
         CMSIS/core CMSIS/device StdPeriph_Driver/inc periph_utils/inc)
 
 add_definitions(-DSTM32 -DSTM32F1 -DSTM32F103VETx -DDEBUG -DSTM32F10X_HD -DUSE_HAL_DRIVER -DUSE_STDPERIPH_DRIVER)
@@ -63,6 +64,7 @@ file(GLOB_RECURSE SOURCES "ApplicationLogic/*.*" "CMSIS/*.*" "ClockControl/*.*" 
         "UARTExtension/*.*" "UserInterface/*.*" "UserInterface/controllers/*.*" "VoltageMeter/*.*" "WiredZones/*.*" "WirelessInterface/*.*"
         "Flash/*.*" "fatfs/*.*" "freeRTOS/*.*" "inc/*.*" "src/*.*" "startup/*.*" "Timing/*.*" "periph_utils/*.*"
         "SDCard/*.*" "SDCard/driver/*.*"
+        "Logging/*.*"
 )
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/LinkerScript.ld)
