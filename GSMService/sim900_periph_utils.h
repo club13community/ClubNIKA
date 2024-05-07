@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "config.h"
+#include "./config.h"
 
 namespace sim900 {
 	inline void press_pwr_key() {

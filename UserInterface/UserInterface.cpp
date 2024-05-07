@@ -8,16 +8,16 @@
 #include "UserInterface.h"
 #include "FreeRTOS.h"
 #include "task.h"
-#include "lcd.h"
+#include "./lcd.h"
 #include "keyboard.h"
 #include "periph_allocation.h"
 #include "queue.h"
 #include "timers.h"
 #include "event_groups.h"
 #include "semphr.h"
-#include "ui_private.h"
-#include "controllers.h"
-#include "display.h"
+#include "./ui_private.h"
+#include "./controllers.h"
+#include "./display.h"
 
 void user_interface::init_periph() {
 	lcd::init();

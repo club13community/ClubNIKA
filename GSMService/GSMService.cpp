@@ -13,7 +13,7 @@
 #include "stm32f10x_usart.h"
 #include "stm32f10x_dma.h"
 #include <string.h>
-#include "sim900_periph_utils.h"
+#include "./sim900_periph_utils.h"
 #include "rcc_utils.h"
 #include "sim900_driver.h"
 

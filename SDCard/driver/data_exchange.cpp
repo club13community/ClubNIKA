@@ -2,9 +2,9 @@
 // Created by independent-variable on 4/27/2024.
 //
 #include "sd_driver.h"
-#include "sd_info.h"
-#include "data_exchange.h"
-#include "periph.h"
+#include "./sd_info.h"
+#include "./data_exchange.h"
+#include "./periph.h"
 
 using namespace sd;
 

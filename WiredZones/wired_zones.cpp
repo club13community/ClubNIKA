@@ -1,9 +1,9 @@
 
 #include "wired_zones.h"
 #include "wired_zones_meas.h"
-#include "periph.h"
+#include "./periph.h"
 #include "periph_allocation.h"
-#include "config.h"
+#include "./config.h"
 
 static void main_task(void *pvParameters){
 	while(1){

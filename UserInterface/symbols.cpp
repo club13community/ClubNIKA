@@ -2,7 +2,7 @@
 // Created by independent-variable on 4/5/2024.
 //
 #include <stdint.h>
-#include "symbols.h"
+#include "./symbols.h"
 
 namespace user_interface::symbol {
 

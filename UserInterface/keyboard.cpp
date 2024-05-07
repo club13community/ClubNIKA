@@ -3,10 +3,10 @@
 //
 #include "stm32f10x.h"
 #include "periph_allocation.h"
-#include "keyboard_config.h"
+#include "./keyboard_config.h"
 #include "keyboard.h"
-#include "keyboard_periph.h"
-#include "ui_private.h"
+#include "./keyboard_periph.h"
+#include "./ui_private.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "timing.h"

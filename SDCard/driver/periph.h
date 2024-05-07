@@ -9,7 +9,7 @@
 #include "dma_utils.h"
 #include "timing.h"
 #include <exception>
-#include "config.h"
+#include "./config.h"
 
 #define TIMER		(timing::coarse_timer1)
 

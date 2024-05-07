@@ -1,8 +1,8 @@
 //
 // Created by independent-variable on 3/23/2024.
 //
-#include "speaker.h"
-#include "speaker_config.h"
+#include "./speaker.h"
+#include "./speaker_config.h"
 #include "periph_allocation.h"
 #include "stm32f10x.h"
 #include "rcc_utils.h"

@@ -6,7 +6,7 @@
 #include "rcc_utils.h"
 #include "tim_utils.h"
 #include "nvic_utils.h"
-#include "timer_channel.h"
+#include "./timer_channel.h"
 
 #define TIMER		TIMING_TIMER
 

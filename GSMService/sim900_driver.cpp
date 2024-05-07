@@ -3,8 +3,8 @@
 //
 #include <exception>
 #include "sim900_driver.h"
-#include "sim900_power_ctrl.h"
-#include "sim900_uart_ctrl.h"
+#include "./sim900_power_ctrl.h"
+#include "./sim900_uart_ctrl.h"
 
 void sim900::config_peripherals() {
 	using namespace sim900;

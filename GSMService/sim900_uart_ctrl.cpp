@@ -2,14 +2,14 @@
 // Created by independent-variable on 3/20/2024.
 //
 #include <stdint.h>
-#include "config.h"
+#include "./config.h"
 #include "sim900_driver.h"
-#include "sim900_uart_ctrl.h"
+#include "./sim900_uart_ctrl.h"
 #include "stm32f10x_usart.h"
 #include "rcc_utils.h"
 #include "nvic_utils.h"
 #include "dma_utils.h"
-#include "sim900_power_ctrl.h"
+#include "./sim900_power_ctrl.h"
 
 #define CHAR_0_PRESENT	0x01U
 #define CHAR_1_PRESENT	0x02U

@@ -5,7 +5,7 @@
 #pragma once
 #include "stm32f10x.h"
 #include "periph_allocation.h"
-#include "config.h"
+#include "./config.h"
 #include <exception>
 
 #define SPI			FLASH_SPI

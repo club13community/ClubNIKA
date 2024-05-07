@@ -3,12 +3,12 @@
 //
 #include "sd_driver.h"
 #include "sd_driver_callbacks.h"
-#include "sd_ctrl.h"
+#include "./sd_ctrl.h"
 #include "stm32f10x.h"
-#include "sd_info.h"
-#include "card_detection.h"
-#include "sd_init.h"
-#include "periph.h"
+#include "./sd_info.h"
+#include "./card_detection.h"
+#include "./sd_init.h"
+#include "./periph.h"
 
 using namespace sd;
 

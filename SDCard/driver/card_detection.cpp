@@ -1,8 +1,8 @@
 //
 // Created by independent-variable on 5/1/2024.
 //
-#include "card_detection.h"
-#include "periph.h"
+#include "./card_detection.h"
+#include "./periph.h"
 
 using namespace sd;
 

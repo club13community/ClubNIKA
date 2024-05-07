@@ -7,7 +7,7 @@
 #include "tim_utils.h"
 #include "rcc_utils.h"
 #include "nvic_utils.h"
-#include "timer_channel.h"
+#include "./timer_channel.h"
 
 #define TIMER	FINE_TIMER
 #define CR1_RUNNING	TIM_CR1_CEN

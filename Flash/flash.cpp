@@ -2,9 +2,9 @@
 // Created by independent-variable on 3/26/2024.
 //
 #include "flash.h"
-#include "periph.h"
-#include "utils.h"
-#include "internal.h"
+#include "./periph.h"
+#include "./utils.h"
+#include "./internal.h"
 #include "timing.h"
 
 #define TIMER		(timing::fine_timer3)

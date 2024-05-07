@@ -2,7 +2,7 @@
 // Created by independent-variable on 3/30/2024.
 //
 #include "voltage_meter.h"
-#include "periph.h"
+#include "./periph.h"
 #include "wired_zones_meas.h"
 #include "supply_system_meas.h"
 

@@ -2,9 +2,9 @@
 // Created by independent-variable on 4/23/2024.
 //
 #include "cmd_execution.h"
-#include "cmd_codes.h"
+#include "./cmd_codes.h"
 #include "stm32f10x.h"
-#include "card_registers.h"
+#include "./card_registers.h"
 
 using namespace sd;
 

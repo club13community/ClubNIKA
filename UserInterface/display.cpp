@@ -1,8 +1,8 @@
 //
 // Created by independent-variable on 4/5/2024.
 //
-#include "display.h"
-#include "lcd.h"
+#include "./display.h"
+#include "./lcd.h"
 
 using namespace user_interface;
 

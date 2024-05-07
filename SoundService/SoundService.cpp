@@ -5,7 +5,7 @@
  *      Author: MaxCm
  */
 #include "SoundService.h"
-#include "speaker.h"
+#include "./speaker.h"
 
 #include "ClockControl.h"
 

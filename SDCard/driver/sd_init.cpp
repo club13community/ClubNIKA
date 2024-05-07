@@ -1,13 +1,13 @@
 //
 // Created by independent-variable on 4/21/2024.
 //
-#include "sd_init.h"
-#include "periph.h"
+#include "./sd_init.h"
+#include "./periph.h"
 #include "timing.h"
-#include "cmd_execution.h"
+#include "./cmd_execution.h"
 #include "sd_errors.h"
-#include "config.h"
-#include "sd_info.h"
+#include "./config.h"
+#include "./sd_info.h"
 
 using namespace sd;
 static uint8_t cid_cds_buff[16];

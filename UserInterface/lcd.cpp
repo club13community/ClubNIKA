@@ -1,8 +1,8 @@
 //
 // Created by independent-variable on 3/25/2024.
 //
-#include "lcd.h"
-#include "lcd_periph.h"
+#include "./lcd.h"
+#include "./lcd_periph.h"
 
 #define FUNCTION_SET	0x20U
 #define DB_4BITS	(0 << 4)

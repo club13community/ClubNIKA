@@ -2,7 +2,7 @@
 // Created by independent-variable on 4/26/2024.
 //
 #include "sd_driver.h"
-#include "sd_info.h"
+#include "./sd_info.h"
 #include "sd_types.h"
 
 namespace sd {

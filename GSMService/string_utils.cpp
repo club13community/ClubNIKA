@@ -1,7 +1,7 @@
 //
 // Created by independent-variable on 3/20/2024.
 //
-#include "string_utils.h"
+#include "./string_utils.h"
 
 bool equals(const char * a, const char * b, uint16_t len) {
 	while (len >= 4) {
