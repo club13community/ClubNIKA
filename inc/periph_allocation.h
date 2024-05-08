@@ -46,10 +46,12 @@
 #define SD_DMA_PRIORITY				DMA_Priority_High
 
 #define TASK_NORMAL_PRIORITY		1U
-// detects what was pressed
-#define KEYBOARD_SERVICE_PRIORITY	3U
 // mounts and unmounts SD card
 #define SD_SERVICE_PRIORITY			2U
+// detects what was pressed
+#define KEYBOARD_SERVICE_PRIORITY	3U
+// starts application(mounts flash, loads settings, etc.); should have higher priority, than normal task
+#define APP_STARTER_PRIORITY		4U
 
 #if configTIMER_TASK_PRIORITY <= KEYBOARD_SERVICE_PRIORITY || configTIMER_TASK_PRIORITY <= KEYBOARD_SERVICE_PRIORITY
 // highest priority guaranties that timer control commands are executed right after issuing

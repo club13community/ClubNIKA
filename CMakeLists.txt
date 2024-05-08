@@ -53,7 +53,7 @@ endif ()
 include_directories(ApplicationLogic/inc ClockControl/inc fatfs/inc freeRTOS/inc freeRTOS/ARM_CM3 GSMService/inc I2CExtension/inc inc
         MessageRouter/inc SoundService/inc SPIExtension/inc SupplySystem/inc UARTExtension/inc UserInterface/inc
         VoltageMeter/inc WiredZones/inc WirelessInterface/inc Timing/inc Flash/inc
-        SDCard/inc SDCard/driver/inc
+        SDCard/inc SDCard/driver/inc Settings/inc
         Logging/inc
         CMSIS/core CMSIS/device StdPeriph_Driver/inc periph_utils/inc)
 
@@ -63,8 +63,7 @@ file(GLOB_RECURSE SOURCES "ApplicationLogic/*.*" "CMSIS/*.*" "ClockControl/*.*" 
         "MessageRouter/*.*" "SPIExtension/*.*" "SoundService/*.*" "StdPeriph_Driver/*.*" "SupplySystem/*.*"
         "UARTExtension/*.*" "UserInterface/*.*" "UserInterface/controllers/*.*" "VoltageMeter/*.*" "WiredZones/*.*" "WirelessInterface/*.*"
         "Flash/*.*" "fatfs/*.*" "freeRTOS/*.*" "inc/*.*" "src/*.*" "startup/*.*" "Timing/*.*" "periph_utils/*.*"
-        "SDCard/*.*" "SDCard/driver/*.*"
-        "Logging/*.*"
+        "SDCard/*.*" "SDCard/driver/*.*" "Settings/*.*" "Logging/*.*"
 )
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/LinkerScript.ld)

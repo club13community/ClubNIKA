@@ -17,4 +17,12 @@ namespace flash {
 	DRESULT disk_write(const BYTE *buff, DWORD sector, UINT count);
 
 	DRESULT disk_ioctl(BYTE cmd, void *buff);
+
+#if FF_USE_MKFS == 1
+	/** Formats flash.
+	 * @param buffer 512 bytes buffer
+	 * @param root_entries_x16 number of possible root dir. entries multiplied by 16 */
+	FRESULT make_fs(uint8_t * buffer, uint8_t root_entries_x16);
+#endif
+
 }

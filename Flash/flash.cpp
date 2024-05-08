@@ -55,7 +55,7 @@ static void read_status();
 
 /** Initializes peripherals and state.
  * Interrupts should be enabled(timer is used for power-on delay, SPI is used to check that fash is ready) */
-void flash::init() {
+void flash::init_periph() {
 	init_cs();
 	TIMER.wait_us(POWER_ON_DELAY);
 	init_mosi_miso_sck();

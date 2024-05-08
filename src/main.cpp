@@ -14,7 +14,6 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-#include "croutine.h"
 #include "timing.h"
 #include "ClockControl.h"
 #include "SupplySystem.h"
@@ -28,23 +27,21 @@
 #include "UARTExtension.h"
 #include "SPIExtension.h"
 #include "I2CExtension.h"
-#include "Message.h"
 #include "flash.h"
 #include "UserInterface.h"
 #include "ff.h"
 #include "ff_flash_driver.h"
-#include "sd_driver.h"
 #include "sd_fs.h"
 #include "stack_monitor.h"
 #include "logging.h"
-#include "../Logging/Buffer.h"
 #include "drives.h"
+#include "settings.h"
+#include "periph_allocation.h"
 
 static TaskHandle_t test_task;
 static StaticTask_t test_task_ctrl;
 static StackType_t test_task_stack[1024];
 static FIL tst_file;
-
 
 static void do_test_task(void * args) {
 	while(true);
@@ -54,6 +51,8 @@ static void create_test_task() {
 	test_task = xTaskCreateStatic(do_test_task, "test task", 1024, nullptr, 1U, test_task_stack, &test_task_ctrl);
 }
 
+static void create_app_starter();
+
 // float div = 170u, mult = 60u, sub = 75u
 extern "C" int main(void)
 {
@@ -62,20 +61,17 @@ extern "C" int main(void)
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
+
 	timing::config_coarse_timer();
 	timing::config_fine_timer();
 	vmeter::init_periph();
-
-	//test_timer_wait();
-	//test_timer_invoke_once();
-	//test_timer_invoke_repeatedly_and_stop();
-	//test_timer_start_blink_while_delay();
-
-	flash::init();
+	flash::init_periph();
 	gsm_service::init_periph();
 	sound_service::init_periph();
 	user_interface::init_periph();
 	wired_zones::init_periph();
+
+	flash::init_disk_driver();
 
 	MessageRouter_StartUpInit();
 
@@ -86,21 +82,13 @@ extern "C" int main(void)
 	wired_zones::start();
 	sd::start();
 	rec::start();
-	//taskHandleRegister.wsens_handle=WiredSensorMonitor_Launch(getMessageBuffer_WiredSensorMonitorDataIn(), getMessageBuffer_WiredSensorMonitorDataOut());
-	//taskHandleRegister.voltMet_handle=VoltageMeter_Launch(getMessageBuffer_VoltageMeterDataIn(), getMessageBuffer_VoltageMeterDataOut());
-	//taskHandleRegister.wless_handle=WirelessInterface_Launch(getMessageBuffer_WirelessInterfaceDataIn(), getMessageBuffer_WirelessInterfaceDataOut());
-	//taskHandleRegister.ui_handle=UserInterface_Launch(getMessageBuffer_UserInterfaceDataIn(), getMessageBuffer_UserInterfaceDataOut());
-	//taskHandleRegister.uartExt_handle=UARTExtension_Launch(getMessageBuffer_UARTExtensionDataIn(), getMessageBuffer_UARTExtensionDataOut());
-	//taskHandleRegister.spiExt_handle=SPIExtension_Launch(getMessageBuffer_SPIExtensionDataIn(), getMessageBuffer_SPIExtensionDataOut());
-	//taskHandleRegister.i2cExt_handle=I2CExtension_Launch(getMessageBuffer_I2CExtensionDataIn(), getMessageBuffer_I2CExtensionDataOut());
-
-	//taskHandleRegister.msg_handle=MessageRouter_Launch();
 
 	//wireless
 	//File system
 	//idle task
 	//timer task
 	create_test_task();
+	create_app_starter();
 #ifdef DEBUG
 	start_stack_monitor();
 #endif
@@ -108,6 +96,18 @@ extern "C" int main(void)
 	vTaskStartScheduler();
 }
 
+static void start_app(void * args) {
+	f_mount(&flash_fs, "/flash", 1);
+	load_settings();
+	vTaskSuspend(NULL);
+}
+
+static void create_app_starter() {
+	constexpr size_t stack_size = 192;
+	static StaticTask_t task_ctrl;
+	static StackType_t task_stack[stack_size];
+	xTaskCreateStatic(start_app, "app. starter", stack_size, nullptr, APP_STARTER_PRIORITY, task_stack, &task_ctrl);
+}
 
 extern "C" void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer,
                                     StackType_t **ppxIdleTaskStackBuffer,

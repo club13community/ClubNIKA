@@ -23,7 +23,7 @@ namespace flash {
 		ByteOffset byte;
 	};
 
-	void init();
+	void init_periph();
 	void read_memory(MemoryAddress address, uint16_t length, uint8_t * destination, Callback callback);
 	void read_buffer(Buffer buffer, ByteOffset address, uint16_t length, uint8_t * destination, Callback callback);
 	void write_buffer(Buffer buffer, ByteOffset address, uint16_t length, uint8_t * source, Callback callback);

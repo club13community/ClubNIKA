@@ -128,3 +128,15 @@ DRESULT flash::disk_ioctl (BYTE cmd, void* buff) {
 			return RES_PARERR;
 	}
 }
+
+#if FF_USE_MKFS == 1
+FRESULT flash::make_fs(uint8_t * buffer, uint8_t root_entries_x16) {
+	MKFS_PARM params;
+	params.fmt = FM_FAT;
+	params.n_fat = 2;
+	params.align = 1;
+	params.n_root = (uint16_t)root_entries_x16 << 4;
+	params.au_size = 512;
+	return f_mkfs("/flash", &params, buffer, 512);
+}
+#endif
