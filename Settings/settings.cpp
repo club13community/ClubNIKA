@@ -108,7 +108,11 @@ const char * get_phone(uint8_t index) {
 	return settings.phones[index];
 }
 
-bool set_phone(uint8_t index, char * phone_number) {
+const char (* get_phones())[MAX_PHONE_LENGTH + 1] {
+	return settings.phones;
+}
+
+bool set_phone(uint8_t index, const char * phone_number) {
 	if (used_default) {
 		return false;
 	}
@@ -116,6 +120,48 @@ bool set_phone(uint8_t index, char * phone_number) {
 	strcpy(temp.phones[index], phone_number);
 	if (save_settings(temp)) {
 		strcpy(settings.phones[index], phone_number);
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool add_phone(const char * phone_number) {
+	if (used_default) {
+		return false;
+	}
+	SettingsDto temp = settings;
+	add_phone(phone_number, temp);
+	if (save_settings(temp)) {
+		add_phone(phone_number, settings);
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool delete_phone(uint8_t index) {
+	if (used_default) {
+		return false;
+	}
+	SettingsDto temp = settings;
+	delete_phone(index, temp);
+	if (save_settings(temp)) {
+		delete_phone(index, settings);
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool shift_phone(uint8_t old_index, uint8_t new_index) {
+	if (used_default) {
+		return false;
+	}
+	SettingsDto temp = settings;
+	shift_phone(old_index, new_index, temp);
+	if (save_settings(temp)) {
+		shift_phone(old_index, new_index, settings);
 		return true;
 	} else {
 		return false;

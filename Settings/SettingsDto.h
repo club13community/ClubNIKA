@@ -39,3 +39,29 @@ inline void set_password(char * pwd, SettingsDto & dto) {
 		dto.password[i] = pwd[i];
 	}
 }
+
+inline void add_phone(const char * phone_number, SettingsDto & dto) {
+	strcpy(dto.phones[dto.phones_count++], phone_number);
+}
+
+inline void delete_phone(uint8_t index, SettingsDto & dto) {
+	for (uint8_t dst = index, src = index + 1; src < dto.phones_count; dst++, src++) {
+		strcpy(dto.phones[dst], dto.phones[src]);
+	}
+	dto.phones_count -= 1;
+}
+
+inline void shift_phone(uint8_t old_index, uint8_t new_index, SettingsDto & dto) {
+	// shift phones between old and new indexes
+	char phone[MAX_PHONE_LENGTH + 1];
+	strcpy(phone, dto.phones[old_index]);
+	int8_t step = new_index < old_index ? -1 : 1;
+	uint8_t dst = old_index, src = old_index + step;
+	while (dst != new_index) {
+		strcpy(dto.phones[dst], dto.phones[src]);
+		dst += step;
+		src += step;
+	}
+	// put phone in new position
+	strcpy(dto.phones[new_index], phone);
+}

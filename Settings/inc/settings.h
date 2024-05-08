@@ -44,8 +44,12 @@ PasswordUpdate update_password(char * curr_pwd, char * new_pwd);
 
 uint8_t get_phones_count();
 const char * get_phone(uint8_t index);
+const char (* get_phones())[MAX_PHONE_LENGTH + 1];
 /** @returns false if failed to store */
-bool set_phone(uint8_t index, char * phone_number);
+bool set_phone(uint8_t index, const char * phone_number);
+bool add_phone(const char * phone_number);
+bool delete_phone(uint8_t index);
+bool shift_phone(uint8_t old_index, uint8_t new_index);
 
 /** @returns pointer to array with 8 items */
 const ZoneActivation * get_zone_activations();

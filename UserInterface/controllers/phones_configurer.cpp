@@ -5,14 +5,12 @@
 #include "../controllers.h"
 #include "../symbols.h"
 #include <string.h>
-
-#define MAX_PHONE_LENGTH	11U
-#define MAX_PHONE_NUMBER	3U
+#include "settings.h"
 
 namespace user_interface {
 	class PhoneConfigurer : public Controller {
 	private:
-		char phones[9][MAX_PHONE_LENGTH + 1];
+		const char (*phones)[MAX_PHONE_LENGTH + 1];
 		uint8_t phones_num = 0;
 		uint8_t phone_ind = 0;
 
@@ -49,13 +47,13 @@ namespace user_interface {
 
 	class PhoneEditor : public Controller {
 	private:
-		char * phone;
+		const char * phone;
 		uint8_t index;
 	public:
 		void activate() override ;
 		void handle(keyboard::Button button, keyboard::Event event) override;
 
-		void prepare_to_edit(char * phone, uint8_t index);
+		void prepare_to_edit(const char * phone, uint8_t index);
 		void number_changed(char * new_number);
 		void priority_changed(uint8_t new_priority);
 	};
@@ -64,7 +62,6 @@ namespace user_interface {
 
 	class NumberEditor : public Controller {
 	private:
-		char * phone;
 		char phone_buf[MAX_PHONE_LENGTH + 1];
 		uint8_t phone_len;
 		bool edit;
@@ -73,7 +70,7 @@ namespace user_interface {
 		static constexpr uint8_t del_pos = 0, ok_pos = 9, cancel_pos = 13;
 	public:
 		void prepare_to_add();
-		void prepare_to_edit(char * number);
+		void prepare_to_edit(const char * number);
 		void activate() override;
 		void handle(keyboard::Button button, keyboard::Event event) override;
 	};
@@ -107,11 +104,13 @@ void PhoneConfigurer::activate() {
 			.define(enter, symbol::enter)
 			.define(exit, symbol::exit)
 			.set_cursor(0, 0);
+	phones = get_phones();
+	phones_num = get_phones_count();
 	// 1st row
 	if (phone_ind > 0) {
 		disp[0] << "A:" << up;
 	}
-	if (phone_ind < phones_num && phone_ind < MAX_PHONE_NUMBER - 1) {
+	if (phone_ind < phones_num && phone_ind < MAX_PHONE_NUMBERS - 1) {
 		// if phone == phone_num -> show 'empty'
 		disp[4] << "B:" << down;
 	}
@@ -134,18 +133,18 @@ void PhoneConfigurer::handle(keyboard::Button button, keyboard::Event event) {
 			// hide 'up'
 			disp.push_cursor().set_cursor(0, up_pos).print("   ").pop_cursor();
 		}
-		if (prev_ind == phones_num || prev_ind == MAX_PHONE_NUMBER - 1) {
+		if (prev_ind == phones_num || prev_ind == MAX_PHONE_NUMBERS - 1) {
 			// show 'down'
 			disp.push_cursor().set_cursor(0, down_pos).print("B:").print(down).pop_cursor();
 		}
 	} else if (button == Button::B && event == Event::CLICK) {
 		// move down
-		if (phone_ind == phones_num || phone_ind == MAX_PHONE_NUMBER - 1) {
+		if (phone_ind == phones_num || phone_ind == MAX_PHONE_NUMBERS - 1) {
 			return;
 		}
 		uint8_t prev_ind = phone_ind++;
 		print_phone();
-		if (phone_ind == phones_num || phone_ind == MAX_PHONE_NUMBER - 1) {
+		if (phone_ind == phones_num || phone_ind == MAX_PHONE_NUMBERS - 1) {
 			// hide 'down'
 			disp.push_cursor().set_cursor(0, down_pos).print("   ").pop_cursor();
 		}
@@ -169,21 +168,20 @@ void PhoneConfigurer::handle(keyboard::Button button, keyboard::Event event) {
 }
 
 void PhoneConfigurer::phone_added(char * new_phone) {
-	strcpy(phones[phones_num++], new_phone);
+	add_phone(new_phone);
+	phones_num = get_phones_count();
 }
 
 void PhoneConfigurer::number_changed(uint8_t index, char * new_phone) {
-	strcpy(phones[index], new_phone);
+	set_phone(index, new_phone);
 }
 
 void PhoneConfigurer::phone_deleted(uint8_t index) {
-	// shift phones up
-	for (uint8_t dst = index, src = index + 1; src < phones_num; dst++, src++) {
-		strcpy(phones[dst], phones[src]);
-	}
-	phones_num--;
-	if (phone_ind > phones_num) {
-		phone_ind = phones_num;
+	if (delete_phone(index)) {
+		phones_num = get_phones_count();
+		if (phone_ind > phones_num) {
+			phone_ind = phones_num;
+		}
 	}
 }
 
@@ -191,20 +189,10 @@ void PhoneConfigurer::phone_moved(uint8_t old_index, uint8_t new_index) {
 	if (new_index >= phones_num) {
 		new_index = phones_num - 1;
 	}
-	// shift phones between old and new indexes
-	char phone[MAX_PHONE_LENGTH];
-	strcpy(phone, phones[old_index]);
-	int8_t step = new_index < old_index ? -1 : 1;
-	uint8_t dst = old_index, src = old_index + step;
-	while (dst != new_index) {
-		strcpy(phones[dst], phones[src]);
-		dst += step;
-		src += step;
+	if (shift_phone(old_index, new_index)) {
+		// show this phone in new position
+		phone_ind = new_index;
 	}
-	// put phone in new position
-	strcpy(phones[new_index], phone);
-	// show this phone in new position
-	phone_ind = new_index;
 }
 
 /* --- Phone editing --- */
@@ -242,7 +230,7 @@ void PhoneEditor::handle(keyboard::Button button, keyboard::Event event) {
 	}
 }
 
-void PhoneEditor::prepare_to_edit(char * phone, uint8_t index) {
+void PhoneEditor::prepare_to_edit(const char * phone, uint8_t index) {
 	this->phone = phone;
 	this->index = index;
 }
@@ -263,7 +251,7 @@ void NumberEditor::prepare_to_add() {
 	edit = false;
 }
 
-void NumberEditor::prepare_to_edit(char * number) {
+void NumberEditor::prepare_to_edit(const char * number) {
 	strcpy(phone_buf, number);
 	phone_len = strlen(number);
 	edit = true;
@@ -275,8 +263,10 @@ void NumberEditor::activate() {
 			.define(cancel, symbol::exit)
 			.set_cursor(0, 1);
 	// 1st row
-	if (phone_len != 0) {
+	if (phone_len >= MIN_PHONE_LENGTH) {
 		disp[ok_pos] << "C:" << ok;
+	}
+	if (phone_len != 0) {
 		disp[del_pos] << "A:" << del;
 	}
 	disp[cancel_pos] << "D:" << cancel;
@@ -309,8 +299,12 @@ void NumberEditor::handle(keyboard::Button button, keyboard::Event event) {
 		if (phone_len == 1) {
 			disp.push_cursor()
 					.set_cursor(0, del_pos).print("A:").print(del) // show 'delete'
+					.pop_cursor();
+		}
+		if (phone_len == MIN_PHONE_LENGTH) {
+			disp.push_cursor()
 					.set_cursor(0, ok_pos).print("C:").print(ok) // show 'enter'
-			.pop_cursor();
+					.pop_cursor();
 		}
 	} else if (button == Button::A && event == Event::CLICK) {
 		// delete
@@ -322,12 +316,16 @@ void NumberEditor::handle(keyboard::Button button, keyboard::Event event) {
 		if (phone_len == 0) {
 			disp.push_cursor()
 					.set_cursor(0, del_pos).print("   ") // hide 'delete'
+					.pop_cursor();
+		}
+		if (phone_len == MIN_PHONE_LENGTH - 1) {
+			disp.push_cursor()
 					.set_cursor(0, ok_pos).print("   ") // hide 'ok'
-			.pop_cursor();
+					.pop_cursor();
 		}
 	} else if (button == Button::C && event == Event::CLICK) {
 		// ok
-		if (phone_len == 0) {
+		if (phone_len < MIN_PHONE_LENGTH) {
 			return;
 		}
 		if (edit) {
@@ -360,7 +358,7 @@ void PriorityEditor::activate() {
 
 void PriorityEditor::handle(keyboard::Button button, keyboard::Event event) {
 	using keyboard::Button, keyboard::Event;
-	if (button >= Button::N1 && button <= (Button)MAX_PHONE_NUMBER && event == Event::CLICK) {
+	if (button >= Button::N1 && button <= (Button)MAX_PHONE_NUMBERS && event == Event::CLICK) {
 		// change priority
 		priority = (uint8_t)button;
 		disp.print((int) priority).set_cursor(1, prio_pos);
