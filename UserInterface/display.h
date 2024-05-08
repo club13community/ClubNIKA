@@ -13,8 +13,6 @@ namespace user_interface {
 	public:
 		Display & light_up();
 		Display & put_out();
-		Display & put_out_on_inactivity();
-		Display & put_out_manually();
 		Display & clear();
 		Display & set_cursor(uint8_t line, uint8_t pos);
 		Display & move_cursor(int8_t offset);

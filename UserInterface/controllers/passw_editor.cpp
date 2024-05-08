@@ -18,14 +18,10 @@ namespace user_interface {
 		char passw[PASSWORD_LENGTH + 1], old_passw[PASSWORD_LENGTH + 1];
 		uint8_t len;
 	private:
-		void init_state();
 		void activate_step();
-	public:
-		PasswordEditor() {
-			init_state();
-		}
-		void activate();
-		void handle(keyboard::Button button, keyboard::Event event);
+	protected:
+		void activate(bool init) override;
+		void handle(keyboard::Button button, keyboard::Event event) override;
 	};
 
 	static PasswordEditor editor;
@@ -33,13 +29,6 @@ namespace user_interface {
 }
 
 using namespace user_interface;
-
-/** Sets initial state */
-void PasswordEditor::init_state() {
-	passw[0] = '\0';
-	len = 0;
-	step = ENTER_OLD;
-}
 
 void PasswordEditor::activate_step() {
 	disp.clear();
@@ -76,11 +65,13 @@ void PasswordEditor::activate_step() {
 	}
 }
 
-void PasswordEditor::activate() {
-	disp
-	.put_out_on_inactivity()
-	.light_up()
-	.define(enter, symbol::enter).define(cancel, symbol::exit);
+void PasswordEditor::activate(bool init) {
+	if (init) {
+		step = ENTER_OLD;
+		passw[0] = '\0';
+		len = 0;
+	}
+	disp.define(enter, symbol::enter).define(cancel, symbol::exit);
 	activate_step();
 }
 
@@ -159,15 +150,13 @@ void PasswordEditor::handle(keyboard::Button button, keyboard::Event event) {
 			}
 		} else {
 			// reporting success
-			init_state();
-			activate_previous();
+			yield();
 		}
 	} else if (button == Button::D && event == Event::CLICK) {
 		// cancel
 		if (step != ENTER_OLD && step != ENTER_NEW) {
 			return; // button is not shown
 		}
-		init_state();
-		activate_previous();
+		yield();
 	}
 }

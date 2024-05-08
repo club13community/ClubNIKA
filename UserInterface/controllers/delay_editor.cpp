@@ -14,7 +14,7 @@ namespace user_interface {
 		static constexpr uint16_t min_delay_s = 20, max_delay_s = 15 * 60;
 		static constexpr uint8_t step_s = 20;
 
-		uint16_t delay_s = 120;
+		uint16_t delay_s;
 		bool inc_active, dec_active;
 
 	private:
@@ -40,8 +40,8 @@ namespace user_interface {
 				return 1;
 			}
 		}
-	public:
-		void activate() override;
+	protected:
+		void activate(bool init) override;
 		void handle(keyboard::Button button, keyboard::Event event) override;
 	};
 
@@ -51,19 +51,19 @@ namespace user_interface {
 
 using namespace user_interface;
 
-void DelayEditor::activate() {
-	disp
-	.put_out_on_inactivity()
-	.light_up()
-	.clear()
+void DelayEditor::activate(bool init) {
+	if (init) {
+		delay_s = get_alarm_delay_s();
+		inc_active = may_inc();
+		dec_active = may_dec();
+	}
+	disp.clear()
 	.define(ok, symbol::enter).define(cancel, symbol::exit).define(v, symbol::ua_v);
-	delay_s = get_alarm_delay_s();
+
 	// 1st line
-	inc_active = may_inc();
 	if (inc_active) {
 		disp.set_cursor(0, inc_pos).print("A:+");
 	}
-	dec_active = may_dec();
 	if (dec_active) {
 		disp.set_cursor(0, dec_pos).print("B:-");
 	}
@@ -114,10 +114,10 @@ void DelayEditor::handle(keyboard::Button button, keyboard::Event event) {
 	} else if (button == Button::C && event == Event::CLICK) {
 		// ok
 		update_delay();
-		activate_previous();
+		yield();
 	} else if (button == Button::D && event == Event::CLICK) {
 		// cancel
-		activate_previous();
+		yield();
 	}
 }
 

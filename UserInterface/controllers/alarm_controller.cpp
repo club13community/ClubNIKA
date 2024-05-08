@@ -10,9 +10,9 @@ namespace user_interface {
 	class AlarmController : public Controller {
 	private:
 		enum State {WAIT_ARMING, WAIT_DISARMING, NOTIFY_WRONG_PASSWORD};
-		State state = NOTIFY_WRONG_PASSWORD;
-	public:
-		void activate() override;
+		State state;
+	protected:
+		void activate(bool init) override;
 		void handle(keyboard::Button button, keyboard::Event event) override;
 	};
 
@@ -58,10 +58,11 @@ namespace user_interface {
 
 using namespace user_interface;
 
-void AlarmController::activate() {
-	disp
-	.put_out_on_inactivity() // todo: control manually
-	.light_up();
+void AlarmController::activate(bool init) {
+	if (init) {
+		state = WAIT_ARMING;
+		handle_ui_inactivity(false);
+	}
 	switch (state) {
 		case WAIT_ARMING:
 			enabler.activate();
@@ -93,8 +94,8 @@ void AlarmController::handle(keyboard::Button button, keyboard::Event event) {
 
 void AlarmEnabler::activate() {
 	delay = 10; // todo load from config
+
 	disp
-			.put_out_on_inactivity() // todo: control manually
 			.light_up()
 			.clear()
 			.define('\1', symbol::ua_D).define('\2', symbol::ua_U)
@@ -135,7 +136,6 @@ void AlarmEnabler::print_delay() {
 
 void AlarmDisabler::activate() {
 	disp
-	.put_out_on_inactivity()
 	.light_up()
 	.clear()
 	.define('\1', symbol::ua_U).define('\2', symbol::ua_Y).define('\3', symbol::ua_P)

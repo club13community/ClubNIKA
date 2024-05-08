@@ -7,8 +7,8 @@
 
 namespace user_interface {
 	class ZoneViewer : public Controller {
-	public:
-		void activate() override;
+	protected:
+		void activate(bool init) override;
 		void handle(keyboard::Button button, keyboard::Event event) override;
 	};
 
@@ -19,13 +19,10 @@ namespace user_interface {
 
 using namespace user_interface;
 
-void ZoneViewer::activate() {
-	disp
-	.put_out_on_inactivity()
-	.light_up()
-	.clear()
-	.define('\0', symbol::exit)
-	.define('\1', symbol::ua_U);
+void ZoneViewer::activate(bool init) {
+	disp.clear()
+			.define('\0', symbol::exit)
+			.define('\1', symbol::ua_U);
 
 	// show 'exit'
 	disp.set_cursor(0, 0);
@@ -38,6 +35,6 @@ void ZoneViewer::activate() {
 void ZoneViewer::handle(keyboard::Button button, keyboard::Event event) {
 	using keyboard::Button, keyboard::Event;
 	if (button == Button::D && event == Event::CLICK) {
-		activate_previous();
+		yield();
 	}
 }

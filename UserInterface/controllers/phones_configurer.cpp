@@ -11,8 +11,8 @@ namespace user_interface {
 	class PhoneConfigurer : public Controller {
 	private:
 		const char (*phones)[MAX_PHONE_LENGTH + 1];
-		uint8_t phones_num = 0;
-		uint8_t phone_ind = 0;
+		uint8_t phones_num;
+		uint8_t phone_ind;
 
 		const char up = '\0', down = '\1', enter = '\2', exit = '\3';
 		static constexpr uint8_t up_pos = 0, down_pos = 4;
@@ -32,10 +32,10 @@ namespace user_interface {
 			disp.set_cursor(1, 0);
 		}
 
-	public:
-		void activate() override ;
+	protected:
+		void activate(bool init) override;
 		void handle(keyboard::Button button, keyboard::Event event) override;
-
+	public:
 		void phone_added(char * new_phone);
 		void number_changed(uint8_t index, char * new_phone);
 		void phone_deleted(uint8_t index);
@@ -49,10 +49,10 @@ namespace user_interface {
 	private:
 		const char * phone;
 		uint8_t index;
-	public:
-		void activate() override ;
+	protected:
+		void activate(bool init) override ;
 		void handle(keyboard::Button button, keyboard::Event event) override;
-
+	public:
 		void prepare_to_edit(const char * phone, uint8_t index);
 		void number_changed(char * new_number);
 		void priority_changed(uint8_t new_priority);
@@ -68,11 +68,13 @@ namespace user_interface {
 
 		static constexpr char del = 0x7F, ok = '\1', cancel = '\2', cursor = 0x5F;
 		static constexpr uint8_t del_pos = 0, ok_pos = 9, cancel_pos = 13;
+	protected:
+		void activate(bool init) override;
+		void handle(keyboard::Button button, keyboard::Event event) override;
 	public:
 		void prepare_to_add();
 		void prepare_to_edit(const char * number);
-		void activate() override;
-		void handle(keyboard::Button button, keyboard::Event event) override;
+
 	};
 
 	static NumberEditor number_editor;
@@ -82,10 +84,10 @@ namespace user_interface {
 		uint8_t priority;
 
 		static constexpr uint8_t prio_pos = 13;
-	public:
-		void activate() override;
+	protected:
+		void activate(bool init) override;
 		void handle(keyboard::Button button, keyboard::Event event) override;
-
+	public:
 		void prepare_to_edit(uint8_t priority);
 	};
 
@@ -94,18 +96,19 @@ namespace user_interface {
 
 using namespace user_interface;
 
-void PhoneConfigurer::activate() {
-	disp
-			.put_out_on_inactivity()
-			.light_up()
-			.clear()
+void PhoneConfigurer::activate(bool init) {
+	if (init) {
+		phones = get_phones();
+		phones_num = get_phones_count();
+		phone_ind = 0;
+	}
+	disp.clear()
 			.define(up, symbol::up)
 			.define(down, symbol::down)
 			.define(enter, symbol::enter)
 			.define(exit, symbol::exit)
 			.set_cursor(0, 0);
-	phones = get_phones();
-	phones_num = get_phones_count();
+
 	// 1st row
 	if (phone_ind > 0) {
 		disp[0] << "A:" << up;
@@ -156,14 +159,14 @@ void PhoneConfigurer::handle(keyboard::Button button, keyboard::Event event) {
 		// edit/add phone
 		if (phone_ind == phones_num) {
 			number_editor.prepare_to_add();
-			activate_next(&number_editor);
+			invoke(&number_editor);
 		} else {
 			phone_editor.prepare_to_edit(phones[phone_ind], phone_ind);
-			activate_next(&phone_editor);
+			invoke(&phone_editor);
 		}
 	} else if (button == Button::D && event == Event::CLICK) {
 		// exit
-		activate_previous();
+		yield();
 	}
 }
 
@@ -197,11 +200,8 @@ void PhoneConfigurer::phone_moved(uint8_t old_index, uint8_t new_index) {
 
 /* --- Phone editing --- */
 
-void PhoneEditor::activate() {
-	disp
-			.put_out_on_inactivity()
-			.light_up()
-			.clear()
+void PhoneEditor::activate(bool init) {
+	disp.clear()
 			.define('\1', symbol::ua_U)
 			.define('\2', symbol::ua_D)
 			.define('\3', symbol::ua_L)
@@ -216,17 +216,17 @@ void PhoneEditor::handle(keyboard::Button button, keyboard::Event event) {
 	if (button == Button::A && event == Event::CLICK) {
 		// delete
 		configurer.phone_deleted(index);
-		activate_previous();
+		yield();
 	} else if (button == Button::B && event == Event::CLICK) {
 		// change number
 		number_editor.prepare_to_edit(phone);
-		activate_next(&number_editor);
+		invoke(&number_editor);
 	} else if (button == Button::C && event == Event::CLICK) {
 		// change priority
 		priority_editor.prepare_to_edit(index + 1);
-		activate_next(&priority_editor);
+		invoke(&priority_editor);
 	} else if (button == Button::D && event == Event::CLICK) {
-		activate_previous();
+		yield();
 	}
 }
 
@@ -257,7 +257,7 @@ void NumberEditor::prepare_to_edit(const char * number) {
 	edit = true;
 }
 
-void NumberEditor::activate() {
+void NumberEditor::activate(bool init) {
 	disp.clear()
 			.define(ok, symbol::enter)
 			.define(cancel, symbol::exit)
@@ -333,20 +333,17 @@ void NumberEditor::handle(keyboard::Button button, keyboard::Event event) {
 		} else {
 			configurer.phone_added(phone_buf);
 		}
-		activate_previous();
+		yield();
 	} else if (button == Button::D && event == Event::CLICK) {
 		// cancel
-		activate_previous();
+		yield();
 	}
 }
 
 /* --- Edit priority --- */
 
-void PriorityEditor::activate() {
-	disp
-			.put_out_on_inactivity()
-			.light_up()
-			.clear()
+void PriorityEditor::activate(bool init) {
+	disp.clear()
 			.define('\1', symbol::enter)
 			.define('\2', symbol::exit)
 			.define('\3', symbol::ua_P)
@@ -365,10 +362,10 @@ void PriorityEditor::handle(keyboard::Button button, keyboard::Event event) {
 	} else if (button == Button::C && event == Event::CLICK) {
 		// ok
 		phone_editor.priority_changed(priority);
-		activate_previous();
+		yield();
 	} else if (button == Button::D && event == Event::CLICK) {
 		// cancel
-		activate_previous();
+		yield();
 	}
 }
 

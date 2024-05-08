@@ -11,7 +11,7 @@ static const char up = '\0', down = '\1', enter = '\2', exit = '\3', U = '\4', P
 namespace user_interface {
 	class ZoneConfigurer : public Controller {
 	private:
-		uint8_t zone = 0;
+		uint8_t zone;
 		const uint8_t first_zone = 0, last_zone = ZONES_COUNT - 1;
 		const uint8_t up_pos = 0, down_pos = 4;
 		const ZoneActivation * activation;
@@ -36,8 +36,8 @@ namespace user_interface {
 			disp[0] << zone + 1 << ") ";
 			show_activation();
 		}
-	public:
-		void activate() override ;
+	protected:
+		void activate(bool init) override ;
 		void handle(keyboard::Button button, keyboard::Event event) override ;
 	};
 
@@ -47,11 +47,12 @@ namespace user_interface {
 
 using namespace user_interface;
 
-void ZoneConfigurer::activate() {
-	disp
-			.put_out_on_inactivity()
-			.light_up()
-			.clear()
+void ZoneConfigurer::activate(bool init) {
+	if (init) {
+		activation = get_zone_activations();
+		zone = 0;
+	}
+	disp.clear()
 			.define(up, symbol::up)
 			.define(down, symbol::down)
 			.define(enter, symbol::enter)
@@ -59,7 +60,6 @@ void ZoneConfigurer::activate() {
 			.define(U, symbol::ua_U)
 			.define(P, symbol::ua_P)
 			.set_cursor(0, 0);
-	activation = get_zone_activations();
 	// show 1st row
 	if (zone != first_zone) {
 		disp[up_pos] << "A:" << up;
@@ -113,6 +113,6 @@ void ZoneConfigurer::handle(keyboard::Button button, keyboard::Event event) {
 		disp.set_cursor(1, 0);
 	} else if (button == Button::D && event == Event::CLICK) {
 		// exit
-		activate_previous();
+		yield();
 	}
 }

@@ -10,7 +10,7 @@ static const char down = '\0', up = '\1', enter = '\2', back = '\3';
 namespace user_interface {
 	class Menu : public Controller {
 	private:
-		uint8_t item = 0;
+		uint8_t item;
 		const uint8_t first_item = 0, last_item = 4;
 		const uint8_t up_pos = 0, down_pos = 4;
 
@@ -39,8 +39,8 @@ namespace user_interface {
 					break;
 			}
 		}
-	public:
-		void activate() override;
+	protected:
+		void activate(bool init) override;
 		void handle(keyboard::Button button, keyboard::Event event) override;
 	};
 
@@ -50,16 +50,17 @@ namespace user_interface {
 
 using namespace user_interface;
 
-void Menu::activate() {
-	disp
-			.put_out_on_inactivity()
-			.light_up()
-			.clear()
+void Menu::activate(bool init) {
+	if (init) {
+		item = 0;
+	}
+	disp.clear()
 			.define(down, symbol::down)
 			.define(up, symbol::up)
 			.define(enter, symbol::enter)
 			.define(back, symbol::exit)
 			.set_cursor(0, 0);
+
 	// show 1st line
 	if (item != first_item) {
 		disp[up_pos] << "A:" << up;
@@ -110,23 +111,23 @@ void Menu::handle(keyboard::Button button, keyboard::Event event) {
 		// enter
 		switch (item) {
 			case 0:
-				activate_next(zone_viewer);
+				invoke(zone_viewer);
 				break;
 			case 1:
-				activate_next(zone_configurer);
+				invoke(zone_configurer);
 				break;
 			case 2:
-				activate_next(password_editor);
+				invoke(password_editor);
 				break;
 			case 3:
-				activate_next(phone_configurer);
+				invoke(phone_configurer);
 				break;
 			case 4:
-				activate_next(delay_editor);
+				invoke(delay_editor);
 				break;
 		}
 	} else if (button == Button::D && event == Event::CLICK) {
 		// back
-		activate_previous();
+		yield();
 	}
 }
