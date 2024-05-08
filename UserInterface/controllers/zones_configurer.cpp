@@ -4,30 +4,28 @@
 #include "../controllers.h"
 #include "../display.h"
 #include "../symbols.h"
+#include "settings.h"
 
 static const char up = '\0', down = '\1', enter = '\2', exit = '\3', U = '\4', P = '\5';
 
 namespace user_interface {
-	enum class Activation : uint8_t {NONE = 0, CLOSE, OPEN};
-
 	class ZoneConfigurer : public Controller {
 	private:
 		uint8_t zone = 0;
-		const uint8_t first_zone = 0, last_zone = 7;
+		const uint8_t first_zone = 0, last_zone = ZONES_COUNT - 1;
 		const uint8_t up_pos = 0, down_pos = 4;
-		Activation activation[8] = {Activation::NONE, Activation::NONE, Activation::NONE, Activation::NONE,
-									Activation::NONE, Activation::NONE, Activation::NONE, Activation::NONE};
+		const ZoneActivation * activation;
 
 		/** Expects, that cursor is on the 2nd row. 'Overflows' row, so cursor is on the 1st line after return */
 		inline void show_activation() {
 			switch (activation[zone]) {
-				case Activation::NONE:
+				case ZoneActivation::NEVER:
 					disp[3] << "HE AKT" << U << "BHA   ";
 					break;
-				case Activation::CLOSE:
+				case ZoneActivation::ON_CLOSE:
 					disp[3] << "AKT. " << P << 'P' << U << " K3  ";
 					break;
-				case Activation::OPEN:
+				case ZoneActivation::ON_OPEN:
 					disp[3] << "AKT. " << P << 'P' << U << " PO3P";
 					break;
 			}
@@ -61,6 +59,7 @@ void ZoneConfigurer::activate() {
 			.define(U, symbol::ua_U)
 			.define(P, symbol::ua_P)
 			.set_cursor(0, 0);
+	activation = get_zone_activations();
 	// show 1st row
 	if (zone != first_zone) {
 		disp[up_pos] << "A:" << up;
@@ -109,11 +108,7 @@ void ZoneConfigurer::handle(keyboard::Button button, keyboard::Event event) {
 		disp.set_cursor(1, 0);
 	} else if (button == Button::C && event == Event::CLICK) {
 		// change activation
-		uint8_t a = (uint8_t)activation[zone] + 1;
-		if (a == 3) {
-			a = 0;
-		}
-		activation[zone] = (Activation)a;
+		set_zone_activation(zone, next_value(activation[zone]));
 		show_activation();
 		disp.set_cursor(1, 0);
 	} else if (button == Button::D && event == Event::CLICK) {

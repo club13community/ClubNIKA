@@ -4,8 +4,7 @@
 #include "../controllers.h"
 #include "../display.h"
 #include "../symbols.h"
-
-#define PASSWORD_LENGTH	4U
+#include "settings.h"
 
 namespace user_interface {
 	class AlarmController : public Controller {
@@ -192,6 +191,9 @@ void AlarmDisabler::handle(keyboard::Button button, keyboard::Event event) {
 		// enter password
 		if (passw_len != PASSWORD_LENGTH) {
 			return;
+		}
+		if (is_correct_password(passw)) {
+			// todo
 		}
 		// todo
 	}

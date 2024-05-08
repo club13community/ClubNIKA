@@ -83,11 +83,23 @@ bool set_alarm_delay_s(uint16_t delay) {
 	}
 }
 
-PasswordUpdate update_password(char * curr_pwd, char * new_pwd) {
+bool is_correct_password(const char * pwd) {
+	if (used_default) {
+		return true;
+	}
+	for (uint8_t i = 0; i < PASSWORD_LENGTH; i++) {
+		if (pwd[i] != settings.password[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+PasswordUpdate update_password(const char * curr_pwd, const char * new_pwd) {
 	if (used_default) {
 		return PasswordUpdate::FAILED_TO_PERSIST;
 	}
-	if (!equal_passwords(curr_pwd, settings)) {
+	if (is_correct_password(curr_pwd)) {
 		return PasswordUpdate::WRONG_PASSWORD;
 	}
 	SettingsDto temp = settings;

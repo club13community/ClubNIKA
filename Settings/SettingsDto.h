@@ -25,16 +25,7 @@ inline void set_defaults(SettingsDto & dto) {
 	}
 }
 
-inline bool equal_passwords(char * pwd, SettingsDto & dto) {
-	for (uint8_t i = 0; i < PASSWORD_LENGTH; i++) {
-		if (pwd[i] != dto.password[i]) {
-			return false;
-		}
-	}
-	return true;
-}
-
-inline void set_password(char * pwd, SettingsDto & dto) {
+inline void set_password(const char * pwd, SettingsDto & dto) {
 	for (uint8_t i = 0; i < PASSWORD_LENGTH; i++) {
 		dto.password[i] = pwd[i];
 	}
