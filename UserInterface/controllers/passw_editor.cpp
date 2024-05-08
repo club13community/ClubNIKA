@@ -5,26 +5,21 @@
 #include "../controllers.h"
 #include "../display.h"
 #include <string.h>
-
-#define PASSWORD_LENGTH	4U
-
-static char old_passw[PASSWORD_LENGTH + 1] = "1313";
+#include "settings.h"
 
 namespace user_interface {
 	class PasswordEditor : public Controller {
 	private:
-		enum Step {ENTER_OLD, REPORT_WRONG_OLD, ENTER_NEW, REPORT_SUCCESS};
+		enum Step {ENTER_OLD, REPORT_WRONG_OLD, ENTER_NEW, REPORT_SUCCESS, REPORT_HW_ERROR};
 		static constexpr char del = 0x7F, enter = '\0', cancel = '\1';
 		static constexpr uint8_t del_pos = 0, enter_pos = 9, cancel_pos = 13, passw_pos = 8;
 
 		Step step;
-		char passw[PASSWORD_LENGTH + 1];
+		char passw[PASSWORD_LENGTH + 1], old_passw[PASSWORD_LENGTH + 1];
 		uint8_t len;
 	private:
 		void init_state();
 		void activate_step();
-		bool match_old_password();
-		void update_password();
 	public:
 		PasswordEditor() {
 			init_state();
@@ -68,9 +63,12 @@ void PasswordEditor::activate_step() {
 		disp.set_cursor(1, passw_pos).print(passw);
 	} else {
 		// common chars
-		disp.define('\2', symbol::ua_P).define('\3', symbol::ua_L).define('\4', symbol::ua_MILD);
+		disp.define('\2', symbol::ua_P).define('\3', symbol::ua_L)
+			.define('\4', symbol::ua_MILD).define('\5', symbol::ua_U);
 		if (step == REPORT_WRONG_OLD) {
 			disp.set_cursor(0, 0).print("HE\2PAB. \2APO\3\4");
+		} else if (step == REPORT_HW_ERROR) {
+			disp.set_cursor(0, 1).print("\2OM\5\3KA FLASH");
 		} else {
 			disp.set_cursor(0, 1).print("\2APO\3\4 3MIHEHO");
 		}
@@ -132,28 +130,33 @@ void PasswordEditor::handle(keyboard::Button button, keyboard::Event event) {
 			if (len != PASSWORD_LENGTH) {
 				return;
 			}
-			if (match_old_password()) {
-				// prepare to enter new password
-				passw[0] = '\0';
-				len = 0;
-				step = ENTER_NEW;
-				activate_step();
-			} else {
-				// report wrong password
-				step = REPORT_WRONG_OLD;
-				activate_step();
-			}
-		} else if (step == REPORT_WRONG_OLD) {
+			// remember old passw., prepare to enter new password
+			strcpy(old_passw, passw);
+			passw[0] = '\0';
+			len = 0;
+			step = ENTER_NEW;
+			activate_step();
+		} else if (step == REPORT_WRONG_OLD || step == REPORT_HW_ERROR) {
 			// return to entering old
+			strcpy(passw, old_passw);
 			step = ENTER_OLD;
 			activate_step();
 		} else if (step == ENTER_NEW) {
 			if (len != PASSWORD_LENGTH) {
 				return;
 			}
-			update_password();
-			step = REPORT_SUCCESS;
-			activate_step();
+			PasswordUpdate res = update_password(old_passw, passw);
+			if (res == PasswordUpdate::DONE) {
+				step = REPORT_SUCCESS;
+				activate_step();
+			} else if (res == PasswordUpdate::WRONG_PASSWORD) {
+				step = REPORT_WRONG_OLD;
+				activate_step();
+			} else {
+				// failed to persist
+				step = REPORT_HW_ERROR;
+				activate_step();
+			}
 		} else {
 			// reporting success
 			init_state();
@@ -167,12 +170,4 @@ void PasswordEditor::handle(keyboard::Button button, keyboard::Event event) {
 		init_state();
 		activate_previous();
 	}
-}
-
-bool PasswordEditor::match_old_password() {
-	return strcmp(passw, old_passw) == 0;
-}
-
-void PasswordEditor::update_password() {
-	strcpy(old_passw, passw);
 }

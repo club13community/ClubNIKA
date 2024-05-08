@@ -4,8 +4,7 @@
 #include "../display.h"
 #include "../controllers.h"
 #include "../symbols.h"
-
-static uint16_t old_delay = 120;
+#include "settings.h"
 
 namespace user_interface {
 	class DelayEditor : public Controller {
@@ -58,7 +57,7 @@ void DelayEditor::activate() {
 	.light_up()
 	.clear()
 	.define(ok, symbol::enter).define(cancel, symbol::exit).define(v, symbol::ua_v);
-	delay_s = old_delay; // todo: init on first entrance
+	delay_s = get_alarm_delay_s();
 	// 1st line
 	inc_active = may_inc();
 	if (inc_active) {
@@ -140,5 +139,5 @@ void DelayEditor::print_delay() {
 }
 
 void DelayEditor::update_delay() {
-	old_delay = delay_s;
+	set_alarm_delay_s(delay_s);
 }
