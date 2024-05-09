@@ -14,7 +14,6 @@
 #include "queue.h"
 #include "timers.h"
 #include "event_groups.h"
-#include "./ui_private.h"
 #include "./controllers.h"
 #include "./display.h"
 
@@ -63,8 +62,7 @@ static void on_delay_timeout(TimerHandle_t xTimer) {
 	xEventGroupSetBits(ui_events, DELAY_TIMEOUT_EVENT);
 }
 
-/** First press of a button will light up backlight again, this pressing of a button will not be handled - just lights up.*/
-void user_interface::handle(keyboard::ButtonEvent button_event) {
+void handle_keyboard(keyboard::ButtonEvent button_event) {
 	xQueueSend(keyboard_events, &button_event, 0);
 	xEventGroupSetBits(ui_events, KEYBOARD_EVENT);
 }

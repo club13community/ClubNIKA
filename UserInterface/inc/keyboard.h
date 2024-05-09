@@ -34,3 +34,6 @@ namespace keyboard {
 	void start();
 	void exti_isr();
 }
+
+/** Handling of keyboard event. Should be implemented */
+void handle_keyboard(keyboard::ButtonEvent button_event);

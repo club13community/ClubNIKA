@@ -6,7 +6,6 @@
 #include "./keyboard_config.h"
 #include "keyboard.h"
 #include "./keyboard_periph.h"
-#include "./ui_private.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "timing.h"
@@ -195,7 +194,7 @@ static const Button layout[4][4] = {
 static void add_active_key_event(Event event) {
 	Button button = layout[active_key.row][active_key.col];
 	ButtonEvent buttonEvent = ButtonEvent(button, event);
-	user_interface::handle(buttonEvent);
+	handle_keyboard(buttonEvent);
 }
 
 static uint16_t samples[3], sample_count;
