@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 namespace wired_zones {
+	/** Measure current sourced/sank by sensor or nothing */
 	enum class Measurement : uint8_t {NONE, SOURCING, SINKING};
 
 	/** Should be invoked before selecting measurement */

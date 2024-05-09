@@ -14,4 +14,5 @@
 namespace wired_zones {
 	void init_periph();
 	void start();
+	uint8_t get_active();
 }
