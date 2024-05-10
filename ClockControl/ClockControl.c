@@ -19,6 +19,8 @@ const int32_t APB1TimerClockValues[]={8000, 8000, 12000, 24000};
 const int32_t APB2TimerClockValues[]={8000, 8000, 12000, 24000};
 const int32_t APB2AdcClockValues[]={2000, 2000, 2000, 2000};
 
+extern uint32_t SystemCoreClock;
+
 //TODO: move this somewhere - ClockControl.h should not be included to other services
 int32_t getPeripheralClockFrequencyKHz(uint32_t periphBaseAddr){
 	uint8_t clockConf=clockStatus & CLOCK_CONF_MASK;
@@ -142,8 +144,10 @@ uint8_t setClockFromPLL(uint32_t fastClock){
 		return CLOCK_ERROR_FLAG | CLOCK_CONF_UNKNOWN;
 	}
 	if(fastClock){
+		SystemCoreClock = 24000000;
 		return CLOCK_CONF_FAST;
 	}
+	SystemCoreClock = 12000000;
 	return CLOCK_CONF_NOMINAL;
 }
 
