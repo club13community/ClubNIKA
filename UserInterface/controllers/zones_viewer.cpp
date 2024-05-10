@@ -42,6 +42,7 @@ using namespace user_interface;
 void ZoneViewer::activate(bool init) {
 	if (init) {
 		zones = wired_zones::get_active();
+		handle_ui_inactivity(false);
 		start_delay(REFRESH_PERIOD_ms);
 	}
 	disp.clear()

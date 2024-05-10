@@ -34,7 +34,9 @@ void Desktop::activate(bool init) {
 
 void Desktop::handle(keyboard::Button button, keyboard::Event event) {
 	using keyboard::Button, keyboard::Event;
-	if (button == Button::B && event == Event::CLICK) {
+	if (button == Button::A && event == Event::CLICK) {
+		invoke(alarm_enabler);
+	} else if (button == Button::B && event == Event::CLICK) {
 		invoke(menu);
 	}
 }

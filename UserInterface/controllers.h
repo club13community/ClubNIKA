@@ -24,18 +24,15 @@ namespace user_interface {
 			if (ui_active) {
 				// handle button
 				handle(button, event);
-			} else {
-				// make UI active
-				ui_activated();
 			}
+			// make UI active
+			on_ui_activity();
 		}
 
-		void on_activity_timer() {
-			ui_suspended();
-		}
+		void on_activity_timer();
 
 		void on_delay_timer() {
-			ui_activated();
+			on_ui_activity();
 			delay_elapsed();
 		}
 
@@ -46,8 +43,8 @@ namespace user_interface {
 		 * Control is returned to this after next yields */
 		void invoke(Controller * next);
 	private:
-		void ui_activated();
-		void ui_suspended();
+		/** Invoke this in handler of anything which is assumed UI activity */
+		void on_ui_activity();
 	protected:
 		/** Invoked by controller.
 		 * @param do_handle if true - put out backlight when no button is pressed (or no other activity reported)
@@ -71,4 +68,6 @@ namespace user_interface {
 	extern Controller * const password_editor;
 	extern Controller * const delay_editor;
 	extern Controller * const alarm_controller;
+	extern Controller * const alarm_enabler;
+	extern Controller * const alarm_disabler;
 }

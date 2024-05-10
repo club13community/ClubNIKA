@@ -16,6 +16,7 @@
 #include "event_groups.h"
 #include "./controllers.h"
 #include "./display.h"
+#include "alarm.h"
 
 void user_interface::init_periph() {
 	lcd::init();
@@ -37,10 +38,11 @@ static StaticEventGroup_t ui_events_ctrl;
 #define RESUME_CONTROLLER_EVENT	( (EventBits_t)(1U << 2) )
 #define ACTIVITY_TIMEOUT_EVENT	( (EventBits_t)(1U << 3) )
 #define DELAY_TIMEOUT_EVENT		( (EventBits_t)(1U << 4) )
+#define ALARM_EVENT				( (EventBits_t)(1U << 5) )
 
 #define CONTROLLER_CHANGED_EVENTS	(INVOKE_CONTROLLER_EVENT | RESUME_CONTROLLER_EVENT)
 #define TIMER_EVENTS				(ACTIVITY_TIMEOUT_EVENT | DELAY_TIMEOUT_EVENT)
-#define ALL_EVENTS					(KEYBOARD_EVENT | CONTROLLER_CHANGED_EVENTS | TIMER_EVENTS)
+#define ALL_EVENTS					(KEYBOARD_EVENT | CONTROLLER_CHANGED_EVENTS | TIMER_EVENTS | ALARM_EVENT)
 
 #define KEYBOARD_QUEUE_LENGTH	3U
 static uint8_t keyboard_events_data[KEYBOARD_QUEUE_LENGTH * sizeof (keyboard::ButtonEvent)];
@@ -99,8 +101,14 @@ void Controller::resume() {
 	activate(false);
 }
 
-void Controller::ui_activated() {
-	// may be invoked by keyboard event or delay timer
+void Controller::on_activity_timer() {
+	// is invoked only if 'handling of UI inactivity' is enabled and after inactivity timeout
+	ui_active = false;
+	disp.put_out();
+}
+
+void Controller::on_ui_activity() {
+	// may be invoked by keyboard event, delay timer, etc.
 	if (run_activity_timer) {
 		portENTER_CRITICAL();
 		xTimerReset(activity_timer, portMAX_DELAY);
@@ -114,20 +122,14 @@ void Controller::ui_activated() {
 	}
 }
 
-void Controller::ui_suspended() {
-	// may be invoked only by activity timer
-	ui_active = false;
-	disp.put_out();
-}
-
 void Controller::invoke(Controller * next) {
-	next->previous = controller;
+	next->previous = this;
 	controller = next;
 	xEventGroupSetBits(ui_events, INVOKE_CONTROLLER_EVENT);
 }
 
 void Controller::yield() {
-	controller = controller->previous;
+	controller = this->previous;
 	xEventGroupSetBits(ui_events, RESUME_CONTROLLER_EVENT);
 }
 
@@ -165,7 +167,18 @@ static void service_ui_events(void * args) {
 		const BaseType_t dont_clear_bits = pdFALSE;
 		const BaseType_t wait_for_any_bit = pdFALSE;
 		EventBits_t bits = xEventGroupWaitBits(ui_events, ALL_EVENTS, dont_clear_bits, wait_for_any_bit, portMAX_DELAY);
-		if (bits & CONTROLLER_CHANGED_EVENTS) {
+		if (bits & ALARM_EVENT) {
+			xEventGroupClearBits(ui_events, ALARM_EVENT);
+			bool armed = alarm::is_armed();
+			// next guaranties, that arm-disarm-arm-... does not lead to inconsistent controller
+			using namespace user_interface;
+			if (armed && controller != alarm_disabler) {
+				desktop->invoke(alarm_disabler); // disabler has opportunity to return to desktop
+			} else if (!armed && controller != user_interface::desktop) {
+				controller = desktop;
+				xEventGroupSetBits(ui_events, RESUME_CONTROLLER_EVENT);
+			}
+		} else if (bits & CONTROLLER_CHANGED_EVENTS) {
 			xQueueReset(keyboard_events);
 			xEventGroupClearBits(ui_events, CONTROLLER_CHANGED_EVENTS | KEYBOARD_EVENT);
 			if (bits & INVOKE_CONTROLLER_EVENT) {
@@ -203,4 +216,13 @@ void user_interface::start() {
 	controller = desktop;
 
 	keyboard::start();
+}
+
+void user_interface::alarm_armed() {
+	xEventGroupSetBits(ui_events, ALARM_EVENT);
+}
+
+/** Notifies user interface, that alarm is armed */
+void user_interface::alarm_disarmed() {
+	xEventGroupSetBits(ui_events, ALARM_EVENT);
 }
