@@ -20,8 +20,14 @@ namespace sim900 {
 	/** Invoke when new message from SIM900 arrives */
 	void response_received();
 
-	void send_with_timeout(const char * cmd, uint16_t len, uint32_t deadline_ms, void (* timeout_elapsed)());
+	/** Invoke at the beginning of command execution */
+	void begin_command(ResponseHandler handler);
+	/** Invoke before calling result handler */
+	void before_handler();
+	/** Invoke after calling result handler */
+	void end_command();
 
+	void send_with_timeout(const char * cmd, uint16_t len, uint32_t deadline_ms, void (* timeout_elapsed)());
 	void start_timeout(uint32_t time_ms, void (* timeout_elapsed)());
 	void stop_timeout();
 }

@@ -15,6 +15,22 @@ void sim900::start_execution() {
 	response_handler = nullptr;
 }
 
+void sim900::response_received() {
+
+}
+
+void sim900::begin_command(ResponseHandler handler) {
+
+}
+
+void sim900::before_handler() {
+
+}
+
+void sim900::end_command() {
+
+}
+
 void sim900::send_with_timeout(const char * cmd, uint16_t len, uint32_t deadline_ms, void (* timeout_elapsed)()) {
 
 }
@@ -24,9 +40,5 @@ void sim900::start_timeout(uint32_t time_ms, void (* timeout_elapsed)()) {
 }
 
 void sim900::stop_timeout() {
-
-}
-
-void sim900::response_received() {
 
 }
