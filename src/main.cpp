@@ -66,7 +66,7 @@ extern "C" int main(void)
 	timing::config_fine_timer();
 	vmeter::init_periph();
 	flash::init_periph();
-	gsm_service::init_periph();
+	gsm::init_periph();
 	sound_service::init_periph();
 	user_interface::init_periph();
 	wired_zones::init_periph();
@@ -82,6 +82,7 @@ extern "C" int main(void)
 	wired_zones::start();
 	sd::start();
 	rec::start();
+	gsm::start();
 
 	//wireless
 	//File system

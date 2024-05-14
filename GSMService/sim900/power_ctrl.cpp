@@ -3,11 +3,11 @@
 //
 #include <stdint.h>
 #include <exception>
-#include "./config.h"
-#include "./sim900_power_ctrl.h"
-#include "./sim900_periph_utils.h"
+#include "config.h"
+#include "./power_ctrl.h"
+#include "periph.h"
 #include "rcc_utils.h"
-#include "./string_utils.h"
+#include "../string_utils.h"
 
 enum class PowerOnStep : uint8_t {
 	OPEN_VBAT, ENABLE_VBAT,

@@ -26,6 +26,8 @@ namespace sim900 {
 
 	enum class Result {DONE, FAILED};
 
+	enum class Error {ERROR_RESPONSE, CORRUPTED_RESPONSE, NO_RESPONSE, NONE};
+
 	struct Controls;
 	typedef void (* Handler)(const Controls & ctrl);
 	typedef void (* ResultHandler)(Result res, Controls & ctrl);
@@ -56,7 +58,9 @@ namespace sim900 {
 		bool (* const get_registration)(RegistrationHandler handler);
 	};
 
-	void init_driver();
+	/** Interrupts should be enabled(uses timer to discharge decoupling cap.)*/
+	void init_periph();
+	void start();
 
 	/** Blocks thread till control is released by other.
 	 * @returns API which always runs requested action(and always returns true) */
@@ -69,9 +73,9 @@ namespace sim900 {
 /** Invoked when initiator ends incoming call before accepting/rejecting by driver
  * or when ongoing call is ended by interlocutor(not by driver).
  * Is not invoked when call is ended/rejected by driver. */
-void on_call_ended(sim900::Handler handler);
+void on_call_ended(sim900::Controls ctrl);
 
 /** Invoked on incoming call. */
-void on_incoming_call(sim900::CallHandler handler);
+void on_incoming_call(sim900::Controls ctrl);
 
 // todo void on_sms_received();

@@ -50,7 +50,8 @@ else ()
     add_compile_options(-O0 -g)
 endif ()
 
-include_directories(ApplicationLogic/inc ClockControl/inc fatfs/inc freeRTOS/inc freeRTOS/ARM_CM3 GSMService/inc I2CExtension/inc inc
+include_directories(ApplicationLogic/inc ClockControl/inc fatfs/inc freeRTOS/inc freeRTOS/ARM_CM3 I2CExtension/inc inc
+        GSMService/inc GSMService/sim900/inc
         MessageRouter/inc SoundService/inc SPIExtension/inc SupplySystem/inc UARTExtension/inc UserInterface/inc
         VoltageMeter/inc WiredZones/inc WirelessInterface/inc Timing/inc Flash/inc
         SDCard/inc SDCard/driver/inc Settings/inc
@@ -59,7 +60,8 @@ include_directories(ApplicationLogic/inc ClockControl/inc fatfs/inc freeRTOS/inc
 
 add_definitions(-DSTM32 -DSTM32F1 -DSTM32F103VETx -DDEBUG -DSTM32F10X_HD -DUSE_HAL_DRIVER -DUSE_STDPERIPH_DRIVER)
 
-file(GLOB_RECURSE SOURCES "ApplicationLogic/*.*" "CMSIS/*.*" "ClockControl/*.*" "GSMService/*.*" "I2CExtension/*.*"
+file(GLOB_RECURSE SOURCES "ApplicationLogic/*.*" "CMSIS/*.*" "ClockControl/*.*" "I2CExtension/*.*"
+        "GSMService/*.*" "GSMService/sim900/*.*"
         "MessageRouter/*.*" "SPIExtension/*.*" "SoundService/*.*" "StdPeriph_Driver/*.*" "SupplySystem/*.*"
         "UARTExtension/*.*" "UserInterface/*.*" "UserInterface/controllers/*.*" "VoltageMeter/*.*" "WiredZones/*.*" "WirelessInterface/*.*"
         "Flash/*.*" "fatfs/*.*" "freeRTOS/*.*" "inc/*.*" "src/*.*" "startup/*.*" "Timing/*.*" "periph_utils/*.*"

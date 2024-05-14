@@ -5,8 +5,8 @@
 #include "task.h"
 #include "message_buffer.h"
 
-
-
-namespace gsm_service {
+namespace gsm {
 	void init_periph();
+	void start();
 }
+

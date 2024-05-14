@@ -25,9 +25,12 @@
 
 #define TIMER (timing::coarse_timer3)
 
-// time in ms for VBAT settling after connecting to 4V
+/** time in ms for VBAT settling after connecting to 4V */
 #define VBAT_SETTIMG_TIME	300
-// time in ms to discharge VBAT decoupling caps.
+/** time in ms to discharge VBAT decoupling caps. */
 #define VBAT_DISCHARGE_TIME	300
 
-#define MAX_UART_MESSAGE_LENGTH	128
+/** Size of buffer for SIM900 commands(and data)*/
+#define TX_BUFFER_LENGTH	128
+/** Size of circular buffer for SIM900 responses */
+#define RX_BUFFER_LENGTH_pow2	9
