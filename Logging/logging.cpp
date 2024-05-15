@@ -22,6 +22,7 @@ static StackType_t stack[STACK_SIZE];
 static StaticTask_t task_ctrl;
 
 static void record_logs(void * args) {
+	// todo: log bulk of messages, not each message
 	rec::init_card_recorder();
 	while (true) {
 		auto slot = buffer.start_read();

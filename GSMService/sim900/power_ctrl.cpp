@@ -1,13 +1,10 @@
 //
 // Created by independent-variable on 3/20/2024.
 //
-#include <stdint.h>
-#include <exception>
 #include "config.h"
-#include "./power_ctrl.h"
 #include "periph.h"
 #include "rcc_utils.h"
-#include "../string_utils.h"
+#include "./power_ctrl.h"
 #include "./execution.h"
 
 namespace sim900 {
@@ -42,99 +39,6 @@ static volatile union {
 	void (* powered_off)();
 } callback;
 
-static void do_power_on() {
-	using namespace sim900;
-	switch (next_step.on) {
-		case PowerOnStep::OPEN_VBAT:
-			open_vbat();
-			next_step.on = PowerOnStep::ENABLE_VBAT;
-			TIMER.invoke_in_ticks(1, do_power_on);
-			break;
-		case PowerOnStep::ENABLE_VBAT:
-			enable_vbat();
-			next_step.on = PowerOnStep::PRESS_PWR_KEY;
-			TIMER.invoke_in_ms(VBAT_SETTIMG_TIME, do_power_on);
-			break;
-		case PowerOnStep::PRESS_PWR_KEY:
-			// "RDY" message may be received while PWR_KEY is still pressed
-			// and is received asynchronously - it safer to have next step set
-			next_step.on = PowerOnStep::RELEASE_PWR_KEY;
-			received_message = false;
-			activate_uart();
-			press_pwr_key();
-			TIMER.invoke_in_ms(1100, do_power_on); // hold PWR_KEY > 1s
-			break;
-		case PowerOnStep::RELEASE_PWR_KEY:
-			release_pwr_key();
-			next_step.on = PowerOnStep::WAIT_READY_MESSAGE;
-			TIMER.invoke_in_ms(5000, do_power_on); // module starts faster than in 2.2s
-			break;
-		case PowerOnStep::WAIT_READY_MESSAGE:
-			if (received_message) {
-				next_step.on = PowerOnStep::REPORT_SUCCESS;
-				callback.powered_on(true);
-			} else {
-				next_step.on = PowerOnStep::REPORT_FAILURE;
-				callback.powered_on(false);
-			}
-			break;
-		default: throw std::exception();
-	}
-}
-
-static void do_power_off() {
-	using namespace sim900;
-	switch (next_step.off) {
-		case PowerOffStep::PRESS_PWR_KEY:
-			// "normal power down" message is received asynchronously - it safer to have next step set
-			next_step.off = PowerOffStep::RELEASE_PWR_KEY;
-			received_message = false;
-			press_pwr_key();
-			TIMER.invoke_in_ms(1100, do_power_off); // hold PWR_KEY > 1s
-			break;
-		case PowerOffStep::RELEASE_PWR_KEY:
-			release_pwr_key();
-			next_step.off = PowerOffStep::WAIT_POWER_DOWN_MESSAGE;
-			TIMER.invoke_in_ms(1800, do_power_off); // module stops in 1.7s
-			break;
-		case PowerOffStep::WAIT_POWER_DOWN_MESSAGE:
-			// do not care if message was received or not
-			suspend_uart();
-			disable_vbat();
-			next_step.off = PowerOffStep::SHORT_VBAT;
-			TIMER.invoke_in_ticks(1, do_power_off);
-			break;
-		case PowerOffStep::SHORT_VBAT:
-			short_vbat();
-			next_step.off = PowerOffStep::REPORT_DONE;
-			TIMER.invoke_in_ms(VBAT_DISCHARGE_TIME, do_power_off);
-			break;
-		case PowerOffStep::REPORT_DONE:
-			next_step.on = PowerOnStep::OPEN_VBAT;
-			callback.powered_off();
-			break;
-		default: throw std::exception();
-	}
-}
-
-static bool receive_ready(rx_buffer_t & rx_buffer) {
-	if (rx_buffer.equals("RDY")) {
-		received_message = true;
-		return true;
-	} else {
-		return false;
-	}
-}
-
-static bool receive_power_down(rx_buffer_t & rx_buffer) {
-	if (rx_buffer.equals("NORMAL POWER DOWN")) {
-		received_message = true;
-		return true;
-	} else {
-		return false;
-	}
-}
-
 void sim900::init_power_ctrl() {
 	GPIO_InitTypeDef pinInitStruct;
 	// VBAT switch
@@ -166,6 +70,103 @@ void sim900::init_power_ctrl() {
 	TIMER.wait_ms(VBAT_DISCHARGE_TIME);
 
 	next_step.on = PowerOnStep::OPEN_VBAT;
+}
+
+static void do_power_on() {
+	using namespace sim900;
+	switch (next_step.on) {
+		case PowerOnStep::OPEN_VBAT:
+			open_vbat();
+			next_step.on = PowerOnStep::ENABLE_VBAT;
+			TIMER.invoke_in_ticks(1, do_power_on);
+			break;
+		case PowerOnStep::ENABLE_VBAT:
+			enable_vbat();
+			next_step.on = PowerOnStep::PRESS_PWR_KEY;
+			TIMER.invoke_in_ms(VBAT_SETTIMG_TIME, do_power_on);
+			break;
+		case PowerOnStep::PRESS_PWR_KEY:
+			// "RDY" message may be received while PWR_KEY is still pressed
+			// and is received asynchronously - it safer to have next step set
+			next_step.on = PowerOnStep::RELEASE_PWR_KEY;
+			received_message = false;
+			activate_uart();
+			press_pwr_key();
+			TIMER.invoke_in_ms(1100, do_power_on); // hold PWR_KEY > 1s
+			break;
+		case PowerOnStep::RELEASE_PWR_KEY:
+			release_pwr_key();
+			next_step.on = PowerOnStep::WAIT_READY_MESSAGE;
+			start_timeout(5000, do_power_on); // module starts faster than in 2.2s; invoke callback from thread
+			break;
+		case PowerOnStep::WAIT_READY_MESSAGE:
+			if (received_message) {
+				next_step.on = PowerOnStep::REPORT_SUCCESS;
+				end_command();
+				callback.powered_on(true);
+			} else {
+				next_step.on = PowerOnStep::REPORT_FAILURE;
+				end_command();
+				callback.powered_on(false);
+			}
+			break;
+		default:
+			// not reachable
+			break;
+	}
+}
+
+static void do_power_off() {
+	using namespace sim900;
+	switch (next_step.off) {
+		case PowerOffStep::PRESS_PWR_KEY:
+			// "normal power down" message is received asynchronously - it safer to have next step set
+			next_step.off = PowerOffStep::RELEASE_PWR_KEY;
+			received_message = false;
+			press_pwr_key();
+			TIMER.invoke_in_ms(1100, do_power_off); // hold PWR_KEY > 1s
+			break;
+		case PowerOffStep::RELEASE_PWR_KEY:
+			release_pwr_key();
+			next_step.off = PowerOffStep::WAIT_POWER_DOWN_MESSAGE;
+			TIMER.invoke_in_ms(1800, do_power_off); // module stops in 1.7s
+			break;
+		case PowerOffStep::WAIT_POWER_DOWN_MESSAGE:
+			// do not care if message was received or not
+			suspend_uart();
+			disable_vbat();
+			next_step.off = PowerOffStep::SHORT_VBAT;
+			TIMER.invoke_in_ticks(1, do_power_off);
+			break;
+		case PowerOffStep::SHORT_VBAT:
+			short_vbat();
+			next_step.off = PowerOffStep::REPORT_DONE;
+			start_timeout(VBAT_DISCHARGE_TIME, do_power_off); // to invoke callback from thread
+			break;
+		case PowerOffStep::REPORT_DONE:
+			next_step.on = PowerOnStep::OPEN_VBAT;
+			end_command();
+			callback.powered_off();
+			break;
+	}
+}
+
+static bool receive_ready(rx_buffer_t & rx) {
+	if (rx.is_message_ok() && rx.equals("RDY")) {
+		received_message = true;
+		return true;
+	} else {
+		return false;
+	}
+}
+
+static bool receive_power_down(rx_buffer_t & rx) {
+	if (rx.is_message_ok() && rx.equals("NORMAL POWER DOWN")) {
+		received_message = true;
+		return true;
+	} else {
+		return false;
+	}
 }
 
 /** @param handler is invoked with "true" if turned on successfully(SIM900 responded),

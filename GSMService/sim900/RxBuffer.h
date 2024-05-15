@@ -124,6 +124,11 @@ namespace sim900 {
 		}
 
 		inline bool is_message_corrupted() {
+			return get_message_len() == 0;
+		}
+
+		/** @returns true if message is not corrupted */
+		inline bool is_message_ok() {
 			return get_message_len() != 0;
 		}
 

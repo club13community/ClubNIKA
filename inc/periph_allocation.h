@@ -48,6 +48,8 @@
 #define TASK_NORMAL_PRIORITY		1U
 // mounts and unmounts SD card
 #define SD_SERVICE_PRIORITY			2U
+// parses received messages, handles timeouts, etc.
+#define SIM900_DRIVER_PRIORITY		2U
 // detects what was pressed
 #define KEYBOARD_SERVICE_PRIORITY	3U
 // starts application(mounts flash, loads settings, etc.); should have higher priority, than normal task

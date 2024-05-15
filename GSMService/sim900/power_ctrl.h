@@ -7,8 +7,4 @@
 
 namespace sim900 {
 	void init_power_ctrl();
-	void turn_on(void (* callback)(bool success));
-	void turn_off(void (* callback)());
-	bool is_turned_on();
-	bool is_turned_off();
 }

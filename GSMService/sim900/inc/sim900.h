@@ -9,6 +9,40 @@ namespace sim900 {
 	/** Interrupts should be enabled(uses timer to discharge decoupling cap.)*/
 	void init_periph();
 	void start();
+
+	enum class Result {
+		OK,
+		/** Received "ERROR" from SIM900 */
+		ERROR,
+		/** Problem with UART communication.
+		 * In case of request - data is invalid. In case of operation initiation - not clear if initiated */
+		CORRUPTED_RESPONSE,
+		/** Seems, that SIM900 stuck */
+		NO_RESPONSE
+	};
+	enum class CardStatus {
+		ABSENT,
+		/** Not usable till PIN is entered */
+		LOCKED,
+		READY,
+		/** Not functioning */
+		ERROR
+	};
+	enum class Registration {
+		/** Registered(in domestic or roaming). */
+		DONE,
+		ONGOING,
+		FAILED
+	};
+
+	void turn_on(void (* callback)(bool success));
+	void turn_off(void (* callback)());
+	bool is_turned_on();
+	bool is_turned_off();
+	void get_card_status(void (* callback)(CardStatus status, Result result));
+	void get_signal_strength(void (* callback)(uint8_t signal_pct, Result result));
+	void get_registration(void (* callback)(Registration registration, Result result));
+	void send_sms(const char * phone, const char * text, void (* callback)(uint16_t id, Result result));
 }
 
 /** Invoked when initiator ends incoming call before accepting/rejecting by driver
