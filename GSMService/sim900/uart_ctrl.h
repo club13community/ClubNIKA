@@ -9,4 +9,6 @@
 namespace sim900 {
 	void init_uart_ctrl();
 	void send(const char * command, uint16_t length);
+	void send(const char * command, uint16_t length, void (* callback)());
+	bool is_sent();
 }

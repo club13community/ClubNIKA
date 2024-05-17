@@ -3,7 +3,17 @@
 //
 
 #pragma once
-#include "config.h"
+#include "stm32f10x.h"
+#include "timing.h"
+
+#define TIMER (timing::coarse_timer3)
+
+#define PWR_KEY_PORT	GPIOD
+#define PWR_KEY_PIN		GPIO_Pin_4
+#define VBAT_SW_PORT	GPIOD
+#define VBAT_SW_PIN		GPIO_Pin_1
+#define VBAT_DISCHARGE_PORT	GPIOD
+#define VBAT_DISCHARGE_PIN	GPIO_Pin_0
 
 namespace sim900 {
 	inline void press_pwr_key() {
@@ -32,17 +42,4 @@ namespace sim900 {
 	inline void open_vbat() {
 		GPIO_WriteBit(VBAT_DISCHARGE_PORT, VBAT_DISCHARGE_PIN, Bit_RESET);
 	}
-
-	inline void activate_uart() {
-		GPIO_InitTypeDef io_conf = {.GPIO_Pin = TX_PIN, .GPIO_Speed = GPIO_Speed_2MHz, .GPIO_Mode = GPIO_Mode_AF_PP};
-		GPIO_Init(TX_PORT, &io_conf);
-		USART_Cmd(UART, ENABLE);
-	}
-
-	inline void suspend_uart() {
-		USART_Cmd(UART, DISABLE);
-		GPIO_InitTypeDef io_conf = {.GPIO_Pin = TX_PIN, .GPIO_Mode = GPIO_Mode_IN_FLOATING};
-		GPIO_Init(TX_PORT, &io_conf);
-	}
-
 }

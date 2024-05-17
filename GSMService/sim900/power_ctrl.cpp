@@ -2,9 +2,10 @@
 // Created by independent-variable on 3/20/2024.
 //
 #include "config.h"
-#include "periph.h"
+#include "power_periph.h"
 #include "rcc_utils.h"
 #include "./power_ctrl.h"
+#include "./uart_periph.h"
 #include "./execution.h"
 
 namespace sim900 {

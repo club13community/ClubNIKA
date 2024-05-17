@@ -83,8 +83,9 @@ static void call_info_timeout() {
 static bool call_info_listener(rx_buffer_t & rx) {
 	auto phase_now = call_info_phase;
 	if (phase_now == CallInfoPhase::WAIT_INFO) {
-		//todo if (!is_sent()) {} else
-		if (rx.is_message_corrupted()) {
+		if (!is_sent()) {
+			return false;
+		} else if (rx.is_message_corrupted()) {
 			// assume that it was requested info
 			call_info_phase = CallInfoPhase::WAIT_OPTIONAL_END;
 			start_response_timeout(RESP_TIMEOUT_ms, call_info_timeout);

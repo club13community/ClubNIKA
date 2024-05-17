@@ -48,7 +48,9 @@ namespace sim900 {
 	bool get_info_handler(sim900::rx_buffer_t & rx) {
 		GetInfoState state_now = state;
 		if (state_now == GetInfoState::WAIT_INFO) {
-			if (rx.is_message_corrupted()) {
+			if (!is_sent()) {
+				return false;
+			} else if (rx.is_message_corrupted()) {
 				// wait "OK" if SIM900 sent requested info, if SIM900 sent "ERROR" - nothing will be received
 				state = GetInfoState::WAIT_OPTIONAL_END;
 				start_response_timeout(RESP_TIMEOUT_ms, get_info_timeout<state, end>);
@@ -102,7 +104,9 @@ namespace sim900 {
 		if (!active) {
 			return false;
 		}
-		if (rx.is_message_corrupted()) {
+		if (!is_sent()) {
+			return false;
+		} else if (rx.is_message_corrupted()) {
 			active = false;
 			end(Result::CORRUPTED_RESPONSE);
 			return true;
