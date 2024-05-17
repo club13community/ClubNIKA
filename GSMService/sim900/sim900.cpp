@@ -29,7 +29,8 @@ using namespace sim900;
 
 #define SIM900_MESSAGE	( (uint32_t)1U )
 #define TIMEOUT			( (uint32_t)2U )
-#define ALL_EVENTS		(SIM900_MESSAGE | TIMEOUT)
+#define METHOD			( (uint32_t)4U )
+#define ALL_EVENTS		(SIM900_MESSAGE | TIMEOUT | METHOD)
 
 static TaskHandle_t service_task;
 
@@ -38,6 +39,8 @@ static volatile enum {NONE, RESPONSE, DELAY} timeout_type;
 static void (* volatile timeout_handler)();
 
 static volatile ResponseHandler response_handler;
+
+static void (* volatile ctrl_method)();
 
 static void service_commands(void * args);
 static void timeout_elapsed(TimerHandle_t xTimer);
@@ -96,6 +99,13 @@ void sim900::stop_timeout() {
 	ulTaskNotifyValueClear(service_task, TIMEOUT);
 }
 
+BaseType_t sim900::invoke_from_task(void (* method)()) {
+	ctrl_method = method;
+	BaseType_t task_woken = pdFALSE;
+	xTaskNotifyFromISR(service_task, METHOD, eSetBits, &task_woken);
+	return task_woken;
+}
+
 static inline void service_timeout() {
 	timeout_type = NONE;
 	timeout_handler();
@@ -127,6 +137,9 @@ static void service_commands(void * args) {
 	while (true) {
 		uint32_t bits;
 		while (xTaskNotifyWait(0, ALL_EVENTS, &bits, portMAX_DELAY) == pdFALSE);
+		if (bits & METHOD) {
+			ctrl_method();
+		}
 		if (bits & TIMEOUT) {
 			service_timeout();
 		}

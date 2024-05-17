@@ -5,6 +5,7 @@
 
 #pragma once
 #include "./uart_ctrl.h"
+#include "FreeRTOS.h"
 
 namespace sim900 {
 	typedef char tx_buffer_t[TX_BUFFER_LENGTH];
@@ -30,4 +31,7 @@ namespace sim900 {
 
 	void start_timeout(uint32_t delay_ms, void (* callback)());
 	void stop_timeout();
+	/** Invoke from ISR to continue execution from task.
+	 * @returns pdTRUE if higher priority task was woken */
+	BaseType_t invoke_from_task(void (* method)());
 }
