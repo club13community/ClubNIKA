@@ -54,14 +54,7 @@ namespace gsm {
 
 }
 
-///** @param phone '\0' ended phone number without leading '+' and country code. */
-//bool (* const call)(const char * phone, DialingHandler handler);
-///** If no incoming call - do not invoke handler(if there was incoming call,
-// * but ended before accepting - appropriate callback is invoked) */
-//bool (* const accept_call)(Handler handler);
-///** If no incoming call - do not invoke handler(if there was incoming call,
-// * but ended before rejecting - appropriate callback is invoked) */
-//bool (* const reject_call)(Handler handler);
+
 ///** If no ongoing call - do not invoke handler(if there was ongoing call,
 // * but ended before ending - appropriate callback is invoked) */
 //bool (* const end_call)(Handler handler);

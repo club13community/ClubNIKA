@@ -34,6 +34,12 @@ namespace sim900 {
 		ONGOING,
 		FAILED
 	};
+	enum class CallState {
+		RINGING,
+		DIALED,
+		/** No ongoing calls(all previous are ended) */
+		ENDED
+	};
 
 	void turn_on(void (* callback)(bool success));
 	void turn_off(void (* callback)());
@@ -43,6 +49,15 @@ namespace sim900 {
 	void get_signal_strength(void (* callback)(uint8_t signal_pct, Result result));
 	void get_registration(void (* callback)(Registration registration, Result result));
 	void send_sms(const char * phone, const char * text, void (* callback)(uint16_t id, Result result));
+	void call(const char * phone, void (* callback)(Result result));
+	/** If no incoming call - do not invoke handler(if there was incoming call,
+	 * but ended before accepting - appropriate callback is invoked) */
+	void accept_call(void (* callback)(Result result));
+	/** If no ongoing call - do not invoke handler(if there was ongoing call,
+	 * but ended before ending - appropriate callback is invoked) */
+	void end_call(void (* callback)(Result result));
+	/** Number in callback's arg. may contain leading '+' with country code */
+	void get_call_info(void (* callback)(CallState state, char * number, Result result));
 }
 
 /** Invoked when initiator ends incoming call before accepting/rejecting by driver

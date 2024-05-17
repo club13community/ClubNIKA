@@ -64,6 +64,10 @@ void sim900::begin_command(ResponseHandler handler) {
 	response_handler = handler;
 }
 
+void sim900::change_listener(ResponseHandler handler) {
+	response_handler = handler;
+}
+
 void sim900::end_command() {
 	response_handler = nullptr;
 }

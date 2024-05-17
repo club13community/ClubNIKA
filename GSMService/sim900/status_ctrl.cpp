@@ -4,7 +4,7 @@
 #include <string.h>
 #include "sim900.h"
 #include "./execution.h"
-#include "./get_info_template.h"
+#include "./ctrl_templates.h"
 #include "./utils.h"
 
 using namespace sim900;
@@ -37,9 +37,7 @@ void sim900::get_card_status(void (* callback)(CardStatus status, Result result)
 	static volatile GetInfoState state;
 
 	card_status_callback = callback;
-	state = GetInfoState::WAIT_INFO;
-	begin_command(get_info_handler<CPIN, state, parse_card_status, end_card_status>);
-	send_with_timeout(cmd, length(cmd), RESP_TIMEOUT_ms, get_info_timeout<state, end_card_status>);
+	start_get_info<CPIN, state, parse_card_status, end_card_status>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }
 
 static void (* volatile signal_strength_handler)(uint8_t, Result);
@@ -72,9 +70,7 @@ void sim900::get_signal_strength(void (* callback)(uint8_t signal_pct, Result re
 	static volatile GetInfoState state;
 
 	signal_strength_handler = callback;
-	state = GetInfoState::WAIT_INFO;
-	begin_command(get_info_handler<CSQ, state, parse_signal_strength, end_signal_strength>);
-	send_with_timeout(cmd, length(cmd), RESP_TIMEOUT_ms, get_info_timeout<state, end_signal_strength>);
+	start_get_info<CSQ, state, parse_signal_strength, end_signal_strength>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }
 
 static void (* volatile registration_handler)(Registration, Result);
@@ -103,7 +99,5 @@ void sim900::get_registration(void (* callback)(Registration registration, Resul
 	static volatile GetInfoState state;
 
 	registration_handler = callback;
-	state = GetInfoState::WAIT_INFO;
-	begin_command(get_info_handler<CREG, state, parse_registration, end_registration>);
-	send_with_timeout(cmd, length(cmd), RESP_TIMEOUT_ms, get_info_timeout<state, end_registration>);
+	start_get_info<CREG, state, parse_registration, end_registration>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }

@@ -19,6 +19,7 @@ namespace sim900 {
 
 	/** Invoke at the beginning of command execution */
 	void begin_command(ResponseHandler handler);
+	void change_listener(ResponseHandler handler);
 	/** Invoke before calling result handler */
 	void end_command();
 
