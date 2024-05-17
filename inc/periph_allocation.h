@@ -27,8 +27,9 @@
 
 #define FINE_TIMER_IRQ_PRIORITY		13U
 #define COARSE_TIMER_IRQ_PRIORITY	13U
-// same priority for UART and DMA(channel for TX) handlers
+
 #define SIM900_UART_IRQ_PRIORITY	3U
+#define SIM900_DMA_IRQ_PRIORITY		14U
 // same for DMA and timer
 #define DAC_IRQ_PRIORITY	4U
 #define FLASH_IRQ_PRIORITY	6U

@@ -10,6 +10,10 @@
 #include "sim900_isr.h"
 #include "./uart_periph.h"
 
+#if configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY >= SIM900_DMA_IRQ_PRIORITY
+#error FreeRTOS API may be used in 'UART sent ISR'
+#endif
+
 void sim900::init_uart_ctrl() {
 	GPIO_InitTypeDef pinInitStruct;
 	// Tx pin
@@ -69,12 +73,12 @@ void sim900::init_uart_ctrl() {
 	// Interrupt for end of transmitting
 	nvicInitStruct.NVIC_IRQChannel = get_IRQn(DMA_CHANNEL);
 	nvicInitStruct.NVIC_IRQChannelCmd = ENABLE;
-	nvicInitStruct.NVIC_IRQChannelPreemptionPriority = UART_IRQ_PRIORITY;
+	nvicInitStruct.NVIC_IRQChannelPreemptionPriority = DMA_IRQ_PRIORITY;
 	nvicInitStruct.NVIC_IRQChannelSubPriority = 0;
 	NVIC_Init(&nvicInitStruct);
 }
 
-static void (* volatile on_sent)();
+static BaseType_t (* volatile on_sent)();
 
 /** Does not check if module is turned on, does not check concurrent access.
  * @param command '\r'-ended command, should not change before send is completed
@@ -85,7 +89,7 @@ void sim900::send(const char * command, uint16_t length) {
 	send_via_dma(command, length);
 }
 
-void sim900::send(const char * command, uint16_t length, void (* callback)()) {
+void sim900::send(const char * command, uint16_t length, BaseType_t (* callback)()) {
 	on_sent = callback;
 	send_via_dma(command, length);
 }
@@ -106,7 +110,5 @@ void sim900::handle_uart_interrupt() {
 
 void sim900::handle_dma_interrupt() {
 	on_sent_via_dma();
-	if (on_sent != nullptr) {
-		on_sent();
-	}
+	portYIELD_FROM_ISR(on_sent != nullptr ? on_sent() : pdFALSE);
 }

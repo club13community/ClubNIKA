@@ -4,7 +4,8 @@
 //
 
 #pragma once
-#include "./uart_ctrl.h"
+#include "./config.h"
+#include "./RxBuffer.h"
 #include "FreeRTOS.h"
 
 namespace sim900 {
@@ -26,6 +27,8 @@ namespace sim900 {
 
 	/** Sends and starts timeout till handled response. Can not be simultaneously used with other timeout functions. */
 	void send_with_timeout(const char * cmd, uint16_t len, uint32_t deadline_ms, void (* timeout_elapsed)());
+	void send_with_timeout(const char * cmd, uint16_t len, BaseType_t (* sent)(),
+						   uint32_t deadline_ms, void (* timeout_elapsed)());
 	/** Starts timeout till handled response. Can not be simultaneously used with other timeout functions.*/
 	void start_response_timeout(uint32_t deadline_ms, void (* timeout_elapsed)());
 

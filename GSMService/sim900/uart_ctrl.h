@@ -3,12 +3,12 @@
 //
 
 #pragma once
-#include "./config.h"
-#include "./RxBuffer.h"
+#include <stdint.h>
+#include "FreeRTOS.h"
 
 namespace sim900 {
 	void init_uart_ctrl();
 	void send(const char * command, uint16_t length);
-	void send(const char * command, uint16_t length, void (* callback)());
+	void send(const char * command, uint16_t length, BaseType_t (* callback)());
 	bool is_sent();
 }

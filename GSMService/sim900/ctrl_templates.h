@@ -26,6 +26,7 @@
 #include "sim900.h"
 #include "./execution.h"
 #include "./config.h"
+#include "./uart_ctrl.h"
 
 namespace sim900 {
 	enum class GetInfoState {

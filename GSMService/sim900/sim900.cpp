@@ -76,9 +76,18 @@ void sim900::end_command() {
 }
 
 void sim900::send_with_timeout(const char * cmd, uint16_t len, uint32_t deadline_ms, void (* timeout_elapsed)()) {
-	// todo think about critical section
+	portENTER_CRITICAL();
 	start_response_timeout(deadline_ms, timeout_elapsed);
 	send(cmd, len);
+	portEXIT_CRITICAL();
+}
+
+void sim900::send_with_timeout(const char * cmd, uint16_t len, BaseType_t (* sent)(),
+							   uint32_t deadline_ms, void (* timeout_elapsed)()) {
+	portENTER_CRITICAL();
+	start_response_timeout(deadline_ms, timeout_elapsed);
+	send(cmd, len, sent);
+	portEXIT_CRITICAL();
 }
 
 void sim900::start_response_timeout(uint32_t deadline_ms, void (* timeout_elapsed)()) {
