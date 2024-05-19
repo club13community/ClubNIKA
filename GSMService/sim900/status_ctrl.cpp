@@ -34,10 +34,9 @@ static void end_card_status(Result res) {
 void sim900::get_card_status(void (* callback)(CardStatus status, Result result)) {
 	static const char * cmd = "AT+CPIN?\r";
 	static const char * CPIN = "+CPIN:";
-	static volatile GetInfoState state;
 
 	card_status_callback = callback;
-	start_get_info<CPIN, state, parse_card_status, end_card_status>(cmd, length(cmd), RESP_TIMEOUT_ms);
+	start_get_info<CPIN, parse_card_status, end_card_status>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }
 
 static void (* volatile signal_strength_handler)(uint8_t, Result);
@@ -67,10 +66,9 @@ static void end_signal_strength(Result res) {
 void sim900::get_signal_strength(void (* callback)(uint8_t signal_pct, Result result)) {
 	static const char * cmd = "AT+CSQ\r";
 	static const char * CSQ = "+CSQ:";
-	static volatile GetInfoState state;
 
 	signal_strength_handler = callback;
-	start_get_info<CSQ, state, parse_signal_strength, end_signal_strength>(cmd, length(cmd), RESP_TIMEOUT_ms);
+	start_get_info<CSQ, parse_signal_strength, end_signal_strength>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }
 
 static void (* volatile registration_handler)(Registration, Result);
@@ -96,8 +94,7 @@ static void end_registration(Result res) {
 void sim900::get_registration(void (* callback)(Registration registration, Result result)) {
 	static const char * cmd = "AT+CREG?\r";
 	static const char * CREG = "+CREG:";
-	static volatile GetInfoState state;
 
 	registration_handler = callback;
-	start_get_info<CREG, state, parse_registration, end_registration>(cmd, length(cmd), RESP_TIMEOUT_ms);
+	start_get_info<CREG, parse_registration, end_registration>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }

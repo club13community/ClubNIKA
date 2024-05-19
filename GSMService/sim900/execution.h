@@ -27,14 +27,11 @@ namespace sim900 {
 
 	/** Sends and starts timeout till handled response. Can not be simultaneously used with other timeout functions. */
 	void send_with_timeout(const char * cmd, uint16_t len, uint32_t deadline_ms, void (* timeout_elapsed)());
-	void send_with_timeout(const char * cmd, uint16_t len, BaseType_t (* sent)(),
+	void send_with_timeout(const char * cmd, uint16_t len, void (* message_sent)(),
 						   uint32_t deadline_ms, void (* timeout_elapsed)());
 	/** Starts timeout till handled response. Can not be simultaneously used with other timeout functions.*/
 	void start_response_timeout(uint32_t deadline_ms, void (* timeout_elapsed)());
 
 	void start_timeout(uint32_t delay_ms, void (* callback)());
 	void stop_timeout();
-	/** Invoke from ISR to continue execution from task.
-	 * @returns pdTRUE if higher priority task was woken */
-	BaseType_t invoke_from_task(void (* method)());
 }

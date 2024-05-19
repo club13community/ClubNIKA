@@ -17,7 +17,6 @@ static void call_done(Result res) {
 }
 
 void sim900::call(const char * phone, void (* callback)(Result result)) {
-	static volatile bool active;
 	call_callback = callback;
 
 	// prepare command
@@ -27,7 +26,7 @@ void sim900::call(const char * phone, void (* callback)(Result result)) {
 	*tail++ = '\r';
 	uint16_t len = tail - tx_buffer;
 
-	start_execute<active, call_done>(tx_buffer, len, RESP_TIMEOUT_ms);
+	start_execute<call_done>(tx_buffer, len, RESP_TIMEOUT_ms);
 }
 
 static void (* volatile accept_callback)(Result);
@@ -39,10 +38,9 @@ static void accept_done(Result res) {
 
 void sim900::accept_call(void (* callback)(Result result)) {
 	constexpr const char * cmd = "ATA\r";
-	static volatile bool active;
 
 	accept_callback = callback;
-	start_execute<active, accept_done>(cmd, length(cmd), RESP_TIMEOUT_ms);
+	start_execute<accept_done>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }
 
 static void (* volatile end_callback)(Result);
@@ -54,34 +52,17 @@ static void end_done(Result res) {
 
 void sim900::end_call(void (* callback)(Result result)) {
 	constexpr const char * cmd = "ATH\r";
-	static volatile bool active;
 
 	end_callback = callback;
-	start_execute<active, end_done>(cmd, length(cmd), RESP_TIMEOUT_ms);
-}
-
-namespace sim900 {
-	enum class CallInfoPhase {WAIT_INFO, WAIT_OK, WAIT_END, DONE};
+	start_execute<end_done>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }
 
 static void (* volatile call_info_callback)(CallState, char *, Result);
 static volatile CallState call_info_state;
-static volatile CallInfoPhase call_info_phase;
 
-static inline void call_info_done(Result res) {
+static void call_info_done(Result res) {
 	end_command();
 	call_info_callback(call_info_state, tx_buffer, res);
-}
-
-static void call_info_timeout() {
-	auto phase_now = call_info_phase;
-	if (phase_now == CallInfoPhase::WAIT_INFO || phase_now == CallInfoPhase::WAIT_OK) {
-		call_info_phase = CallInfoPhase::DONE;
-		call_info_done(Result::NO_RESPONSE);
-	} else if (phase_now == CallInfoPhase::WAIT_END) {
-		call_info_phase = CallInfoPhase::DONE;
-		call_info_done(Result::CORRUPTED_RESPONSE);
-	}
 }
 
 static void parse_call_info(rx_buffer_t & rx) {
@@ -102,60 +83,12 @@ static void parse_call_info(rx_buffer_t & rx) {
 	copy(tx_buffer, 1, len - 1, tx_buffer);
 }
 
-static bool call_info_listener(rx_buffer_t & rx) {
-	auto phase_now = call_info_phase;
-	if (phase_now == CallInfoPhase::WAIT_INFO) {
-		if (!is_sent()) {
-			return false;
-		} else if (rx.is_message_corrupted()) {
-			// options: requested info, "OK", "ERROR", something else
-			call_info_phase = CallInfoPhase::WAIT_END;
-			start_response_timeout(RESP_TIMEOUT_ms, call_info_timeout);
-			return true;
-		} else if (rx.starts_with("+CLCC:")) {
-			parse_call_info(rx);
-			call_info_phase = CallInfoPhase::WAIT_OK;
-			start_response_timeout(RESP_TIMEOUT_ms, call_info_timeout);
-			return true;
-		} else if (rx.equals("OK")) {
-			// all calls are ended, (state is already "ENDED")
-			call_info_phase = CallInfoPhase::DONE;
-			call_info_done(Result::OK);
-			return true;
-		} else if (rx.equals("ERROR") || rx.starts_with("+CME ERROR:")) {
-			// did not observe during experiments
-			call_info_phase = CallInfoPhase::DONE;
-			call_info_done(Result::ERROR);
-			return true;
-		} else {
-			return false;
-		}
-	} else if (phase_now == CallInfoPhase::WAIT_OK) {
-		call_info_phase = CallInfoPhase::DONE;
-		call_info_done(Result::OK);
-		return true;
-	} else if (phase_now == CallInfoPhase::WAIT_END) {
-		// stay here till "OK"/"ERROR"/not related message
-		if (rx.is_message_corrupted() || rx.equals("OK")
-				|| rx.equals("ERROR") || rx.starts_with("+CME ERROR:")) { // did not observe during experiments
-			call_info_phase = CallInfoPhase::DONE;
-			call_info_done(Result::CORRUPTED_RESPONSE);
-			return true;
-		} else if (rx.starts_with("+CLCC:")) {
-
-		} else {
-			return false;
-		}
-	}
-	return false;
-}
-
 void sim900::get_call_info(void (* callback)(CallState state, char * number, Result result)) {
 	constexpr const char * cmd = "AT+CLCC\r";
+	static const char * CLCC = "+CLCC:";
 	call_info_callback = callback;
 	call_info_state = CallState::ENDED;
-	call_info_phase = CallInfoPhase::WAIT_INFO;
-	begin_command(call_info_listener);
-	send_with_timeout(cmd, length(cmd), RESP_TIMEOUT_ms, call_info_timeout);
+
+	start_get_info<CLCC, parse_call_info, call_info_done>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }
 
