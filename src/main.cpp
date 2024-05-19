@@ -37,6 +37,7 @@
 #include "drives.h"
 #include "settings.h"
 #include "periph_allocation.h"
+#include <string.h>
 
 static TaskHandle_t test_task;
 static StaticTask_t test_task_ctrl;
@@ -44,6 +45,7 @@ static StackType_t test_task_stack[1024];
 static FIL tst_file;
 
 static void do_test_task(void * args) {
+
 	while(true);
 }
 

@@ -4,24 +4,18 @@
 //
 
 #pragma once
+#include "./uart_ctrl.h"
 #include "./config.h"
-#include "./RxBuffer.h"
 #include "FreeRTOS.h"
 
 namespace sim900 {
 	typedef char tx_buffer_t[TX_BUFFER_LENGTH];
-	typedef RxBuffer<RX_BUFFER_LENGTH_pow2> rx_buffer_t;
-	typedef bool (* ResponseHandler)(rx_buffer_t &);
+	typedef bool (* ResponseListener)(rx_buffer_t &);
 
 	extern tx_buffer_t tx_buffer;
-	extern rx_buffer_t rx_buffer;
-
-	/** Invoke when new message from SIM900 arrives */
-	void response_received();
 
 	/** Invoke at the beginning of command execution */
-	void begin_command(ResponseHandler handler);
-	void change_listener(ResponseHandler handler);
+	void begin_command(ResponseListener listener);
 	/** Invoke before calling result handler */
 	void end_command();
 
@@ -32,6 +26,6 @@ namespace sim900 {
 	/** Starts timeout till handled response. Can not be simultaneously used with other timeout functions.*/
 	void start_response_timeout(uint32_t deadline_ms, void (* timeout_elapsed)());
 
-	void start_timeout(uint32_t delay_ms, void (* callback)());
+	void start_timeout(uint32_t delay_ms, void (* timeout_elapsed)());
 	void stop_timeout();
 }

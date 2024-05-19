@@ -105,7 +105,7 @@ void sim900::send_sms(const char * phone, const char * text, void (* callback)(u
 	}
 	*tail++ = '\0';
 	*tail++ = CTRL_Z;
-	send_text_len = send_text_buf - tail;
+	send_text_len = tail - send_text_buf;
 
 	// send command
 	send_state = SendSmsState::SENDING_CMD;

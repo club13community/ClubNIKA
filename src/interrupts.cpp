@@ -59,6 +59,10 @@ extern "C" void DMA1_Channel7_IRQHandler() {
 	sim900::handle_dma_interrupt();
 }
 
+extern "C" void EXTI0_IRQHandler() {
+	sim900::handle_exti_interrupt();
+}
+
 //UARTExtension, Rx
 extern "C" void USART3_IRQHandler(){
 	if(SET == USART_GetITStatus(USART3, USART_IT_RXNE)){

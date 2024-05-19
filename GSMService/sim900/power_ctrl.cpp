@@ -79,12 +79,12 @@ static void do_power_on() {
 		case PowerOnStep::OPEN_VBAT:
 			open_vbat();
 			next_step.on = PowerOnStep::ENABLE_VBAT;
-			TIMER.invoke_in_ticks(1, do_power_on);
+			start_timeout(1, do_power_on);
 			break;
 		case PowerOnStep::ENABLE_VBAT:
 			enable_vbat();
 			next_step.on = PowerOnStep::PRESS_PWR_KEY;
-			TIMER.invoke_in_ms(VBAT_SETTIMG_TIME, do_power_on);
+			start_timeout(VBAT_SETTIMG_TIME, do_power_on);
 			break;
 		case PowerOnStep::PRESS_PWR_KEY:
 			// "RDY" message may be received while PWR_KEY is still pressed
@@ -93,7 +93,7 @@ static void do_power_on() {
 			received_message = false;
 			activate_uart();
 			press_pwr_key();
-			TIMER.invoke_in_ms(1100, do_power_on); // hold PWR_KEY > 1s
+			start_timeout(1100U, do_power_on); // hold PWR_KEY > 1s
 			break;
 		case PowerOnStep::RELEASE_PWR_KEY:
 			release_pwr_key();
@@ -125,19 +125,19 @@ static void do_power_off() {
 			next_step.off = PowerOffStep::RELEASE_PWR_KEY;
 			received_message = false;
 			press_pwr_key();
-			TIMER.invoke_in_ms(1100, do_power_off); // hold PWR_KEY > 1s
+			start_timeout(1100, do_power_off); // hold PWR_KEY > 1s
 			break;
 		case PowerOffStep::RELEASE_PWR_KEY:
 			release_pwr_key();
 			next_step.off = PowerOffStep::WAIT_POWER_DOWN_MESSAGE;
-			TIMER.invoke_in_ms(1800, do_power_off); // module stops in 1.7s
+			start_timeout(1800, do_power_off); // module stops in 1.7s
 			break;
 		case PowerOffStep::WAIT_POWER_DOWN_MESSAGE:
 			// do not care if message was received or not
 			suspend_uart();
 			disable_vbat();
 			next_step.off = PowerOffStep::SHORT_VBAT;
-			TIMER.invoke_in_ticks(1, do_power_off);
+			start_timeout(1, do_power_off);
 			break;
 		case PowerOffStep::SHORT_VBAT:
 			short_vbat();

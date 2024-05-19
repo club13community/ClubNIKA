@@ -8,4 +8,5 @@
 namespace sim900 {
 	void handle_uart_interrupt();
 	void handle_dma_interrupt();
+	void handle_exti_interrupt();
 }

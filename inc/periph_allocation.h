@@ -8,6 +8,8 @@
 
 #define SIM900_UART				USART2
 #define SIM900_UART_TX_DMA		DMA1_Channel7
+// UART's "RX not empty ISR" will trigger this to handle received message
+#define SIM900_EXTI_LINE		EXTI_Line0
 #define SUPPLY_SYSTEM_TIMER		TIM2
 #define FINE_TIMER				TIM3
 #define TIMING_TIMER			TIM4
@@ -30,6 +32,7 @@
 
 #define SIM900_UART_IRQ_PRIORITY	3U
 #define SIM900_DMA_IRQ_PRIORITY		14U
+#define SIM900_EXTI_IRQ_PRIORITY	14U
 // same for DMA and timer
 #define DAC_IRQ_PRIORITY	4U
 #define FLASH_IRQ_PRIORITY	6U
