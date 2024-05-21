@@ -11,18 +11,6 @@ namespace gsm {
 	private:
 		bool end = true;
 	public:
-		inline bool release_ctrl() {
-			return end;
-		}
 
-		void power_on(Handler handler) override {
-			end = false;
-			CtrlsSet::inst.power_on(handler);
-		}
-
-		void power_off(Handler handler) override {
-			end = false;
-			CtrlsSet::inst.power_off(handler);
-		}
 	};
 }

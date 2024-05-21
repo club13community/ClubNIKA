@@ -1,11 +1,10 @@
 //
 // Created by independent-variable on 5/14/2024.
 //
-#include "./execution.h"
 #include "./CtrlsSet.h"
 #include "sim900.h"
 
-static void power_on_done(bool success) {
+/*static void power_on_done(bool success) {
 	constexpr void (* reboot)() = []() {
 		sim900::turn_on(power_on_done);
 	};
@@ -36,4 +35,4 @@ void gsm::CtrlsSet::power_on(Handler handler) {
 
 void gsm::CtrlsSet::power_off(Handler handler) {
 
-}
+}*/

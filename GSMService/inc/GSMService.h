@@ -16,53 +16,28 @@ namespace gsm {
 		DONE,
 		/** Recipient pressed 'reject'. */
 		REJECTED,
-		/** Recipient did not pick up or some problem with SIM900. */
-		FAILED
+		/** Recipient did not pick up a phone. */
+		NO_ANSWER,
+		/** Not registered in mobile network, some call is already ongoing, some problem with GSM module, etc. */
+		ERROR
 	};
 
-	/** Stage of registration in mobile network. */
-	enum class Registration {
-		/** Registered(in domestic or roaming). */
-		DONE,
-		ONGOING,
-		FAILED
-	};
-
-	enum class Result {
-		DONE,
-		FAILED
-	};
-
-	struct Controls;
-	typedef void (* Handler)(const Controls & ctrl);
-	typedef void (* ResultHandler)(Result res, Controls & ctrl);
-	typedef void (* DialingHandler)(Dialing res, Controls & ctrl);
-	typedef void (* CallHandler)(const char * phone, Controls & ctrl);
-	typedef void (* SignalHandler)(uint8_t level_pct, Controls & ctrl);
-	typedef void (* RegistrationHandler)(Registration reg, Controls & ctrl);
-
-	/** Collection of methods. Each method returns true if driver is not busy and action is taken to execution. */
+	/** Collection of controlling methods. */
 	class Controls {
 	public:
-		virtual void power_on(Handler handler) = 0;
-		virtual void power_off(Handler handler) = 0;
+		virtual Dialing call(const char * phone) = 0;
+		virtual void end_call() = 0;
+		/** @return ID of SMS or -1 if failed to send. */
+		virtual int16_t send_sms(const char * phone) = 0;
 	};
 
 	/** Blocks thread till control is released by other.
 	 * @returns API which always runs requested action(and always returns true) */
-	Controls & get_ctrl();
+	//Controls & get_ctrl();
 
+	/** @returns value in range [0, 100]. If not registered in mobile network - signal strength is 0 too. */
+	uint8_t get_signal_strength();
+
+	void set_on_incoming_call(void (* callback)(char * phone, Controls & ctrls));
+	void set_on_call_ended(void (* callback)(Controls & ctrls));
 }
-
-
-///** If no ongoing call - do not invoke handler(if there was ongoing call,
-// * but ended before ending - appropriate callback is invoked) */
-//bool (* const end_call)(Handler handler);
-///** @param message '\0' message, latin letters only.
-//  * @param phone '\0' ended phone number without leading '+' and country code. */
-//bool (* const send_sms)(const char * message, const char * phone, ResultHandler handler); // todo define max length
-///** Deletes all SMS(sent, unread, read, etc.) */
-//bool (* const delete_all_sms)(ResultHandler handler);
-//bool (* const get_signal_strength)(SignalHandler handler);
-//bool (* const get_registration)(RegistrationHandler handler);
-

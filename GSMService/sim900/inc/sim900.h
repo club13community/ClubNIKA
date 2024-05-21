@@ -4,7 +4,7 @@
 
 #pragma once
 #include <stdint.h>
-
+// todo reset rx buffer on power_off
 namespace sim900 {
 	/** Interrupts should be enabled(uses timer to discharge decoupling cap.)*/
 	void init_periph();
@@ -36,6 +36,7 @@ namespace sim900 {
 	};
 	enum class CallState {
 		RINGING,
+		/** Interlocutor picked up a phone. */
 		DIALED,
 		/** No ongoing calls(all previous are ended) */
 		ENDED
@@ -59,13 +60,3 @@ namespace sim900 {
 	/** Number in callback's arg. may contain leading '+' with country code */
 	void get_call_info(void (* callback)(CallState state, char * number, Result result));
 }
-
-/** Invoked when initiator ends incoming call before accepting/rejecting by driver
- * or when ongoing call is ended by interlocutor(not by driver).
- * Is not invoked when call is ended/rejected by driver. */
-void on_call_ended();
-
-/** Invoked on incoming call. */
-void on_incoming_call();
-
-// todo void on_sms_received();

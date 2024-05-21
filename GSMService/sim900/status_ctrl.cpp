@@ -28,7 +28,13 @@ static void parse_card_status(rx_buffer_t & rx) {
 
 static void end_card_status(Result res) {
 	end_command();
-	card_status_callback(card_status, res);
+	if (res == Result::OK) {
+		card_status_callback(card_status, res);
+	} else if (res == Result::ERROR) {
+		card_status_callback(CardStatus::ABSENT, Result::OK); // checked on practice
+	} else {
+		card_status_callback(card_status, res);
+	}
 }
 
 void sim900::get_card_status(void (* callback)(CardStatus status, Result result)) {

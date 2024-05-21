@@ -6,6 +6,8 @@
 #include "stm32f10x.h"
 #include "FreeRTOSConfig.h"
 
+// todo add max masked priority
+
 #define SIM900_UART				USART2
 #define SIM900_UART_TX_DMA		DMA1_Channel7
 // UART's "RX not empty ISR" will trigger this to handle received message

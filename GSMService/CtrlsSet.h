@@ -11,8 +11,7 @@ namespace gsm {
 	private:
 		CtrlsSet() {}
 	public:
-		static CtrlsSet inst;
-		void power_on(Handler handler) override;
-		void power_off(Handler handler) override;
+		//static CtrlsSet inst;
+
 	};
 }

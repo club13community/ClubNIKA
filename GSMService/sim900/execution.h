@@ -19,11 +19,11 @@ namespace sim900 {
 	/** Invoke before calling result handler */
 	void end_command();
 
-	/** Sends and starts timeout till handled response. Can not be simultaneously used with other timeout functions. */
+	/** Sends and starts timeout till executed response. Can not be simultaneously used with other timeout functions. */
 	void send_with_timeout(const char * cmd, uint16_t len, uint32_t deadline_ms, void (* timeout_elapsed)());
 	void send_with_timeout(const char * cmd, uint16_t len, void (* message_sent)(),
 						   uint32_t deadline_ms, void (* timeout_elapsed)());
-	/** Starts timeout till handled response. Can not be simultaneously used with other timeout functions.*/
+	/** Starts timeout till executed response. Can not be simultaneously used with other timeout functions.*/
 	void start_response_timeout(uint32_t deadline_ms, void (* timeout_elapsed)());
 
 	void start_timeout(uint32_t delay_ms, void (* timeout_elapsed)());
