@@ -23,4 +23,6 @@ namespace gsm {
 	extern char phone_number[MAX_PHONE_LENGTH + 1];
 
 	extern SemaphoreHandle_t ctrl_mutex;
+
+	void reboot_state();
 }

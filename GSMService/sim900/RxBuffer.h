@@ -23,7 +23,6 @@ namespace sim900 {
 		char data[size];
 		// where message starts, points on message length(2 bytes, if 0 - message is corrupted)
 		volatile uint16_t write_meta = 0;
-		//uint16_t write_data = 2; // where written data starts
 		uint16_t write_index = 2; //=write_data, points on next character to write
 		volatile uint16_t read_meta = 0; // similar to write_meta
 		uint16_t read_data = 2; // similar to write_data
@@ -113,6 +112,16 @@ namespace sim900 {
 			fifo_level = fifo_empty;
 			all_ok = true;
 			return true;
+		}
+
+		/** No ongoing reads/writes are allowed. */
+		inline void reset() {
+			fifo_level = 0;
+			write_meta = 0;
+			write_index = 2;
+			read_meta = 0;
+			read_data = 2;
+			all_ok = true;
 		}
 
 		inline void mark_message_corrupted() {

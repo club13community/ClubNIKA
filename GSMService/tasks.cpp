@@ -50,6 +50,12 @@ void gsm::execute_or_schedule(Task task) {
 	}
 }
 
+static inline void reboot_tasks() {
+	xTimerStop(call_status_timer, portMAX_DELAY);
+	xTimerStop(module_state_timer, portMAX_DELAY);
+	pending_tasks = 0;
+}
+
 static void reboot();
 static void check_module_state();
 static void check_call_state();
@@ -119,13 +125,14 @@ static void reboot() {
 	using namespace sim900;
 
 	static constexpr auto card_status_received = [](CardStatus status, Result res) {
-		if (res == Result::OK) {
-			card_status = status;
+		if (should_reboot(res)) {
+			reboot();
+		} else {
+			if (res == Result::OK) {
+				card_status = status;
+			}
 			handle(Event::TURNED_ON);
 			executed(Task::REBOOT);
-		} else {
-			rec::log("Failed to req. card status while SIM900 rebooting");
-			reboot();
 		}
 	};
 
@@ -142,6 +149,9 @@ static void reboot() {
 		turn_on(turned_on);
 	};
 
+	reboot_tasks();
+	reboot_event_handling();
+	reboot_state();
 	turn_off(turned_off);
 }
 

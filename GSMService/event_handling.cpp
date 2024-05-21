@@ -27,6 +27,11 @@ void gsm::init_event_handling() {
 											 pdFALSE, (void *)0, conn_recovery_timeout, &timer_ctrl);
 }
 
+void reboot_event_handling() {
+	xTimerStop(conn_recovery_timer, portMAX_DELAY);
+	xTaskNotifyStateClear(task);
+}
+
 void gsm::handle(Event event) {
 	xTaskNotify(task, (uint32_t)event, eSetBits);
 }
@@ -54,7 +59,7 @@ static void handle_events() {
 		poll_module_status();
 	}
 	if (bits & to_int(Event::ERROR)) {
-		// todo need to reboot
+		// todo need to reboot, end call if ongoing
 		__NOP();
 	}
 	if (bits & (to_int(Event::CARD_ERROR) | to_int(Event::NETWORK_ERROR))) {

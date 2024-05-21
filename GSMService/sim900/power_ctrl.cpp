@@ -135,6 +135,7 @@ static void do_power_off() {
 		case PowerOffStep::WAIT_POWER_DOWN_MESSAGE:
 			// do not care if message was received or not
 			suspend_uart();
+			rx_buffer.reset();
 			disable_vbat();
 			next_step.off = PowerOffStep::SHORT_VBAT;
 			start_timeout(1, do_power_off);
@@ -164,10 +165,8 @@ static bool receive_ready(rx_buffer_t & rx) {
 static bool receive_power_down(rx_buffer_t & rx) {
 	if (rx.is_message_ok() && rx.equals("NORMAL POWER DOWN")) {
 		received_message = true;
-		return true;
-	} else {
-		return false;
 	}
+	return true; // do not allow others to receive anything
 }
 
 /** @param handler is invoked with "true" if turned on successfully(SIM900 responded),

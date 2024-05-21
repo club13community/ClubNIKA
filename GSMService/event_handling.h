@@ -15,6 +15,7 @@ namespace gsm {
 	};
 
 	void init_event_handling();
+	void reboot_event_handling();
 
 	void handle(Event event);
 }
