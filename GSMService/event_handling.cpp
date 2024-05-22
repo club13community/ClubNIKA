@@ -13,8 +13,8 @@
 static volatile TaskHandle_t task;
 static void handle_events(void * arg);
 
-static volatile TimerHandle_t conn_recovery_timer;
-static void conn_recovery_timeout(TimerHandle_t timer);
+static volatile TimerHandle_t connection_recovery_timer;
+static void connection_recovery_timeout(TimerHandle_t timer);
 
 void gsm::init_event_handling() {
 	constexpr size_t stack_size = 256;
@@ -23,12 +23,12 @@ void gsm::init_event_handling() {
 	task = xTaskCreateStatic(handle_events, "gsm", stack_size, nullptr, TASK_NORMAL_PRIORITY, task_stack, &task_ctrl);
 
 	static StaticTimer_t timer_ctrl;
-	conn_recovery_timer = xTimerCreateStatic("gsm conn", pdMS_TO_TICKS(CONNECTION_RECOVERY_TIME_ms),
-											 pdFALSE, (void *)0, conn_recovery_timeout, &timer_ctrl);
+	connection_recovery_timer = xTimerCreateStatic("gsm conn", pdMS_TO_TICKS(CONNECTION_RECOVERY_TIME_ms),
+												   pdFALSE, (void *) 0, connection_recovery_timeout, &timer_ctrl);
 }
 
-void reboot_event_handling() {
-	xTimerStop(conn_recovery_timer, portMAX_DELAY);
+void gsm::reboot_event_handling() {
+	xTimerStop(connection_recovery_timer, portMAX_DELAY);
 	xTaskNotifyStateClear(task);
 }
 
@@ -54,20 +54,33 @@ static void handle_events() {
 	constexpr uint32_t ALL_BITS = 0xFF'FF'FF'FFU;
 	uint32_t bits;
 	while (xTaskNotifyWait(0, ALL_BITS, &bits, portMAX_DELAY) == pdFALSE);
-	if (bits & to_int(Event::TURNED_ON)) {
-		// todo set is_functional flag
-		poll_module_status();
-	}
+
 	if (bits & to_int(Event::ERROR)) {
 		// todo need to reboot, end call if ongoing
 		__NOP();
 	}
 	if (bits & (to_int(Event::CARD_ERROR) | to_int(Event::NETWORK_ERROR))) {
-		xTimerReset(conn_recovery_timer, portMAX_DELAY); // this starts timer
+		xTimerReset(connection_recovery_timer, portMAX_DELAY); // this starts timer
 	}
+
+	if (bits & to_int(Event::INCOMING_CALL)) {
+		void (* on_incoming_call_now)(char *) = on_incoming_call;
+		if (on_incoming_call_now != nullptr) {
+			on_incoming_call_now(phone_number);
+		}
+	}
+	// note: this should be below "incoming call" event handling
+	if (bits & to_int(Event::CALL_ENDED)) {
+		void (* on_call_ended_now)() = on_call_ended;
+		call_handling = CallHandling::FREE;
+		if (on_call_ended_now != nullptr) {
+			on_call_ended_now();
+		}
+	}
+
 }
 
-static void conn_recovery_timeout(TimerHandle_t timer) {
+static void connection_recovery_timeout(TimerHandle_t timer) {
 	using namespace sim900;
 	if (card_status != CardStatus::READY || registration == sim900::Registration::FAILED) {
 		execute_or_schedule(Task::REBOOT);

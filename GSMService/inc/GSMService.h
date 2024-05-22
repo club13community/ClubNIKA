@@ -22,6 +22,15 @@ namespace gsm {
 		ERROR
 	};
 
+	enum class CallEnd {
+		/** Somebody hanged up. */
+		NORMAL,
+		/** Interlocutor has ongoing call. */
+		BUSY,
+		/** Interlocutor do not answer for too long. */
+		NO_ANSWER
+	};
+
 	/** Collection of controlling methods. */
 	class Controls {
 	public:
@@ -38,6 +47,6 @@ namespace gsm {
 	/** @returns value in range [0, 100]. If not registered in mobile network - signal strength is 0 too. */
 	uint8_t get_signal_strength();
 
-	void set_on_incoming_call(void (* callback)(char * phone, Controls & ctrls));
-	void set_on_call_ended(void (* callback)(Controls & ctrls));
+	void set_on_incoming_call(void (* callback)(char * phone));
+	void set_on_call_ended(void (* callback)());
 }

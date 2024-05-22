@@ -28,16 +28,14 @@ void gsm::start() {
 
 uint8_t gsm::get_signal_strength() {
 	using namespace sim900;
-	Registration reg_now = registration;
-	uint8_t sing_now = signal_strength;
-	return reg_now == Registration::DONE ? sing_now : 0;
+	return card_status == CardStatus::READY && registration == Registration::DONE ? signal_strength : 0;
 }
 
-void gsm::set_on_incoming_call(void (* callback)(char *, Controls &)) {
+void gsm::set_on_incoming_call(void (* callback)(char *)) {
 	on_incoming_call = callback;
 }
 
-void gsm::set_on_call_ended(void (* callback)(Controls &)) {
+void gsm::set_on_call_ended(void (* callback)()) {
 	on_call_ended = callback;
 }
 
@@ -47,14 +45,24 @@ void gsm::set_on_call_ended(void (* callback)(Controls &)) {
 }*/
 
 void sim900::on_ring() {
-	using gsm::call_state;
-	if (atomic_write_if((volatile uint8_t *)&call_state, (uint8_t)CallState::RINGING, (uint8_t)CallState::ENDED)) {
-		// todo start timer
-	}
+	using namespace gsm;
+	execute_or_schedule(Task::GET_INCOMING_PHONE);
+}
+
+void sim900::on_call_end(CallEnd end) {
+	using namespace gsm;
+	execute_or_schedule(Task::NOTIFY_CALL_ENDED); // todo CallEnd::NORMAL also when outgoing and other not in network
 }
 
 void sim900::on_timestamp(rtc::Timestamp & timestamp) {
 
+}
+
+void end_call() {
+	using namespace gsm;
+	if (set_call_handling_if(CallHandling::ENDING, CallHandling::DIALING, CallHandling::SPEAKING)) {
+		// todo cancel call status polling
+	}
 }
 
 

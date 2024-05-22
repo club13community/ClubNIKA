@@ -147,7 +147,8 @@ static inline void service_response() {
 				}
 			}
 		}
-		handled = handled || ring_listener(rx_buffer) || timestamp_listener(rx_buffer) || ignoring_listener(rx_buffer);
+		handled = handled || ring_listener(rx_buffer) || call_end_listener(rx_buffer) || timestamp_listener(rx_buffer)
+				|| ignoring_listener(rx_buffer);
 		if (!handled) {
 			if (rx_buffer.is_message_ok()) {
 				char message_part[11];

@@ -37,9 +37,17 @@ namespace sim900 {
 	enum class CallState {
 		RINGING,
 		/** Interlocutor picked up a phone. */
-		DIALED,
+		DIALED, // todo change to SPEAKING
 		/** No ongoing calls(all previous are ended) */
 		ENDED
+	};
+	enum class CallEnd {
+		/** Somebody hanged up. */
+		NORMAL,
+		/** Interlocutor has ongoing call. */
+		BUSY,
+		/** Interlocutor do not answer for too long. */
+		NO_ANSWER
 	};
 
 	void turn_on(void (* callback)(bool success));
@@ -57,6 +65,7 @@ namespace sim900 {
 	/** If no ongoing call - do not invoke handler(if there was ongoing call,
 	 * but ended before ending - appropriate callback is invoked) */
 	void end_call(void (* callback)(Result result));
-	/** Number in callback's arg. may contain leading '+' with country code */
+	/** Number in callback's arg. may contain leading '+' with country code.
+	 * Does not end with "ERROR" even if SIM-card is not functioning or no network connection.*/
 	void get_call_info(void (* callback)(CallState state, char * number, Result result));
 }

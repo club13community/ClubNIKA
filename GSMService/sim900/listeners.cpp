@@ -15,6 +15,23 @@ bool sim900::ring_listener(rx_buffer_t & rx) {
 	}
 }
 
+bool sim900::call_end_listener(rx_buffer_t & rx) {
+	if (rx.equals("NO CARRIER")) {
+		on_call_end(CallEnd::NORMAL);
+		return true;
+	}
+	if (rx.equals("BUSY")) {
+		// rejected by interlocutor or line is busy
+		on_call_end(CallEnd::BUSY);
+		return true;
+	}
+	if (rx.equals("NO ANSWER")) {
+		on_call_end(CallEnd::NO_ANSWER);
+		return true;
+	}
+	return false;
+}
+
 bool sim900::timestamp_listener(rx_buffer_t & rx) {
 	if (rx.is_message_corrupted()) {
 		return false;

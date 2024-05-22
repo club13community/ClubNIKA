@@ -7,10 +7,13 @@
 
 namespace gsm {
 	enum class Task : uint8_t {
-		REBOOT = 1U,
+		REBOOT = 1U << 0,
 		/** Checks network connection, signal strength, SIM card status, etc. */
-		CHECK_MODULE_STATE = 2U,
-		GET_INCOMING_PHONE = 4U, CHECK_CALL_STATE = 8U};
+		CHECK_MODULE_STATE = 1U << 1,
+		GET_INCOMING_PHONE = 1U << 2,
+		CHECK_CALL_STATE = 1U << 3,
+		NOTIFY_CALL_ENDED = 1U << 4
+	};
 
 	void init_task_execution();
 
@@ -25,8 +28,4 @@ namespace gsm {
 
 	/** Starts timer for polling call status. */
 	void poll_call_status();
-
-	/** Starts timer to poll network connection, signal quality, card status, etc. */
-	void poll_module_status();
-	void stop_module_status_polling();
 }
