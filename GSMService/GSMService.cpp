@@ -44,9 +44,8 @@ void gsm::set_on_call_ended(void (* callback)()) {
 	//return CtrlsSet::inst;
 }*/
 
-void sim900::on_ring() {
-	using namespace gsm;
-	execute_or_schedule(Task::GET_INCOMING_PHONE);
+void sim900::on_call_update(CallState state, CallDirection direction, char * number) {
+
 }
 
 void sim900::on_call_end(CallEnd end) {

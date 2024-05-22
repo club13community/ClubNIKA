@@ -7,7 +7,7 @@
 #include "sim900.h"
 
 namespace sim900 {
-	void on_ring();
+	void on_call_update(CallState state, CallDirection direction, char * number);
 	void on_call_end(CallEnd end);
 	void on_timestamp(rtc::Timestamp & timestamp);
 	// todo void on_sms_received();

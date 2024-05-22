@@ -266,7 +266,7 @@ static void check_call_state() { // todo rename to "check_dialing"
 		if (res == Result::OK) {
 			CallHandling call_handling_now = call_handling;
 			if (call_handling_now == CallHandling::DIALING) {
-				if (state == CallState::DIALED) {
+				if (state == CallState::SPEAKING) {
 					call_handling = CallHandling::SPEAKING;
 					handle(Event::CALL_DIALED);
 				} else {

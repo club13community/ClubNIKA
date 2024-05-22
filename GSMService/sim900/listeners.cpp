@@ -4,15 +4,37 @@
 #include "./listeners.h"
 #include "sim900_callbacks.h"
 #include "rtc.h"
+#include "settings.h"
+#include "./utils.h"
 #include <stdlib.h>
 
-bool sim900::ring_listener(rx_buffer_t & rx) {
-	if (rx.is_message_ok() && rx.equals("RING")) {
-		on_ring();
-		return true;
-	} else {
+bool sim900::call_state_listener(rx_buffer_t & rx) {
+	if (!rx.starts_with("+CLCC:")) {
 		return false;
 	}
+
+	// length of phone number + opt. "+country code" + quotes + '\0'
+	constexpr uint8_t max_param_len = MAX_PHONE_LENGTH + 1 + 4 + 2 + 1;
+	// parse direction
+	char param[max_param_len];
+	rx.get_param(1, param, 1);
+	CallDirection dir = param[0] == '0' ? CallDirection::OUTGOING : CallDirection::INCOMING;
+	// parse state
+	rx.get_param(2, param, 1);
+	CallState state;
+	if (param[0] == '0') {
+		state = CallState::SPEAKING;
+	} else if (param[0] == '6') {
+		state = CallState::ENDED;
+	} else {
+		// observed only 2, 3, 4
+		state = CallState::RINGING;
+	}
+	// parse phone number(is quoted), tx_buffer is already free
+	uint16_t len = rx.get_param(5, param, max_param_len - 1);
+	copy(param, 1, len - 1, param);
+	on_call_update(state, dir, param);
+	return true;
 }
 
 bool sim900::call_end_listener(rx_buffer_t & rx) {
@@ -21,7 +43,6 @@ bool sim900::call_end_listener(rx_buffer_t & rx) {
 		return true;
 	}
 	if (rx.equals("BUSY")) {
-		// rejected by interlocutor or line is busy
 		on_call_end(CallEnd::BUSY);
 		return true;
 	}
@@ -71,5 +92,5 @@ bool sim900::ignoring_listener(rx_buffer_t & rx) {
 	if (rx.is_message_corrupted()) {
 		return false;
 	}
-	return rx.equals("Call Ready") || rx.starts_with("*PSNWID:") || rx.equals("+CFUN: 1");
+	return rx.equals("RING") || rx.equals("Call Ready") || rx.starts_with("*PSNWID:") || rx.equals("+CFUN: 1");
 }

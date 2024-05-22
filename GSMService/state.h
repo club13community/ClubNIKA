@@ -23,7 +23,7 @@ namespace gsm {
 	extern volatile sim900::Registration registration;
 	extern volatile uint8_t signal_strength;
 
-	extern CallHandling call_handling;
+	extern volatile CallHandling call_handling;
 	extern char phone_number[MAX_PHONE_LENGTH + 1];
 	extern volatile sim900::CallEnd call_end;
 

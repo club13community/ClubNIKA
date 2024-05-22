@@ -57,22 +57,29 @@ void sim900::end_call(void (* callback)(Result result)) {
 	start_execute<end_done>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }
 
-static void (* volatile call_info_callback)(CallState, char *, Result);
+static void (* volatile call_info_callback)(CallState, CallDirection, char *, Result);
 static volatile CallState call_info_state;
+static volatile CallDirection call_info_direction;
 
 static void call_info_done(Result res) {
 	end_command();
-	call_info_callback(call_info_state, tx_buffer, res);
+	call_info_callback(call_info_state, call_info_direction, tx_buffer, res);
 }
 
 static void parse_call_info(rx_buffer_t & rx) {
-	// parse state
 	char param[2];
+	// parse direction
+	rx.get_param(1, param, 1);
+	if (param[0] == '0') {
+		call_info_direction = CallDirection::OUTGOING;
+	} else {
+		call_info_direction = CallDirection::INCOMING;
+	}
+	// parse state
 	rx.get_param(2, param, 1);
 	if (param[0] == '0') {
-		call_info_state = CallState::DIALED;
+		call_info_state = CallState::SPEAKING;
 	} else if (param[0] == '6') {
-		// did not observe during experiments
 		call_info_state = CallState::ENDED;
 	} else {
 		// observed only 2, 3, 4
@@ -83,11 +90,12 @@ static void parse_call_info(rx_buffer_t & rx) {
 	copy(tx_buffer, 1, len - 1, tx_buffer);
 }
 
-void sim900::get_call_info(void (* callback)(CallState state, char * number, Result result)) {
+void sim900::get_call_info(void (* callback)(CallState state,  CallDirection direction, char * number, Result result)) {
 	constexpr const char * cmd = "AT+CLCC\r";
 	static const char * CLCC = "+CLCC:";
 	call_info_callback = callback;
 	call_info_state = CallState::ENDED;
+	call_info_direction = CallDirection::INCOMING;
 
 	start_get_info<CLCC, parse_call_info, call_info_done>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }

@@ -34,17 +34,21 @@ namespace sim900 {
 		ONGOING,
 		FAILED
 	};
+	enum class CallDirection {
+		INCOMING,
+		OUTGOING
+	};
 	enum class CallState {
 		RINGING,
 		/** Interlocutor picked up a phone. */
-		DIALED, // todo change to SPEAKING
+		SPEAKING,
 		/** No ongoing calls(all previous are ended) */
 		ENDED
 	};
 	enum class CallEnd {
-		/** Somebody hanged up. */
+		/** Interlocutor hanged up, or not in network while outgoing call */
 		NORMAL,
-		/** Interlocutor has ongoing call. */
+		/** Rejected by interlocutor or line is busy. */
 		BUSY,
 		/** Interlocutor do not answer for too long. */
 		NO_ANSWER
@@ -66,6 +70,7 @@ namespace sim900 {
 	 * but ended before ending - appropriate callback is invoked) */
 	void end_call(void (* callback)(Result result));
 	/** Number in callback's arg. may contain leading '+' with country code.
-	 * Does not end with "ERROR" even if SIM-card is not functioning or no network connection.*/
-	void get_call_info(void (* callback)(CallState state, char * number, Result result));
+	 * Does not end with "ERROR" even if SIM-card is not functioning or no network connection.
+	 * Do not trust "direction" if call is ended */
+	void get_call_info(void (* callback)(CallState state, CallDirection direction, char * number, Result result));
 }
