@@ -20,4 +20,8 @@ namespace gsm {
 	/** Use during after GSM module turned off(there should be no call-related callbacks).
 	 * Will emulate ending of any ongoing call. */
 	void terminate_calls();
+
+	inline Direction map(sim900::CallDirection dir) {
+		return dir == sim900::CallDirection::INCOMING ? Direction::INCOMING : Direction::OUTGOING;
+	}
 }

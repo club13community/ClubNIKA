@@ -19,12 +19,11 @@ namespace gsm {
 	};
 
 	extern void (* volatile  on_incoming_call)(char *);
+	extern void (* volatile on_call_dialed)(Direction);
 	extern void (* volatile on_call_ended)();
 
 	/** Guards access to controlling methods. */
 	extern volatile SemaphoreHandle_t ctrl_mutex;
-	/** Ensures, order of call-related callbacks and methods. */
-	extern volatile SemaphoreHandle_t call_mutex;
 
 	void init_state();
 
@@ -39,14 +38,6 @@ namespace gsm {
 		xSemaphoreGive(ctrl_mutex);
 	}
 
-	inline void take_call_mutex() {
-		while (xSemaphoreTake(ctrl_mutex, portMAX_DELAY) == pdFALSE);
-	}
-
-	inline void give_call_mutex() {
-		xSemaphoreGive(ctrl_mutex);
-	}
-
 	inline bool one_of(sim900::CallState val, sim900::CallState var1, sim900::CallState var2) {
 		return val == var1 || val == var2;
 	}
@@ -55,6 +46,13 @@ namespace gsm {
 		void (* callback_now)(char *) = on_incoming_call;
 		if (callback_now != nullptr) {
 			callback_now(number);
+		}
+	}
+
+	inline void safe_on_call_dialed(Direction direction) {
+		void (* callback_now)(Direction) = on_call_dialed;
+		if (callback_now != nullptr) {
+			callback_now(direction);
 		}
 	}
 

@@ -15,34 +15,6 @@ namespace gsm {
 	char phone_number[MAX_PHONE_LENGTH + 1];
 }
 
-bool gsm::accept_call() {
-	using namespace sim900;
-
-	static constexpr auto accept_done = [](Result res) {
-		bool call_accepted = false;
-		if (res == Result::OK) {
-			actual_call_state = CallState::SPEAKING;
-			handled_call_state = CallState::SPEAKING;
-			call_accepted = true;
-		} else if (res == Result::ERROR) {
-			if (call_direction == CallDirection::INCOMING && actual_call_state != CallState::SPEAKING) {
-				// call definitely ended(was it ongoing or not)
-				actual_call_state = CallState::ENDED;
-				handled_call_state = CallState::ENDED;
-			} // else - ERROR because of inappropriately usage
-		} else {
-			schedule(Task::REBOOT);
-		}
-		give_call_mutex();
-		future_result({.call_accepted = call_accepted});
-		execute_scheduled();
-	};
-
-	take_call_mutex();
-	sim900::accept_call(accept_done);
-	return future_result().call_accepted;
-}
-
 void gsm::end_call() {
 	using namespace sim900;
 
@@ -56,39 +28,78 @@ void gsm::end_call() {
 		} else {
 			schedule(Task::REBOOT);
 		}
-		give_call_mutex();
 		future_result({.call_ended = call_ended});
 		execute_scheduled();
 	};
 
-	take_call_mutex();
+	// never breaks sequence of "call dialed" -> "call ended" callbacks
 	sim900::end_call(end_done);
 	(void)future_result().call_ended; // do not care about value
+}
+
+bool gsm::accept_call() {
+	using namespace sim900;
+
+	static constexpr auto end_done = [](Result res) {
+		if (res != Result::OK && res != Result::ERROR) {
+			schedule(Task::REBOOT);
+		}
+		future_result({.call_accepted = false});
+		execute_scheduled();
+	};
+
+	static constexpr auto accept_done = [](Result res) {
+		if (res == Result::OK && actual_call_state != CallState::RINGING) {
+			// accepted a call which is not currently handled(next which started immediately after) - reject it
+			sim900::end_call(end_done);
+		} else {
+			if (res != Result::OK && res != Result::ERROR) {
+				schedule(Task::REBOOT);
+			}
+			future_result({.call_accepted = res == Result::OK});
+			execute_scheduled();
+		}
+	};
+
+	sim900::accept_call(accept_done);
+	return future_result().call_accepted;
 }
 
 gsm::Dialing gsm::call(char * number) {
 	using namespace sim900;
 
-	static constexpr auto call_done = [](Result res) {
-		if (res == Result::OK) {
-			actual_call_state = CallState::RINGING;
-			handled_call_state = CallState::RINGING;
-			call_direction = CallDirection::OUTGOING;
-			// future result is set in "call state changed" callback
-		} else if (res == Result::ERROR) {
-			// didn't establish a call
-			// don't touch state - maybe a call was attempted during already ongoing call
-			give_call_mutex();
-			future_result({.dialing = Dialing::ERROR});
-		} else {
-			give_call_mutex();
-			future_result({.dialing = Dialing::ERROR});
+	static constexpr auto end_done = [](Result res) {
+		if (res != Result::OK && res != Result::ERROR) {
 			schedule(Task::REBOOT);
 		}
+		future_result({.dialing = Dialing::ERROR});
 		execute_scheduled();
 	};
 
-	take_call_mutex();
+	static constexpr auto call_done = [](Result res) {
+		if (res == Result::OK && handled_call_state != CallState::ENDED) {
+			// making a call now will break sequence of "call dialed" -> "call ended" callbacks
+			// end it leaving "actual state" ENDED - "call state changed" and "call ended" callbacks will ignore
+			sim900::end_call(end_done);
+		} else {
+			if (res == Result::OK) {
+				actual_call_state = CallState::RINGING;
+				// "actual state" is ENDED(otherwise call would not be established),
+				// "handled state" also ENDED - may write, no racing with other precess
+				handled_call_state = CallState::RINGING;
+				call_direction = CallDirection::OUTGOING;
+				// future result is set in "call state changed" callback
+			} else {
+				// didn't establish a call
+				if (res != Result::ERROR) {
+					schedule(Task::REBOOT);
+				}
+				future_result({.dialing = Dialing::ERROR});
+			}
+			execute_scheduled();
+		}
+	};
+
 	sim900::call(number, call_done);
 	return future_result().dialing;
 }
@@ -98,26 +109,29 @@ static void call_dialed(gsm::Dialing dialing) {
 	using sim900::CallState;
 
 	if (dialing == Dialing::DONE) {
-		handled_call_state = CallState::SPEAKING;
+		handle(Event::CALL_STATE_CHANGED); // to invoke "on dialed" callback
 	} else {
 		handled_call_state = CallState::ENDED;
 	}
-	give_call_mutex();
 	future_result({.dialing = dialing});
 }
 
 void sim900::on_call_update(CallState state, CallDirection direction, char * number) {
 	using namespace gsm;
 	if (direction == CallDirection::INCOMING) {
+		// start new incoming if end of previous is already handled
 		if (state == CallState::RINGING && handled_call_state == CallState::ENDED) {
-			// start new incoming if previous is already handled
 			actual_call_state = CallState::RINGING;
 			call_direction = direction;
 			strcpy(phone_number, number);
 			handle(Event::CALL_STATE_CHANGED);
 			return;
 		}
-		// transition to SPEAKING is done inside "accept call" method
+		if (state == CallState::SPEAKING && actual_call_state == CallState::RINGING) {
+			actual_call_state = CallState::SPEAKING;
+			handle(Event::CALL_STATE_CHANGED);
+			return;
+		}
 		// transition to ENDED is done in "call ended" callback
 	} else { // OUTGOING
 		// transition to RINGING is done in "start call" method

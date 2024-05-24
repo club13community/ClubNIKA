@@ -23,14 +23,7 @@ namespace gsm {
 		ERROR
 	};
 
-	enum class CallEnd {
-		/** Somebody hanged up. */
-		NORMAL,
-		/** Interlocutor has ongoing call. */
-		BUSY,
-		/** Interlocutor do not answer for too long. */
-		NO_ANSWER
-	};
+	enum class Direction {INCOMING, OUTGOING};
 
 	/** Collection of controlling methods. */
 	class Controls {
@@ -49,5 +42,9 @@ namespace gsm {
 	uint8_t get_signal_strength();
 
 	void set_on_incoming_call(void (* callback)(char * phone));
+	/** Order of callbacks for both incoming and outgoing: set_on_call_dialed(...) -> set_on_call_ended(...). */
+	void set_on_call_dialed(void (* callback)(Direction direction));
+	/** Order of callbacks for both incoming and outgoing: set_on_call_dialed(...) -> set_on_call_ended(...).
+	 * If call is ended by method end_call() - this callback is not invoked. */
 	void set_on_call_ended(void (* callback)());
 }

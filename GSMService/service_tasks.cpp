@@ -82,6 +82,10 @@ void gsm::execute_or_schedule(gsm::Task task) {
 	}
 }
 
+void gsm::turn_module_on() {
+
+}
+
 static void turn_on();
 static void turn_off();
 static void check_module_state();

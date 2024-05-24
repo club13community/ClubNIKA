@@ -20,6 +20,7 @@ namespace gsm {
 	};
 
 	void init_service_tasks();
+	void turn_module_on();
 
 	void schedule(Task task);
 	void execute_or_schedule(gsm::Task task);

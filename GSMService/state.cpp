@@ -9,28 +9,22 @@
 
 namespace gsm {
 	void (* volatile on_incoming_call)(char *) = nullptr;
-
+	void (* volatile on_call_dialed)(Direction) = nullptr;
 	void (* volatile on_call_ended)() = nullptr;
 
 	volatile QueueHandle_t result_queue;
 
 	volatile SemaphoreHandle_t ctrl_mutex;
-	volatile SemaphoreHandle_t call_mutex;
 
 	void init_state() {
 		static StaticSemaphore_t ctrl_mutex_buff;
 		ctrl_mutex = xSemaphoreCreateBinaryStatic(&ctrl_mutex_buff);
 		xSemaphoreGive(ctrl_mutex);
 
-		static StaticSemaphore_t call_mutex_buff;
-		call_mutex = xSemaphoreCreateBinaryStatic(&call_mutex_buff);
-		xSemaphoreGive(call_mutex);
-
 		static uint8_t result_queue_data[sizeof (FutureResult)];
 		static StaticQueue_t result_queue_ctrl;
 		result_queue = xQueueCreateStatic(1, sizeof (FutureResult), result_queue_data, &result_queue_ctrl);
 	}
-
 
 	void future_result(FutureResult result) {
 		xQueueSend(result_queue, &result, 0); // no delay, reboot procedure may want to put something
