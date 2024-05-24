@@ -59,25 +59,36 @@ static void handle_events() {
 		// todo need to reboot, end call if ongoing
 		__NOP();
 	}
+
 	if (bits & (to_int(Event::CARD_ERROR) | to_int(Event::NETWORK_ERROR))) {
 		xTimerReset(connection_recovery_timer, portMAX_DELAY); // this starts timer
 	}
 
-	if (bits & to_int(Event::INCOMING_CALL)) {
-		void (* on_incoming_call_now)(char *) = on_incoming_call;
-		if (on_incoming_call_now != nullptr) {
-			on_incoming_call_now(phone_number);
+	if (bits & to_int(Event::CALL_STATE_CHANGED)) {
+		using sim900::CallState, sim900::CallDirection;
+		take_call_mutex();
+		CallState handled_now = handled_call_state;
+		CallState actual_now = actual_call_state;
+		CallDirection direction_now = call_direction;
+		if (handled_now == CallState::ENDED && actual_now == CallState::RINGING
+				&& direction_now == CallDirection::INCOMING) { // for OUTGOING initiated by "start call"
+			handled_call_state = CallState::RINGING;
+			give_call_mutex();
+			safe_on_incoming_call(phone_number);
+		} else if (handled_now == CallState::RINGING && actual_now == CallState::ENDED
+				&& direction_now == CallDirection::INCOMING) { // for OUTGOING handled by "start call"
+			handled_call_state = CallState::ENDED;
+			give_call_mutex();
+			safe_on_call_ended();
+		} else if (handled_now == CallState::SPEAKING && actual_now == CallState::ENDED) {
+			handled_call_state = CallState::ENDED;
+			give_call_mutex();
+			safe_on_call_ended();
+		} else {
+			give_call_mutex();
 		}
+		// transition RINGING - SPEAKING is always initiated by API user
 	}
-	// note: this should be below "incoming call" event handling
-	if (bits & to_int(Event::CALL_ENDED)) {
-		void (* on_call_ended_now)() = on_call_ended;
-		call_handling = CallHandling::FREE;
-		if (on_call_ended_now != nullptr) {
-			on_call_ended_now();
-		}
-	}
-
 }
 
 static void connection_recovery_timeout(TimerHandle_t timer) {

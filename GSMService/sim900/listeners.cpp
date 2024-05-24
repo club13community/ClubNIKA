@@ -14,7 +14,8 @@ bool sim900::call_state_listener(rx_buffer_t & rx) {
 	}
 
 	// length of phone number + opt. "+country code" + quotes + '\0'
-	constexpr uint8_t max_param_len = MAX_PHONE_LENGTH + 1 + 4 + 2 + 1;
+	// MAX_PHONE_LENGTH takes into account last '0' from country code
+	constexpr uint8_t max_param_len = MAX_PHONE_LENGTH + (1 + 2) + 2 + 1;
 	// parse direction
 	char param[max_param_len];
 	rx.get_param(1, param, 1);
@@ -30,9 +31,9 @@ bool sim900::call_state_listener(rx_buffer_t & rx) {
 		// observed only 2, 3, 4
 		state = CallState::RINGING;
 	}
-	// parse phone number(is quoted), tx_buffer is already free
+	// parse phone number(is quoted)
 	uint16_t len = rx.get_param(5, param, max_param_len - 1);
-	copy(param, 1, len - 1, param);
+	copy(param, param[1] == '+' ? 4 : 1, len - 1, param);
 	on_call_update(state, dir, param);
 	return true;
 }

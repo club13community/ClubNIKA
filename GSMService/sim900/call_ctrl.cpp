@@ -85,9 +85,9 @@ static void parse_call_info(rx_buffer_t & rx) {
 		// observed only 2, 3, 4
 		call_info_state = CallState::RINGING;
 	}
-	// parse phone number(is quoted), tx_buffer is already free
+	// parse phone number(is quoted with opt. country code), tx_buffer is already free
 	uint16_t len = rx.get_param(5, tx_buffer, TX_BUFFER_LENGTH);
-	copy(tx_buffer, 1, len - 1, tx_buffer);
+	copy(tx_buffer, tx_buffer[1] == '+' ? 4 : 1, len - 1, tx_buffer);
 }
 
 void sim900::get_call_info(void (* callback)(CallState state,  CallDirection direction, char * number, Result result)) {

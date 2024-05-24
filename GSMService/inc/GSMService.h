@@ -14,11 +14,12 @@ namespace gsm {
 	enum class Dialing {
 		/** Recipient picked up a phone. */
 		DONE,
-		/** Recipient pressed 'reject'. */
+		/** Recipient pressed 'reject' or line is busy. */
 		REJECTED,
-		/** Recipient did not pick up a phone. */
+		/** Recipient did not pick up a phone or is not in network. */
 		NO_ANSWER,
-		/** Not registered in mobile network, some call is already ongoing, some problem with GSM module, etc. */
+		/** Failed to make a call: not registered in mobile network, some call is already ongoing,
+		 * some problem with GSM module, etc. */
 		ERROR
 	};
 
