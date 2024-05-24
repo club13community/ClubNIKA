@@ -154,7 +154,9 @@ static void do_power_off() {
 }
 
 static bool receive_ready(rx_buffer_t & rx) {
-	if (rx.is_message_ok() && rx.equals("RDY")) {
+	if (rx.is_message_corrupted()) {
+		return true;
+	} else if (rx.equals("RDY")) {
 		received_message = true;
 		return true;
 	} else {

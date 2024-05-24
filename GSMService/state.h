@@ -10,9 +10,6 @@
 #include "semphr.h"
 
 namespace gsm {
-	/** Phases of handling a call. Almost everything what changes phase of handling should do it like
-	 * "set DIALING if FREE now". */ // todo change this
-	//enum class CallHandling : uint8_t {FREE, DIALING, SPEAKING, ENDING};
 
 	union FutureResult {
 		int16_t sms_id;
@@ -24,22 +21,12 @@ namespace gsm {
 	extern void (* volatile  on_incoming_call)(char *);
 	extern void (* volatile on_call_ended)();
 
-	extern volatile sim900::CardStatus card_status;
-	extern volatile sim900::Registration registration;
-	extern volatile uint8_t signal_strength;
-
-	extern volatile sim900::CallState actual_call_state;
-	extern volatile sim900::CallState handled_call_state;
-	extern volatile sim900::CallDirection call_direction;
-	extern char phone_number[MAX_PHONE_LENGTH + 1];
-
 	/** Guards access to controlling methods. */
 	extern volatile SemaphoreHandle_t ctrl_mutex;
 	/** Ensures, order of call-related callbacks and methods. */
 	extern volatile SemaphoreHandle_t call_mutex;
 
 	void init_state();
-	void reboot_state();
 
 	void future_result(FutureResult result);
 	FutureResult future_result();
