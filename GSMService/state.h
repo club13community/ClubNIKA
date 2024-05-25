@@ -38,10 +38,6 @@ namespace gsm {
 		xSemaphoreGive(ctrl_mutex);
 	}
 
-	inline bool one_of(sim900::CallState val, sim900::CallState var1, sim900::CallState var2) {
-		return val == var1 || val == var2;
-	}
-
 	inline void safe_on_incoming_call(char * number) {
 		void (* callback_now)(char *) = on_incoming_call;
 		if (callback_now != nullptr) {

@@ -8,9 +8,17 @@
 #include "settings.h"
 
 namespace gsm {
-	extern volatile sim900::CallState actual_call_state;
-	extern volatile sim900::CallState handled_call_state;
-	extern volatile sim900::CallDirection call_direction;
+	enum class CallPhase {
+		RINGING,
+		/** Interlocutor picked up a phone. */
+		SPEAKING,
+		/** No ongoing calls(all previous are ended). */
+		ENDED
+	};
+
+	extern volatile CallPhase actual_call_state;
+	extern volatile CallPhase handled_call_state;
+	extern volatile Direction call_direction;
 	extern char phone_number[MAX_PHONE_LENGTH + 1];
 
 	/** @returns true if incoming call is accepted(now you may speak). */
@@ -21,7 +29,7 @@ namespace gsm {
 	 * Will emulate ending of any ongoing call. */
 	void terminate_calls();
 
-	inline Direction map(sim900::CallDirection dir) {
-		return dir == sim900::CallDirection::INCOMING ? Direction::INCOMING : Direction::OUTGOING;
+	inline bool one_of(CallPhase val, CallPhase var1, CallPhase var2) {
+		return val == var1 || val == var2;
 	}
 }

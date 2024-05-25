@@ -27,6 +27,7 @@ namespace gsm {
 		friend Controls & get_ctrl();
 	private:
 		static Controls inst;
+		Controls(){}
 	public:
 		Dialing call(const char * phone);
 		void end_call();

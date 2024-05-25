@@ -42,8 +42,12 @@ namespace sim900 {
 		RINGING,
 		/** Interlocutor picked up a phone. */
 		SPEAKING,
-		/** No ongoing calls(all previous are ended) */
-		ENDED
+		/** No ongoing calls(all previous are ended). */
+		ENDED,
+		/** One more incoming call. */
+		WAITING,
+		/** Put on hold. */
+		HELD
 	};
 	enum class CallEnd {
 		/** Interlocutor hanged up, or not in network while outgoing call */

@@ -45,6 +45,8 @@ void sim900::on_timestamp(rtc::Timestamp & timestamp) {
 
 }
 
+gsm::Controls gsm::Controls::inst;
+
 gsm::Dialing gsm::Controls::call(const char * phone) {
 	return gsm::call(phone);
 }

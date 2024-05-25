@@ -10,6 +10,7 @@
 #include "./power_ctrl.h"
 #include "./uart_ctrl.h"
 #include "./uart_callbacks.h"
+#include "./call_ctrl.h"
 #include "./listeners.h"
 #include "logging.h"
 
