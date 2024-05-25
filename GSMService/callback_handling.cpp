@@ -27,7 +27,7 @@ using namespace gsm;
 
 static void handle_events();
 static void handle_events(void * arg) {
-	gsm::execute_or_schedule(Task::TURN_ON);
+	gsm::turn_module_on();
 	while (true) {
 		handle_events();
 	}

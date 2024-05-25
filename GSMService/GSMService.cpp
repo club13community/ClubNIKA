@@ -5,7 +5,7 @@
 #include "./state.h"
 #include "./service_tasks.h"
 #include "./callback_handling.h"
-#include <string.h>
+#include "./call_tasks.h"
 
 void gsm::init_periph() {
 	sim900::init_periph();
@@ -36,17 +36,27 @@ void gsm::set_on_call_ended(void (* callback)()) {
 	on_call_ended = callback;
 }
 
-/*gsm::Controls & gsm::get_ctrl() {
+gsm::Controls & gsm::get_ctrl() {
 	while (xSemaphoreTake(ctrl_mutex, portMAX_DELAY) == pdFALSE);
-	//return CtrlsSet::inst;
-}*/
-
-
+	return Controls::inst;
+}
 
 void sim900::on_timestamp(rtc::Timestamp & timestamp) {
 
 }
 
+gsm::Dialing gsm::Controls::call(const char * phone) {
+	return gsm::call(phone);
+}
 
+void gsm::Controls::end_call() {
+	gsm::end_call();
+}
 
+bool gsm::Controls::accept_call() {
+	return gsm::accept_call();
+}
 
+int16_t gsm::Controls::send_sms(const char * phone) {
+	return -1;
+}

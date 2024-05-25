@@ -26,7 +26,7 @@ void gsm::end_call() {
 			handled_call_state = CallState::ENDED;
 			call_ended = true;
 		} else {
-			schedule(Task::REBOOT);
+			schedule_reboot();
 		}
 		future_result({.call_ended = call_ended});
 		execute_scheduled();
@@ -42,7 +42,7 @@ bool gsm::accept_call() {
 
 	static constexpr auto end_done = [](Result res) {
 		if (res != Result::OK && res != Result::ERROR) {
-			schedule(Task::REBOOT);
+			schedule_reboot();
 		}
 		future_result({.call_accepted = false});
 		execute_scheduled();
@@ -54,7 +54,7 @@ bool gsm::accept_call() {
 			sim900::end_call(end_done);
 		} else {
 			if (res != Result::OK && res != Result::ERROR) {
-				schedule(Task::REBOOT);
+				schedule_reboot();
 			}
 			future_result({.call_accepted = res == Result::OK});
 			execute_scheduled();
@@ -65,12 +65,12 @@ bool gsm::accept_call() {
 	return future_result().call_accepted;
 }
 
-gsm::Dialing gsm::call(char * number) {
+gsm::Dialing gsm::call(const char * number) {
 	using namespace sim900;
 
 	static constexpr auto end_done = [](Result res) {
 		if (res != Result::OK && res != Result::ERROR) {
-			schedule(Task::REBOOT);
+			schedule_reboot();
 		}
 		future_result({.dialing = Dialing::ERROR});
 		execute_scheduled();
@@ -92,7 +92,7 @@ gsm::Dialing gsm::call(char * number) {
 			} else {
 				// didn't establish a call
 				if (res != Result::ERROR) {
-					schedule(Task::REBOOT);
+					schedule_reboot();
 				}
 				future_result({.dialing = Dialing::ERROR});
 			}

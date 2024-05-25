@@ -21,10 +21,7 @@ namespace gsm {
 
 	void init_service_tasks();
 	void turn_module_on();
-
-	void schedule(Task task);
-	void execute_or_schedule(gsm::Task task);
-
+	void schedule_reboot();
 	/** Executes scheduled tasks. Use this before releasing a mutex(it releases mutex it self if nothing to execute). */
 	void execute_scheduled();
 }

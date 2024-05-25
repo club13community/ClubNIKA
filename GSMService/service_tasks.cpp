@@ -14,6 +14,7 @@
 #include "logging.h"
 
 namespace gsm {
+	volatile bool powered;
 	volatile sim900::CardStatus card_status;
 	volatile sim900::Registration registration;
 	volatile uint8_t signal_strength;
@@ -58,6 +59,7 @@ static inline void stop_connection_recovery() {
 }
 
 void gsm::init_service_tasks() {
+	powered = false;
 	pending_tasks = 0;
 	reset_service_info();
 
@@ -70,25 +72,17 @@ void gsm::init_service_tasks() {
 												   pdFALSE, (void *) 0, connection_recovery_timeout, &timer_ctrl);
 }
 
-void gsm::schedule(Task task) {
-	atomic_set(&pending_tasks, to_int(task));
-}
-
-void gsm::execute_or_schedule(gsm::Task task) {
-	using namespace gsm;
-	atomic_set(&pending_tasks, to_int(task));
-	if (xSemaphoreTake(ctrl_mutex, 0) == pdTRUE) {
-		execute_scheduled();
-	}
-}
-
-void gsm::turn_module_on() {
-
+void gsm::schedule_reboot() {
+	atomic_set(&pending_tasks, to_int(Task::REBOOT));
 }
 
 static void turn_on();
 static void turn_off();
 static void check_module_state();
+
+void gsm::turn_module_on() {
+	turn_on();
+}
 
 void gsm::execute_scheduled() {
 	uint16_t pending_now = pending_tasks;
@@ -122,10 +116,11 @@ static void turn_on() {
 
 	static constexpr auto turned_on = [](bool ok) {
 		if (ok) {
+			powered = true;
 			schedule_module_state_update();
 		} else {
 			rec::log("Failed to turn SIM900 on");
-			schedule(Task::REBOOT);
+			schedule_reboot();
 		}
 
 		executed(Task::TURN_ON);
@@ -138,6 +133,7 @@ static void turn_off() {
 	using namespace sim900;
 
 	static constexpr auto turned_off = []() {
+		powered = false;
 		stop_module_state_update();
 		stop_connection_recovery();
 		reset_service_info();
@@ -160,7 +156,7 @@ static void check_module_state() {
 		if (res == Result::OK || res == Result::ERROR) {
 			schedule_module_state_update();
 		} else {
-			schedule(Task::REBOOT);
+			schedule_reboot();
 		}
 
 		executed(Task::CHECK_MODULE_STATE);
@@ -181,7 +177,7 @@ static void check_module_state() {
 		} else {
 			check_next = false;
 			if (res != Result::ERROR) {
-				schedule(Task::REBOOT);
+				schedule_reboot();
 			}
 		}
 
@@ -209,7 +205,7 @@ static void check_module_state() {
 		} else {
 			check_next = false;
 			if (res != Result::ERROR) {
-				schedule(Task::REBOOT);
+				schedule_reboot();
 			}
 		}
 
@@ -222,6 +218,14 @@ static void check_module_state() {
 	};
 
 	sim900::get_card_status(sim_checked);
+}
+
+static inline void execute_or_schedule(gsm::Task task) {
+	using namespace gsm;
+	atomic_set(&pending_tasks, to_int(task));
+	if (xSemaphoreTake(ctrl_mutex, 0) == pdTRUE) {
+		execute_scheduled();
+	}
 }
 
 static void module_status_timeout(TimerHandle_t timer) {

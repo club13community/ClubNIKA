@@ -19,7 +19,7 @@ namespace gsm {
 	void init_state() {
 		static StaticSemaphore_t ctrl_mutex_buff;
 		ctrl_mutex = xSemaphoreCreateBinaryStatic(&ctrl_mutex_buff);
-		xSemaphoreGive(ctrl_mutex);
+		// don't give mutex, will be given after "turn module on"
 
 		static uint8_t result_queue_data[sizeof (FutureResult)];
 		static StaticQueue_t result_queue_ctrl;

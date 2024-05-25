@@ -1,9 +1,6 @@
 #pragma once
 
 #include <stdint.h>
-#include "FreeRTOS.h"
-#include "task.h"
-#include "message_buffer.h"
 
 namespace gsm {
 	/** Interrupts should be enabled(uses timer to discharge decoupling cap.)*/
@@ -27,16 +24,20 @@ namespace gsm {
 
 	/** Collection of controlling methods. */
 	class Controls {
+		friend Controls & get_ctrl();
+	private:
+		static Controls inst;
 	public:
-		virtual Dialing call(const char * phone) = 0;
-		virtual void end_call() = 0;
+		Dialing call(const char * phone);
+		void end_call();
+		bool accept_call();
 		/** @return ID of SMS or -1 if failed to send. */
-		virtual int16_t send_sms(const char * phone) = 0;
+		int16_t send_sms(const char * phone);
 	};
 
 	/** Blocks thread till control is released by other.
-	 * @returns API which always runs requested action(and always returns true) */
-	//Controls & get_ctrl();
+	 * @returns set of APIs, always invoke something - otherwise mutex stays taken. */
+	Controls & get_ctrl();
 
 	/** @returns value in range [0, 100]. If not registered in mobile network - signal strength is 0 too. */
 	uint8_t get_signal_strength();

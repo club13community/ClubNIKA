@@ -16,7 +16,7 @@ namespace gsm {
 	/** @returns true if incoming call is accepted(now you may speak). */
 	bool accept_call();
 	void end_call();
-	Dialing call(char *number);
+	Dialing call(const char *number);
 	/** Use during after GSM module turned off(there should be no call-related callbacks).
 	 * Will emulate ending of any ongoing call. */
 	void terminate_calls();
