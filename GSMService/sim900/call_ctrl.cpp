@@ -59,18 +59,17 @@ void sim900::end_call(void (* callback)(Result result)) {
 	start_execute<end_done>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }
 
-static void (* volatile call_info_callback)(CallState, CallDirection, char *, Result);
-static volatile CallState call_info_state;
-static volatile CallDirection call_info_direction;
-
 /** @param number should have at least MAX_PHONE_LENGTH + 6 items. */
-static void parse_call_info(rx_buffer_t & rx,
-							volatile CallState & state, volatile CallDirection & direction, char * number) {
+static void parse_call_info(rx_buffer_t & rx, volatile uint8_t & index, volatile CallState & state,
+							volatile CallDirection & direction, char * number) {
 	// length of phone number + opt. "+country code" + quotes + '\0'
 	// MAX_PHONE_LENGTH takes into account last '0' from country code
-	constexpr uint8_t max_param_len = MAX_PHONE_LENGTH + (1 + 2) + 2 + 1;
-	// parse direction
+	constexpr uint8_t num_buffer_len = MAX_PHONE_LENGTH + (1 + 2) + 2 + 1;
 	char * const param = number; // use buffer for other params
+	// parse index
+	rx.get_param(0, param, 1);
+	index = 0x0FU & param[0];
+	// parse direction
 	rx.get_param(1, param, 1);
 	direction = param[0] == '0' ? CallDirection::OUTGOING : CallDirection::INCOMING;
 	// parse state
@@ -88,41 +87,48 @@ static void parse_call_info(rx_buffer_t & rx,
 		state = CallState::ENDED;
 	}
 	// parse phone number(is quoted)
-	uint16_t len = rx.get_param(5, param, max_param_len - 1);
+	uint16_t len = rx.get_param(5, param, num_buffer_len - 1);
 	copy(param, param[1] == '+' ? 4 : 1, len - 1, number);
 }
 
+static void (* volatile call_info_data_callback)(uint8_t, CallState, CallDirection, char *);
+static void (* volatile call_info_result_callback)(Result);
+
 static void call_info_done(Result res) {
 	end_command();
-	call_info_callback(call_info_state, call_info_direction, tx_buffer, res);
+	call_info_result_callback(res);
 }
 
 static void parse_call_info(rx_buffer_t & rx) {
-	parse_call_info(rx, call_info_state, call_info_direction, tx_buffer);
+	uint8_t index;
+	CallState state;
+	CallDirection direction;
+	parse_call_info(rx, index, state, direction, tx_buffer);
+	call_info_data_callback(index, state, direction, tx_buffer);
 }
 
-void sim900::get_call_info(void (* callback)(CallState state,  CallDirection direction, char * number, Result result)) {
+void sim900::get_call_info(void (* data_callback)(uint8_t index, CallState state, CallDirection direction, char * number),
+						   void (* result_callback)(Result result)) {
 	constexpr const char * cmd = "AT+CLCC\r";
 	static const char * CLCC = "+CLCC:";
-	call_info_callback = callback;
-	call_info_state = CallState::ENDED;
-	call_info_direction = CallDirection::INCOMING;
+	call_info_data_callback = data_callback;
+	call_info_result_callback = result_callback;
 
 	start_get_info<CLCC, parse_call_info, call_info_done>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }
-
 
 bool sim900::call_state_listener(rx_buffer_t & rx) {
 	if (!rx.starts_with("+CLCC:")) {
 		return false;
 	}
 
+	uint8_t index;
 	CallDirection direction;
 	CallState state;
 	char number[MAX_PHONE_LENGTH + 6];
-	parse_call_info(rx, state, direction, number);
+	parse_call_info(rx, index, state, direction, number);
 
-	on_call_update(state, direction, number);
+	on_call_update(index, state, direction, number);
 	return true;
 }
 

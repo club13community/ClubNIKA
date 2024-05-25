@@ -20,6 +20,8 @@ namespace gsm {
 	extern volatile CallPhase handled_call_state;
 	extern volatile Direction call_direction;
 	extern char phone_number[MAX_PHONE_LENGTH + 1];
+	/** Key pressed during phone call. */
+	extern char pressed_key;
 
 	/** @returns true if incoming call is accepted(now you may speak). */
 	bool accept_call();

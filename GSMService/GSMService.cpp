@@ -32,6 +32,10 @@ void gsm::set_on_call_dialed(void (* callback)(Direction direction)) {
 	on_call_dialed = callback;
 }
 
+void gsm::set_on_key_pressed(void (* callback)(char key)) {
+	on_key_pressed = callback;
+}
+
 void gsm::set_on_call_ended(void (* callback)()) {
 	on_call_ended = callback;
 }

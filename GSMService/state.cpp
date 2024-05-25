@@ -10,6 +10,7 @@
 namespace gsm {
 	void (* volatile on_incoming_call)(char *) = nullptr;
 	void (* volatile on_call_dialed)(Direction) = nullptr;
+	void (* volatile on_key_pressed)(char) = nullptr;
 	void (* volatile on_call_ended)() = nullptr;
 
 	volatile QueueHandle_t result_queue;

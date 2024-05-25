@@ -20,6 +20,7 @@ namespace gsm {
 
 	extern void (* volatile  on_incoming_call)(char *);
 	extern void (* volatile on_call_dialed)(Direction);
+	extern void (* volatile on_key_pressed)(char);
 	extern void (* volatile on_call_ended)();
 
 	/** Guards access to controlling methods. */
@@ -49,6 +50,13 @@ namespace gsm {
 		void (* callback_now)(Direction) = on_call_dialed;
 		if (callback_now != nullptr) {
 			callback_now(direction);
+		}
+	}
+
+	inline void safe_on_key_pressed(char key) {
+		void (* callback_now)(char) = on_key_pressed;
+		if (callback_now != nullptr) {
+			callback_now(key);
 		}
 	}
 

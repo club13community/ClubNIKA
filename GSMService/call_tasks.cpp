@@ -14,6 +14,7 @@ namespace gsm {
 	volatile CallPhase handled_call_state = CallPhase::ENDED;
 	volatile Direction call_direction = Direction::INCOMING;
 	char phone_number[MAX_PHONE_LENGTH + 1];
+	char pressed_key;
 }
 
 void gsm::end_call() {
@@ -106,7 +107,13 @@ static void call_dialed(gsm::Dialing dialing) {
 	future_result({.dialing = dialing});
 }
 
-void sim900::on_call_update(CallState state, CallDirection direction, char * number) {
+void sim900::on_key_pressed(char key) {
+	using namespace gsm;
+	pressed_key = key;
+	handle(Event::KEY_PRESSED);
+}
+
+void sim900::on_call_update(uint8_t index, CallState state, CallDirection direction, char * number) {
 	using namespace gsm;
 	if (direction == CallDirection::INCOMING) {
 		// start new incoming if end of previous is already handled

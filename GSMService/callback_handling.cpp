@@ -43,6 +43,12 @@ static void handle_events() {
 	uint32_t bits;
 	while (xTaskNotifyWait(0, ALL_BITS, &bits, portMAX_DELAY) == pdFALSE);
 
+	if (bits & to_int(Event::KEY_PRESSED)) {
+		if (handled_call_state == CallPhase::SPEAKING) {
+			safe_on_key_pressed(pressed_key);
+		}
+	}
+
 	if (bits & to_int(Event::CALL_STATE_CHANGED)) {
 		CallPhase handled_now = handled_call_state;
 		portENTER_CRITICAL();

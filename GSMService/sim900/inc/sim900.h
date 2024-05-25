@@ -73,8 +73,10 @@ namespace sim900 {
 	/** If no ongoing call - do not invoke handler(if there was ongoing call,
 	 * but ended before ending - appropriate callback is invoked) */
 	void end_call(void (* callback)(Result result));
-	/** Number in callback's arg. may contain leading '+' with country code.
-	 * Does not end with "ERROR" even if SIM-card is not functioning or no network connection.
-	 * Do not trust "direction" if call is ended */
-	void get_call_info(void (* callback)(CallState state, CallDirection direction, char * number, Result result));
+	/** Number in callback's arg. - in local format. Does not end with "ERROR" even if SIM-card is not functioning
+	 * or no network connection.
+	 * @param data_callback - invoked for every existing call.
+	 * @param result_callback - invoked at the end. */
+	void get_call_info(void (* data_callback)(uint8_t index, CallState state, CallDirection direction, char * number),
+			void (* result_callback)(Result result));
 }

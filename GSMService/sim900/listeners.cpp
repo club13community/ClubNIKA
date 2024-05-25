@@ -6,6 +6,20 @@
 #include "rtc.h"
 #include <stdlib.h>
 
+bool sim900::pressed_key_listener(rx_buffer_t & rx) {
+	if (rx.is_message_corrupted()) {
+		return false;
+	}
+	if (rx.starts_with("+DTMF:")) {
+		char param[2];
+		rx.get_param(0, param, 1);
+		on_key_pressed(param[0]);
+		return true;
+	} else {
+		return false;
+	}
+}
+
 bool sim900::timestamp_listener(rx_buffer_t & rx) {
 	if (rx.is_message_corrupted()) {
 		return false;

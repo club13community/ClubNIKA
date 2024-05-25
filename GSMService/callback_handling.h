@@ -7,7 +7,8 @@
 
 namespace gsm {
 	enum class Event : uint32_t {
-		CALL_STATE_CHANGED = 1U << 1
+		CALL_STATE_CHANGED = 1U << 0,
+		KEY_PRESSED = 1U << 1
 	};
 
 	void init_callback_handling();
