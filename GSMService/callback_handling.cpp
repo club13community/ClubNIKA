@@ -2,12 +2,15 @@
 // Created by independent-variable on 5/21/2024.
 //
 #include "./callback_handling.h"
-#include "./call_tasks.h"
 #include "periph_allocation.h"
 #include "FreeRTOS.h"
 #include "task.h"
-#include "./service_tasks.h"
+#include "./service.h"
 #include "./state.h"
+
+namespace gsm {
+	volatile CallPhase handled_call_state = CallPhase::ENDED;
+}
 
 static volatile TaskHandle_t task;
 static void handle_events(void * arg);
@@ -33,7 +36,7 @@ static void handle_events(void * arg) {
 	}
 }
 
-static inline uint32_t to_int(Event event) {
+static inline uint32_t flag_of(Event event) {
 	return (uint32_t)event;
 }
 
@@ -43,13 +46,13 @@ static void handle_events() {
 	uint32_t bits;
 	while (xTaskNotifyWait(0, ALL_BITS, &bits, portMAX_DELAY) == pdFALSE);
 
-	if (bits & to_int(Event::KEY_PRESSED)) {
+	if (bits & flag_of(Event::KEY_PRESSED)) {
 		if (handled_call_state == CallPhase::SPEAKING) {
 			safe_on_key_pressed(pressed_key);
 		}
 	}
 
-	if (bits & to_int(Event::CALL_STATE_CHANGED)) {
+	if (bits & flag_of(Event::CALL_STATE_CHANGED)) {
 		CallPhase handled_now = handled_call_state;
 		portENTER_CRITICAL();
 		CallPhase actual_now = actual_call_state;

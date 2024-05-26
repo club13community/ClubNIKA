@@ -1,11 +1,9 @@
 //
 // Created by independent-variable on 5/24/2024.
 //
-#include "./call_tasks.h"
-#include "./tasks.h"
+#include "./call.h"
+#include "./async_execution.h"
 #include "sim900_callbacks.h"
-#include "./state.h"
-#include "./service_tasks.h"
 #include "./callback_handling.h"
 #include "./config.h"
 #include "./sim900/config.h"
@@ -13,7 +11,6 @@
 
 namespace gsm {
 	volatile CallPhase actual_call_state = CallPhase::ENDED;
-	volatile CallPhase handled_call_state = CallPhase::ENDED;
 	volatile Direction call_direction = Direction::INCOMING;
 	char phone_number[MAX_PHONE_LENGTH + 1];
 	char pressed_key;

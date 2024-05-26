@@ -39,7 +39,8 @@
 #include "periph_allocation.h"
 #include <string.h>
 
-#include "../GSMService/call_tasks.h"
+#include "../GSMService/call.h"
+#include "../GSMService/callback_handling.h"
 
 static TaskHandle_t test_task;
 static StaticTask_t test_task_ctrl;
@@ -49,8 +50,6 @@ static FIL tst_file;
 static volatile uint8_t dialied = 0, ended = 0;
 
 volatile gsm::Dialing d1, d2;
-
-
 
 static void do_test_task(void * args) {
 	static volatile uint8_t c = 0;

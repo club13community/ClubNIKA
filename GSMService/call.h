@@ -17,7 +17,6 @@ namespace gsm {
 	};
 
 	extern volatile CallPhase actual_call_state;
-	extern volatile CallPhase handled_call_state;
 	extern volatile Direction call_direction;
 	extern char phone_number[MAX_PHONE_LENGTH + 1];
 	/** Key pressed during phone call. */

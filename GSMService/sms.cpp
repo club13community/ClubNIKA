@@ -1,11 +1,11 @@
 //
 // Created by independent-variable on 5/26/2024.
 //
-#include "./sms_tasks.h"
-#include "./sim900.h"
+#include "sim900.h"
+#include "sim900_callbacks.h"
+#include "./sms.h"
 #include "./state.h"
-#include "./service_tasks.h"
-#include "./tasks.h"
+#include "./async_execution.h"
 
 bool gsm::send_sms(const char * text, const char * phone) {
 	using namespace sim900;
@@ -24,4 +24,8 @@ bool gsm::send_sms(const char * text, const char * phone) {
 
 	sim900::send_sms(phone, text, sent);
 	return future_result().sms_sent;
+}
+
+void sim900::on_sms_received(uint16_t id) {
+
 }

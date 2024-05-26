@@ -2,15 +2,28 @@
 // Created by independent-variable on 5/21/2024.
 //
 #include "./state.h"
-#include "./service_tasks.h"
-#include "./call_tasks.h"
-#include "./tasks.h"
+#include "./service.h"
+#include "./call.h"
+#include "./async_execution.h"
 
 #include "FreeRTOS.h"
 #include "timers.h"
 #include "./config.h"
 #include <string.h>
 #include "logging.h"
+
+namespace gsm {
+	volatile bool powered;
+	volatile sim900::CardStatus card_status;
+	volatile sim900::Registration registration;
+	volatile uint8_t signal_strength;
+}
+
+static inline void reset_connection_info() {
+	gsm::card_status = sim900::CardStatus::ERROR;
+	gsm::registration = sim900::Registration::ONGOING;
+	gsm::signal_strength = 0;
+}
 
 /** Used to poll card status, network registration, signal strength, etc.*/
 static volatile TimerHandle_t module_state_timer;
@@ -39,6 +52,9 @@ static inline void stop_connection_recovery() {
 }
 
 void gsm::init_service_tasks() {
+	powered = false;
+	reset_connection_info();
+
 	static StaticTimer_t module_status_timer_ctrl;
 	module_state_timer = xTimerCreateStatic("gsm status", pdMS_TO_TICKS(MODULE_STATUS_UPDATE_PERIOD_ms),
 											pdFALSE, (void *)0, module_status_timeout, &module_status_timer_ctrl);

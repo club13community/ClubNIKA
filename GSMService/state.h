@@ -23,21 +23,10 @@ namespace gsm {
 	extern void (* volatile on_key_pressed)(char);
 	extern void (* volatile on_call_ended)();
 
-	extern volatile bool powered;
-	extern volatile sim900::CardStatus card_status;
-	extern volatile sim900::Registration registration;
-	extern volatile uint8_t signal_strength;
-
 	/** Guards access to controlling methods. */
 	extern volatile SemaphoreHandle_t ctrl_mutex;
 
 	void init_state();
-
-	inline void reset_connection_info() {
-		gsm::card_status = sim900::CardStatus::ERROR;
-		gsm::registration = sim900::Registration::ONGOING;
-		gsm::signal_strength = 0;
-	}
 
 	void future_result(FutureResult result);
 

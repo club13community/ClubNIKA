@@ -2,11 +2,9 @@
 // Created by independent-variable on 5/21/2024.
 //
 #include "./state.h"
-#include "sim900.h"
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include "queue.h"
-#include "concurrent_utils.h"
 
 namespace gsm {
 	void (* volatile on_incoming_call)(char *) = nullptr;
@@ -14,19 +12,11 @@ namespace gsm {
 	void (* volatile on_key_pressed)(char) = nullptr;
 	void (* volatile on_call_ended)() = nullptr;
 
-	volatile bool powered;
-	volatile sim900::CardStatus card_status;
-	volatile sim900::Registration registration;
-	volatile uint8_t signal_strength;
-
 	volatile QueueHandle_t result_queue;
 
 	volatile SemaphoreHandle_t ctrl_mutex;
 
 	void init_state() {
-		powered = false;
-		reset_connection_info();
-
 		static StaticSemaphore_t ctrl_mutex_buff;
 		ctrl_mutex = xSemaphoreCreateBinaryStatic(&ctrl_mutex_buff);
 		// don't give mutex, will be given after "turn module on"

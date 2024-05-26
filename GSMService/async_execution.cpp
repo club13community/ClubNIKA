@@ -1,12 +1,12 @@
 //
 // Created by independent-variable on 5/26/2024.
 //
-#include "./tasks.h"
-#include "./service_tasks.h"
+#include "./async_execution.h"
+#include "./service.h"
 #include "concurrent_utils.h"
 
 namespace gsm {
-	static volatile uint8_t pending_tasks;
+	static volatile uint8_t pending_tasks = 0;
 
 	static inline void set_pending(Task task) {
 		atomic_set(&pending_tasks, (uint8_t) task);
