@@ -1,32 +1,16 @@
 //
 // Created by independent-variable on 5/21/2024.
 //
-#include "concurrent_utils.h"
 #include "./state.h"
 #include "./service_tasks.h"
 #include "./call_tasks.h"
+#include "./tasks.h"
 
 #include "FreeRTOS.h"
-#include "semphr.h"
 #include "timers.h"
 #include "./config.h"
 #include <string.h>
 #include "logging.h"
-
-namespace gsm {
-	volatile bool powered;
-	volatile sim900::CardStatus card_status;
-	volatile sim900::Registration registration;
-	volatile uint8_t signal_strength;
-}
-
-static inline void reset_service_info() {
-	gsm::card_status = sim900::CardStatus::ERROR;
-	gsm::registration = sim900::Registration::ONGOING;
-	gsm::signal_strength = 0;
-}
-
-static volatile uint8_t pending_tasks;
 
 /** Used to poll card status, network registration, signal strength, etc.*/
 static volatile TimerHandle_t module_state_timer;
@@ -37,17 +21,13 @@ static void module_status_timeout(TimerHandle_t timer);
 static volatile TimerHandle_t connection_recovery_timer;
 static void connection_recovery_timeout(TimerHandle_t timer);
 
-static inline uint8_t to_int(gsm::Task task) {
-	return (uint8_t)task;
-}
-
 static inline void schedule_module_state_update() {
 	xTimerReset(module_state_timer, portMAX_DELAY);
 }
 
 static inline void stop_module_state_update() {
 	xTimerStop(module_state_timer, portMAX_DELAY);
-	atomic_clear(&pending_tasks, ~to_int(gsm::Task::CHECK_MODULE_STATE));
+	gsm::clear_pending(gsm::Task::CHECK_MODULE_STATE);
 }
 
 static inline void schedule_connection_recovery() {
@@ -59,10 +39,6 @@ static inline void stop_connection_recovery() {
 }
 
 void gsm::init_service_tasks() {
-	powered = false;
-	pending_tasks = 0;
-	reset_service_info();
-
 	static StaticTimer_t module_status_timer_ctrl;
 	module_state_timer = xTimerCreateStatic("gsm status", pdMS_TO_TICKS(MODULE_STATUS_UPDATE_PERIOD_ms),
 											pdFALSE, (void *)0, module_status_timeout, &module_status_timer_ctrl);
@@ -72,46 +48,7 @@ void gsm::init_service_tasks() {
 												   pdFALSE, (void *) 0, connection_recovery_timeout, &timer_ctrl);
 }
 
-void gsm::schedule_reboot() {
-	atomic_set(&pending_tasks, to_int(Task::REBOOT));
-}
-
-static void turn_on();
-static void turn_off();
-static void check_module_state();
-
-void gsm::turn_module_on() {
-	turn_on();
-}
-
-void gsm::execute_scheduled() {
-	uint16_t pending_now = pending_tasks;
-
-	if (pending_now & to_int(Task::REBOOT)) {
-		atomic_clear(&pending_tasks, ~to_int(Task::REBOOT));
-		atomic_set(&pending_tasks, to_int(Task::TURN_ON));
-		pending_now |= to_int(Task::TURN_OFF);
-	}
-
-	if (pending_now & to_int(Task::TURN_OFF)) {
-		turn_off();
-	} else if (pending_now & to_int(Task::TURN_ON)) { // should be after "turn off" for reboot
-		turn_on();
-	} else if (pending_now & to_int(Task::CHECK_MODULE_STATE)) {
-		check_module_state();
-	} else {
-		xSemaphoreGive(ctrl_mutex);
-	}
-}
-
-static inline void executed(gsm::Task task) {
-	atomic_clear(&pending_tasks, ~to_int(task));
-	gsm::execute_scheduled();
-}
-
-using namespace gsm;
-
-static void turn_on() {
+void gsm::turn_on() {
 	using namespace sim900;
 
 	static constexpr auto turned_on = [](bool ok) {
@@ -129,14 +66,14 @@ static void turn_on() {
 	sim900::turn_on(turned_on);
 }
 
-static void turn_off() {
+void gsm::turn_off() {
 	using namespace sim900;
 
 	static constexpr auto turned_off = []() {
 		powered = false;
 		stop_module_state_update();
 		stop_connection_recovery();
-		reset_service_info();
+		reset_connection_info();
 		terminate_calls();
 
 		executed(Task::TURN_OFF);
@@ -145,12 +82,12 @@ static void turn_off() {
 	sim900::turn_off(turned_off);
 }
 
-static void check_module_state() {
+void gsm::check_module_state() {
 	using namespace sim900;
 
 	static constexpr auto signal_checked = [](uint8_t signal_pct, Result res) {
 		if (res == Result::OK) {
-			gsm::signal_strength = signal_pct;
+			signal_strength = signal_pct;
 		}
 
 		if (res == Result::OK || res == Result::ERROR) {
@@ -166,8 +103,8 @@ static void check_module_state() {
 		bool check_next;
 
 		if (res == Result::OK) {
-			Registration prev_reg = gsm::registration;
-			gsm::registration = new_reg;
+			Registration prev_reg = registration;
+			registration = new_reg;
 			bool was_ok = prev_reg != Registration::FAILED;
 			bool ok_now = new_reg != Registration::FAILED;
 			if (was_ok && !ok_now) {
@@ -182,7 +119,7 @@ static void check_module_state() {
 		}
 
 		if (check_next) {
-			get_signal_strength(signal_checked);
+			sim900::get_signal_strength(signal_checked);
 		} else {
 			schedule_module_state_update(); // schedules update even if going to reboot - ok, it's simpler
 			executed(Task::CHECK_MODULE_STATE);
@@ -193,8 +130,8 @@ static void check_module_state() {
 		bool check_next;
 
 		if (res == Result::OK) {
-			CardStatus prev_status = gsm::card_status;
-			gsm::card_status = new_status;
+			CardStatus prev_status = card_status;
+			card_status = new_status;
 			bool was_ok = prev_status == CardStatus::READY;
 			bool is_ok = new_status == CardStatus::READY;
 			if (was_ok && !is_ok) {
@@ -210,7 +147,7 @@ static void check_module_state() {
 		}
 
 		if (check_next) {
-			get_registration(reg_checked);
+			sim900::get_registration(reg_checked);
 		} else {
 			schedule_module_state_update(); // schedules update even if going to reboot - ok, it's simpler
 			executed(Task::CHECK_MODULE_STATE);
@@ -220,21 +157,13 @@ static void check_module_state() {
 	sim900::get_card_status(sim_checked);
 }
 
-static inline void execute_or_schedule(gsm::Task task) {
-	using namespace gsm;
-	atomic_set(&pending_tasks, to_int(task));
-	if (xSemaphoreTake(ctrl_mutex, 0) == pdTRUE) {
-		execute_scheduled();
-	}
-}
-
 static void module_status_timeout(TimerHandle_t timer) {
-	execute_or_schedule(Task::CHECK_MODULE_STATE);
+	gsm::check_module_state_asap();
 }
 
 static void connection_recovery_timeout(TimerHandle_t timer) {
 	using namespace sim900;
 	if (gsm::card_status != CardStatus::READY || gsm::registration == Registration::FAILED) {
-		execute_or_schedule(Task::REBOOT);
+		gsm::reboot_asap();
 	}
 }

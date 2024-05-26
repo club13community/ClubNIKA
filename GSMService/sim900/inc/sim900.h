@@ -68,6 +68,9 @@ namespace sim900 {
 	void get_signal_strength(void (* callback)(uint8_t signal_pct, Result result));
 	void get_registration(void (* callback)(Registration registration, Result result));
 	void send_sms(const char * phone, const char * text, void (* callback)(uint16_t id, Result result));
+	void delete_sent_sms(void (* callback)(Result result));
+	void delete_received_sms(void (* callback)(Result result));
+	void delete_all_sms(void (* callback)(Result result));
 	void call(const char * phone, void (* callback)(Result result));
 	/** If no incoming call - do not invoke handler(if there was incoming call,
 	 * but ended before accepting - appropriate callback is invoked) */

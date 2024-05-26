@@ -6,6 +6,8 @@
 #include "./service_tasks.h"
 #include "./callback_handling.h"
 #include "./call_tasks.h"
+#include "./sms_tasks.h"
+#include "./tasks.h"
 
 void gsm::init_periph() {
 	sim900::init_periph();
@@ -13,7 +15,10 @@ void gsm::init_periph() {
 
 void gsm::start() {
 	init_state();
+	// todo double check
 	init_callback_handling();
+	init_service_tasks();
+
 	init_service_tasks();
 
 	sim900::start();
@@ -49,6 +54,10 @@ void sim900::on_timestamp(rtc::Timestamp & timestamp) {
 
 }
 
+void sim900::on_sms_received(uint16_t id) {
+
+}
+
 gsm::Controls gsm::Controls::inst;
 
 gsm::Dialing gsm::Controls::call(const char * phone) {
@@ -63,6 +72,6 @@ bool gsm::Controls::accept_call() {
 	return gsm::accept_call();
 }
 
-int16_t gsm::Controls::send_sms(const char * phone) {
-	return -1;
+bool gsm::Controls::send_sms(const char * text, const char * phone) {
+	return gsm::send_sms(text, phone);
 }

@@ -3,6 +3,8 @@
 //
 #include <stdlib.h>
 #include "sim900.h"
+#include "sim900_callbacks.h"
+#include "./sms_ctrl.h"
 #include "./execution.h"
 #include "./utils.h"
 #include "./config.h"
@@ -111,4 +113,60 @@ void sim900::send_sms(const char * phone, const char * text, void (* callback)(u
 	send_state = SendSmsState::SENDING_CMD;
 	begin_command(send_listener);
 	send_with_timeout(tx_buffer, cmd_len, send_transferred, RESP_TIMEOUT_ms, end_on_timeout<end_send>);
+}
+
+static void (* volatile delete_sent_handler)(Result);
+
+static void end_delete_sent(Result res) {
+	end_command();
+	delete_sent_handler(res);
+};
+
+void sim900::delete_sent_sms(void (* callback)(Result result)) {
+	static constexpr const char * cmd = "AT+CMGDA=\"DEL SENT\"\r";
+
+	delete_sent_handler = callback;
+	start_execute<end_delete_sent>(cmd, length(cmd), RESP_TIMEOUT_ms);
+}
+
+static void (* volatile delete_received_handler)(Result);
+
+static void end_delete_received(Result res) {
+	end_command();
+	delete_received_handler(res);
+};
+
+void sim900::delete_received_sms(void (* callback)(Result result)) {
+	static constexpr const char * cmd = "AT+CMGDA=\"DEL INBOX\"\r";
+
+	delete_received_handler = callback;
+	start_execute<end_delete_received>(cmd, length(cmd), RESP_TIMEOUT_ms);
+}
+
+static void (* volatile delete_all_handler)(Result);
+
+static void end_delete_all(Result res) {
+	end_command();
+	delete_all_handler(res);
+};
+
+void sim900::delete_all_sms(void (* callback)(Result result)) {
+	static constexpr const char * cmd = "AT+CMGDA=\"DEL ALL\"";
+
+	delete_all_handler = callback;
+	start_execute<end_delete_all>(cmd, length(cmd), RESP_TIMEOUT_ms);
+}
+
+bool sim900::incoming_sms_listener(rx_buffer_t & rx) {
+	if (rx.is_message_corrupted()) {
+		return false;
+	}
+	if (!rx.starts_with("+CMTI:")) {
+		return false;
+	}
+	char param[4];
+	rx.get_param(1, param, 3);
+	uint16_t id = atoi(param);
+	on_sms_received(id);
+	return true;
 }

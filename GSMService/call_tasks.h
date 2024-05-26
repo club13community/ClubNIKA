@@ -23,9 +23,9 @@ namespace gsm {
 	/** Key pressed during phone call. */
 	extern char pressed_key;
 
+	void end_call();
 	/** @returns true if incoming call is accepted(now you may speak). */
 	bool accept_call();
-	void end_call();
 	Dialing call(const char *number);
 	/** Use during after GSM module turned off(there should be no call-related callbacks).
 	 * Will emulate ending of any ongoing call. */

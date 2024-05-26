@@ -32,8 +32,8 @@ namespace gsm {
 		Dialing call(const char * phone);
 		void end_call();
 		bool accept_call();
-		/** @return ID of SMS or -1 if failed to send. */
-		int16_t send_sms(const char * phone);
+		/** @return true if SMS was sent. */
+		bool send_sms(const char * text, const char * phone);
 	};
 
 	/** Blocks thread till control is released by other.

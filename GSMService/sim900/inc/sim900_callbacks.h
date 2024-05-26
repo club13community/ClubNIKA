@@ -12,5 +12,5 @@ namespace sim900 {
 	/** Invoked when interlocutor presses key during a call. */
 	void on_key_pressed(char key);
 	void on_timestamp(rtc::Timestamp & timestamp);
-	// todo void on_sms_received();
+	void on_sms_received(uint16_t id);
 }

@@ -27,7 +27,7 @@ using namespace gsm;
 
 static void handle_events();
 static void handle_events(void * arg) {
-	gsm::turn_module_on();
+	gsm::turn_on();
 	while (true) {
 		handle_events();
 	}
