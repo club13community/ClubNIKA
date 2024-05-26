@@ -18,6 +18,24 @@ static void call_done(Result res) {
 	call_callback(res);
 }
 
+static bool call_listener(rx_buffer_t & rx) {
+	if (!is_sent()) {
+		return false;
+	}
+	if (rx.is_message_corrupted()) {
+		return false;
+	} else if (rx.equals("OK")) {
+		call_done(Result::OK);
+		return true;
+	} else if (rx.equals("ERROR") || rx.equals("NO DIALTONE")
+			// haven't seen this, but may be according to spec.
+			|| rx.equals("NO CARRIER") || rx.equals("BUSY") || rx.equals("NO ANSWER") || rx.starts_with("+CME ERROR:")) {
+		call_done(Result::ERROR);
+		return true;
+	}
+	return false; // not a message for this handler
+}
+
 void sim900::call(const char * phone, void (* callback)(Result result)) {
 	call_callback = callback;
 
@@ -28,7 +46,8 @@ void sim900::call(const char * phone, void (* callback)(Result result)) {
 	*tail++ = '\r';
 	uint16_t len = tail - tx_buffer;
 
-	start_execute<call_done>(tx_buffer, len, RESP_TIMEOUT_ms);
+	begin_command(call_listener);
+	send_with_timeout(tx_buffer, len, RESP_TIMEOUT_ms, end_on_timeout<call_done>);
 }
 
 static void (* volatile accept_callback)(Result);
@@ -117,6 +136,45 @@ void sim900::get_call_info(void (* data_callback)(uint8_t index, CallState state
 	start_get_info<CLCC, parse_call_info, call_info_done>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }
 
+void sim900::wait_call_state(
+		bool (* predicate)(uint8_t index, CallState state, CallDirection direction, const char * number),
+		uint32_t deadline_ms, void (* callback)(bool state_reached)) {
+	static bool (* volatile desired_state)(uint8_t, CallState, CallDirection, const char * number);
+	static void (* volatile end_wait)(bool);
+
+	desired_state = predicate;
+	end_wait = callback;
+
+	static constexpr auto listener = [](rx_buffer_t & rx) {
+		if (rx.is_message_corrupted()) {
+			return false;
+		}
+		if (!rx.starts_with("+CLCC:")) {
+			return false;
+		}
+		uint8_t index;
+		CallState state;
+		CallDirection direction;
+		char number[MAX_PHONE_LENGTH + 6];
+		parse_call_info(rx, index, state, direction, number);
+		if (desired_state(index, state, direction, number)) {
+			end_command();
+			end_wait(true);
+			return true;
+		} else {
+			return false;
+		}
+	};
+
+	static constexpr auto timeout = []() {
+		end_command();
+		end_wait(false);
+	};
+
+	begin_command(listener);
+	start_response_timeout(deadline_ms, timeout);
+}
+
 bool sim900::call_state_listener(rx_buffer_t & rx) {
 	if (!rx.starts_with("+CLCC:")) {
 		return false;
@@ -132,18 +190,59 @@ bool sim900::call_state_listener(rx_buffer_t & rx) {
 	return true;
 }
 
-bool sim900::call_end_listener(rx_buffer_t & rx) {
+static inline bool is_call_end(rx_buffer_t & rx, CallEnd & end_type) {
+	if (rx.is_message_corrupted()) {
+		return false;
+	}
 	if (rx.equals("NO CARRIER")) {
-		on_call_end(CallEnd::NORMAL);
+		end_type = CallEnd::NORMAL;
 		return true;
 	}
 	if (rx.equals("BUSY")) {
-		on_call_end(CallEnd::BUSY);
+		end_type = CallEnd::BUSY;
 		return true;
 	}
 	if (rx.equals("NO ANSWER")) {
-		on_call_end(CallEnd::NO_ANSWER);
+		end_type = CallEnd::NO_ANSWER;
+		return true;
+	}
+	if (rx.equals("NO DIALTONE")) {
+		end_type = CallEnd::NETWORK_ERROR;
 		return true;
 	}
 	return false;
+}
+
+void sim900::wait_call_end(uint32_t deadline_ms, void (* callback)(bool ended, CallEnd end_type)) {
+	static void (* volatile end_wait)(bool, CallEnd);
+
+	static constexpr auto listener = [](rx_buffer_t & rx) {
+		CallEnd end_type;
+		if (is_call_end(rx, end_type)) {
+			end_command();
+			end_wait(true, end_type);
+			return true;
+		} else {
+			return false;
+		}
+	};
+
+	static constexpr auto timeout = []() {
+		end_command();
+		end_wait(false, CallEnd::NORMAL);
+	};
+
+	end_wait = callback;
+	begin_command(listener);
+	start_response_timeout(deadline_ms, timeout);
+}
+
+bool sim900::call_end_listener(rx_buffer_t & rx) {
+	CallEnd end_type;
+	if (is_call_end(rx, end_type)) {
+		on_call_end(end_type);
+		return true;
+	} else {
+		return false;
+	}
 }

@@ -55,7 +55,9 @@ namespace sim900 {
 		/** Rejected by interlocutor or line is busy. */
 		BUSY,
 		/** Interlocutor do not answer for too long. */
-		NO_ANSWER
+		NO_ANSWER,
+		/** GSM module is not ready for calls. */
+		NETWORK_ERROR
 	};
 
 	void turn_on(void (* callback)(bool success));
@@ -73,6 +75,12 @@ namespace sim900 {
 	/** If no ongoing call - do not invoke handler(if there was ongoing call,
 	 * but ended before ending - appropriate callback is invoked) */
 	void end_call(void (* callback)(Result result));
+	/** Waits while call reaches desired state.
+	 * @param predicate defines desired state. */
+	void wait_call_state(
+			bool (* predicate)(uint8_t index, CallState state, CallDirection direction, const char * number),
+			uint32_t deadline_ms, void (* callback)(bool state_reached));
+	void wait_call_end(uint32_t deadline_ms, void (* callback)(bool ended, CallEnd end_type));
 	/** Number in callback's arg. - in local format. Does not end with "ERROR" even if SIM-card is not functioning
 	 * or no network connection.
 	 * @param data_callback - invoked for every existing call.

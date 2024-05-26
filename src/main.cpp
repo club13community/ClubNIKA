@@ -39,6 +39,8 @@
 #include "periph_allocation.h"
 #include <string.h>
 
+#include "../GSMService/call_tasks.h"
+
 static TaskHandle_t test_task;
 static StaticTask_t test_task_ctrl;
 static StackType_t test_task_stack[1024];
@@ -48,23 +50,26 @@ static volatile uint8_t dialied = 0, ended = 0;
 
 volatile gsm::Dialing d1, d2;
 
+
+
 static void do_test_task(void * args) {
 	static volatile uint8_t c = 0;
-	gsm::set_on_incoming_call([](char * num){
-		gsm::get_ctrl().accept_call();
-	});
+
 	gsm::set_on_call_dialed([](gsm::Direction dir) {
 		dialied++;
-		if (dir == gsm::Direction::INCOMING) {
-			d1 = gsm::get_ctrl().call("0665658757");
-			gsm::get_ctrl().end_call();
-			d2 = gsm::get_ctrl().call("0665658757");
-		}
 	});
 	gsm::set_on_call_ended([](){
 		ended++;
 	});
-	while(true);
+
+	while (gsm::get_signal_strength() == 0);
+
+	do {
+		//d1 = gsm::get_ctrl().call("0665658757");
+		while (gsm::handled_call_state != gsm::CallPhase::ENDED);
+		__NOP();
+
+	} while(true);
 }
 
 static void create_test_task() {
