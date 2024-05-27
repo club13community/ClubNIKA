@@ -5,4 +5,6 @@
 #pragma once
 namespace gsm {
 	bool send_sms(const char * text, const char * phone);
+	/** Deletes all received SMS */
+	void delete_incoming_sms();
 }

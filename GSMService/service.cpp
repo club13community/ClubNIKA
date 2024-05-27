@@ -1,10 +1,11 @@
 //
 // Created by independent-variable on 5/21/2024.
 //
+#include "sim900_callbacks.h"
 #include "./state.h"
 #include "./service.h"
 #include "./call.h"
-#include "./async_execution.h"
+#include "./execution.h"
 
 #include "FreeRTOS.h"
 #include "timers.h"
@@ -40,7 +41,7 @@ static inline void schedule_module_state_update() {
 
 static inline void stop_module_state_update() {
 	xTimerStop(module_state_timer, portMAX_DELAY);
-	gsm::clear_pending(gsm::Task::CHECK_MODULE_STATE);
+	gsm::clear_pending(gsm::AsyncTask::CHECK_MODULE_STATE);
 }
 
 static inline void schedule_connection_recovery() {
@@ -76,7 +77,7 @@ void gsm::turn_on() {
 			schedule_reboot();
 		}
 
-		executed(Task::TURN_ON);
+		executed(AsyncTask::TURN_ON);
 	};
 
 	sim900::turn_on(turned_on);
@@ -92,7 +93,7 @@ void gsm::turn_off() {
 		reset_connection_info();
 		terminate_calls();
 
-		executed(Task::TURN_OFF);
+		executed(AsyncTask::TURN_OFF);
 	};
 
 	sim900::turn_off(turned_off);
@@ -112,7 +113,7 @@ void gsm::check_module_state() {
 			schedule_reboot();
 		}
 
-		executed(Task::CHECK_MODULE_STATE);
+		executed(AsyncTask::CHECK_MODULE_STATE);
 	};
 
 	static constexpr auto reg_checked = [](Registration new_reg, Result res) {
@@ -138,7 +139,7 @@ void gsm::check_module_state() {
 			sim900::get_signal_strength(signal_checked);
 		} else {
 			schedule_module_state_update(); // schedules update even if going to reboot - ok, it's simpler
-			executed(Task::CHECK_MODULE_STATE);
+			executed(AsyncTask::CHECK_MODULE_STATE);
 		}
 	};
 
@@ -166,11 +167,15 @@ void gsm::check_module_state() {
 			sim900::get_registration(reg_checked);
 		} else {
 			schedule_module_state_update(); // schedules update even if going to reboot - ok, it's simpler
-			executed(Task::CHECK_MODULE_STATE);
+			executed(AsyncTask::CHECK_MODULE_STATE);
 		}
 	};
 
 	sim900::get_card_status(sim_checked);
+}
+
+void sim900::on_hw_malfunction() {
+	gsm::reboot_asap();
 }
 
 static void module_status_timeout(TimerHandle_t timer) {

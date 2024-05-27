@@ -13,7 +13,7 @@
 using namespace sim900;
 
 #define CTRL_Z	( (char)0x1AU )
-#define ESC		( "\27" ) /* 0x1B */
+#define ESC		( (char)0x1BU )
 
 namespace sim900 {
 	enum class SendSmsState {
@@ -53,8 +53,8 @@ static bool send_listener(rx_buffer_t & rx) {
 		} else {
 			if (state_now == SendSmsState::SENDING_TEXT) {
 				send_state = SendSmsState::FAILED; // 'on transfer' will end
-			} else {
-				end_send(Result::CORRUPTED_RESPONSE);
+			} else { // WAITING_INPUT or WAITING_OK or WAITING_ID
+				end_send(Result::CORRUPTED_RESPONSE); // sending is not ongoing - end here
 			}
 			return true;
 		}

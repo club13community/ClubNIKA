@@ -5,7 +5,7 @@
 #include "sim900_callbacks.h"
 #include "./sms.h"
 #include "./state.h"
-#include "./async_execution.h"
+#include "./execution.h"
 
 bool gsm::send_sms(const char * text, const char * phone) {
 	using namespace sim900;
@@ -19,13 +19,26 @@ bool gsm::send_sms(const char * text, const char * phone) {
 			}
 			future_result({.sms_sent = false});
 		}
-		execute_scheduled();
+		executed();
 	};
 
 	sim900::send_sms(phone, text, sent);
 	return future_result().sms_sent;
 }
 
-void sim900::on_sms_received(uint16_t id) {
+void gsm::delete_incoming_sms() {
+	using namespace sim900;
 
+	static constexpr auto deleted = [](Result res) {
+		if (res != Result::OK && res != Result::ERROR) {
+			schedule_reboot();
+		}
+		executed(AsyncTask::DELETE_INCOMING_SMS);
+	};
+
+	sim900::delete_received_sms(deleted);
+}
+
+void sim900::on_sms_received(uint16_t id) {
+	gsm::delete_incoming_sms_asap();
 }

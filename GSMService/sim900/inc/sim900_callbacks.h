@@ -7,6 +7,8 @@
 #include "sim900.h"
 
 namespace sim900 {
+	/** Invoked when problem with UART occurs. */
+	void on_hw_malfunction();
 	void on_call_update(uint8_t index, CallState state, CallDirection direction, char * number);
 	void on_call_end(CallEnd end);
 	/** Invoked when interlocutor presses key during a call. */

@@ -2,6 +2,7 @@
 // Created by independent-variable on 5/11/2024.
 //
 #include "sim900.h"
+#include "sim900_callbacks.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "timers.h"
@@ -159,6 +160,7 @@ static inline void service_response() {
 				rec::log("Unexpected from SIM900: {0}", {message_part});
 			} else {
 				rec::log("Not executed corrupted msg. from SIM900");
+				on_hw_malfunction();
 			}
 		}
 	} while (rx_buffer.next_read());

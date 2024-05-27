@@ -12,7 +12,7 @@ namespace gsm {
 		KEY_PRESSED = 1U << 1
 	};
 
-	extern volatile CallPhase handled_call_state;
+	extern volatile CallPhase handled_call_phase;
 
 	void init_callback_handling();
 

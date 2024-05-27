@@ -23,7 +23,8 @@ static bool call_listener(rx_buffer_t & rx) {
 		return false;
 	}
 	if (rx.is_message_corrupted()) {
-		return false;
+		call_done(Result::CORRUPTED_RESPONSE);
+		return true;
 	} else if (rx.equals("OK")) {
 		call_done(Result::OK);
 		return true;

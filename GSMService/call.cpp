@@ -2,7 +2,7 @@
 // Created by independent-variable on 5/24/2024.
 //
 #include "./call.h"
-#include "./async_execution.h"
+#include "./execution.h"
 #include "sim900_callbacks.h"
 #include "./callback_handling.h"
 #include "./config.h"
@@ -10,10 +10,16 @@
 #include <string.h>
 
 namespace gsm {
-	volatile CallPhase actual_call_state = CallPhase::ENDED;
+	volatile CallPhase actual_call_phase = CallPhase::ENDED;
 	volatile Direction call_direction = Direction::INCOMING;
 	char phone_number[MAX_PHONE_LENGTH + 1];
 	char pressed_key;
+}
+
+static inline void change_call_phase(gsm::CallPhase new_actual) {
+	using namespace gsm;
+	actual_call_phase = new_actual;
+	handle(Event::CALL_STATE_CHANGED);
 }
 
 void gsm::end_call() {
@@ -22,13 +28,14 @@ void gsm::end_call() {
 	static constexpr auto end_done = [](Result res) {
 		if (res == Result::OK || res == Result::ERROR) {
 			// result is OK event if there is no ongoing call
-			actual_call_state = CallPhase::ENDED;
-			handled_call_state = CallPhase::ENDED;
+			actual_call_phase = CallPhase::ENDED;
+			handled_call_phase = CallPhase::ENDED;
+			// don't issue event - there should be no callback
 		} else {
 			schedule_reboot();
 		}
 		future_result({.call_ended = true});
-		execute_scheduled();
+		executed();
 	};
 
 	// never breaks sequence of "call dialed" -> "call ended" callbacks
@@ -44,11 +51,11 @@ bool gsm::accept_call() {
 			schedule_reboot();
 		}
 		future_result({.call_accepted = false});
-		execute_scheduled();
+		executed();
 	};
 
 	static constexpr auto accept_done = [](Result res) {
-		if (res == Result::OK && actual_call_state != CallPhase::RINGING) {
+		if (res == Result::OK && actual_call_phase != CallPhase::RINGING) {
 			// accepted a call which is not currently handled(next which started immediately after) - reject it
 			sim900::end_call(end_done);
 		} else {
@@ -56,7 +63,7 @@ bool gsm::accept_call() {
 				schedule_reboot();
 			}
 			future_result({.call_accepted = res == Result::OK});
-			execute_scheduled();
+			executed();
 		}
 	};
 
@@ -67,10 +74,10 @@ bool gsm::accept_call() {
 gsm::Dialing gsm::call(const char * number) {
 	using namespace sim900;
 
-	if (handled_call_state != CallPhase::ENDED || actual_call_state != CallPhase::ENDED) {
+	if (handled_call_phase != CallPhase::ENDED || actual_call_phase != CallPhase::ENDED) {
 		// SIM900 allows outgoing calls while active(SPEAKING not RINGING) incoming
 		// eliminate this feature here
-		execute_scheduled();
+		executed();
 		return Dialing::ERROR;
 	}
 
@@ -93,23 +100,20 @@ gsm::Dialing gsm::call(const char * number) {
 		} else {
 			future_result({.dialing = Dialing::ERROR});
 		}
-		actual_call_state = CallPhase::ENDED;
-		handle(Event::CALL_STATE_CHANGED);
-		execute_scheduled();
+		change_call_phase(CallPhase::ENDED);
+		executed();
 	};
 
 	static constexpr auto dialing_known = [](bool has_info) {
 		if (!has_info) {
-			actual_call_state = CallPhase::ENDED;
-			handle(Event::CALL_STATE_CHANGED);
+			change_call_phase(CallPhase::ENDED);
 			future_result({.dialing = Dialing::ERROR});
 			schedule_reboot();
-			execute_scheduled();
+			executed();
 		} else if (dialed) {
-			actual_call_state = CallPhase::SPEAKING;
-			handle(Event::CALL_STATE_CHANGED);
+			change_call_phase(CallPhase::SPEAKING);
 			future_result({.dialing = Dialing::DONE});
-			execute_scheduled();
+			executed();
 		} else {
 			sim900::wait_call_end(RESP_TIMEOUT_ms, call_ended); // why exactly failed to dial
 		}
@@ -118,8 +122,7 @@ gsm::Dialing gsm::call(const char * number) {
 	static constexpr auto call_started = [](Result res) {
 		if (res == Result::OK) {
 			call_direction = Direction::OUTGOING;
-			actual_call_state = CallPhase::RINGING;
-			handle(Event::CALL_STATE_CHANGED);
+			change_call_phase(CallPhase::RINGING);
 			sim900::wait_call_state(ended_or_dialed, DIALING_TIMEOUT_ms, dialing_known);
 		} else {
 			// didn't establish a call, maybe incoming call started
@@ -127,7 +130,7 @@ gsm::Dialing gsm::call(const char * number) {
 				schedule_reboot();
 			}
 			future_result({.dialing = Dialing::ERROR});
-			execute_scheduled();
+			executed();
 		}
 	};
 
@@ -145,23 +148,20 @@ void sim900::on_call_update(uint8_t index, CallState state, CallDirection direct
 	using namespace gsm;
 	if (direction == CallDirection::INCOMING) {
 		// start new incoming if end of previous is already handled
-		if (state == CallState::RINGING && handled_call_state == CallPhase::ENDED) {
+		if (state == CallState::RINGING && handled_call_phase == CallPhase::ENDED) {
 			call_direction = Direction::INCOMING;
-			actual_call_state = CallPhase::RINGING;
 			strcpy(phone_number, number);
-			handle(Event::CALL_STATE_CHANGED);
+			change_call_phase(CallPhase::RINGING);
 			return;
 		}
-		if (state == CallState::SPEAKING && actual_call_state == CallPhase::RINGING) {
-			actual_call_state = CallPhase::SPEAKING;
-			handle(Event::CALL_STATE_CHANGED);
+		if (state == CallState::SPEAKING && actual_call_phase == CallPhase::RINGING) {
+			change_call_phase(CallPhase::SPEAKING);
 			return;
 		}
 	}
 	// for both
-	if (state == CallState::ENDED && one_of(actual_call_state, CallPhase::RINGING, CallPhase::SPEAKING)) {
-		actual_call_state = CallPhase::ENDED;
-		handle(Event::CALL_STATE_CHANGED);
+	if (state == CallState::ENDED && one_of(actual_call_phase, CallPhase::RINGING, CallPhase::SPEAKING)) {
+		change_call_phase(CallPhase::ENDED);
 		return;
 	}
 }
@@ -172,8 +172,7 @@ void sim900::on_call_end(CallEnd end) {
 
 void gsm::terminate_calls() {
 	using namespace sim900;
-	if (actual_call_state != CallPhase::ENDED) {
-		actual_call_state = CallPhase::ENDED;
-		handle(Event::CALL_STATE_CHANGED);
+	if (actual_call_phase != CallPhase::ENDED) {
+		change_call_phase(CallPhase::ENDED);
 	}
 }

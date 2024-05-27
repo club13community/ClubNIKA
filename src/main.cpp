@@ -54,6 +54,11 @@ volatile gsm::Dialing d1, d2;
 static void do_test_task(void * args) {
 	static volatile uint8_t c = 0;
 
+	gsm::set_on_incoming_call([](char * phone){
+		gsm::get_ctrl().end_call();
+		gsm::get_ctrl().send_sms("this is me", "0665658757");
+	});
+
 	gsm::set_on_call_dialed([](gsm::Direction dir) {
 		dialied++;
 	});
@@ -61,14 +66,7 @@ static void do_test_task(void * args) {
 		ended++;
 	});
 
-	while (gsm::get_signal_strength() == 0);
-
-	do {
-		//d1 = gsm::get_ctrl().call("0665658757");
-		while (gsm::handled_call_state != gsm::CallPhase::ENDED);
-		__NOP();
-
-	} while(true);
+	while(true);
 }
 
 static void create_test_task() {
