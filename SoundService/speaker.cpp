@@ -127,6 +127,10 @@ void speaker::playOnDac(uint16_t samplePeriod_us, DataSupplier getData, Callback
 	DAC_TIMER->CR1 |= TIM_CR1_CEN;
 }
 
+void speaker::stopPlay() {
+	// todo implement
+}
+
 void speaker::dmaISR() {
 	Data data = nextData();
 	if (data.isEnd()) {

@@ -89,7 +89,6 @@ extern "C" int main(void)
 	vmeter::init_periph();
 	flash::init_periph();
 	gsm::init_periph();
-	sound_service::init_periph();
 	user_interface::init_periph();
 	wired_zones::init_periph();
 
@@ -105,6 +104,7 @@ extern "C" int main(void)
 	sd::start();
 	rec::start();
 	gsm::start();
+	player::start();
 
 	//wireless
 	//File system

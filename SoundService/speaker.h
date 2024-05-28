@@ -21,7 +21,8 @@ namespace speaker {
 	typedef void (* Callback)();
 
 	void initPeripherals();
-	void playOnDac(uint16_t, DataSupplier, Callback);
+	void playOnDac(uint16_t samplePeriod_us, DataSupplier getData, Callback onEnd);
+	void stopPlay();
 
 	void mute();
 	void unmute();
