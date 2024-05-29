@@ -5,7 +5,8 @@
  *      Author: MaxCm
  */
 #include "SoundService.h"
-#include "./speaker.h"
+#include "./multiplexer.h"
+#include "./converter.h"
 #include "ff.h"
 #include "./wav.h"
 #include "FreeRTOS.h"
@@ -24,22 +25,13 @@ static void (* volatile on_finished)() = nullptr;
 static TaskHandle_t task;
 static SemaphoreHandle_t mutex;
 
-static speaker::Data getData() {
-	/*if (buffer1) {
-		buffer1 = false;
-		return {.samples = const_cast<uint8_t *>(playBuffer1), .samplesLength = points/2};
-	} else {
-		buffer1 = true;
-		return {.samples = const_cast<uint8_t *>(playBuffer2), .samplesLength = points/2};
-	}*/
-}
-
 #define STACK_SIZE	128U
 static void service_task(void * args);
 
 void player::start() {
-	speaker::initPeripherals();
-	speaker::selectDac();
+	speaker::init_converter();
+	speaker::init_mux_pins();
+
 
 	static StackType_t stack[STACK_SIZE];
 	static StaticTask_t task_ctrl;
@@ -112,7 +104,7 @@ static bool load_wav(const char * file) {
 }
 
 static inline void finish_previous() {
-	speaker::stopPlay();
+	speaker::stop_playing();
 	void (* finished)() = on_finished;
 	if (finished != nullptr) {
 		finished();
@@ -120,14 +112,15 @@ static inline void finish_previous() {
 	}
 }
 
-speaker::Data get_samples() {
+void get_samples(uint8_t * & samples, uint16_t & size, BaseType_t & task_woken) {
 	uint8_t this_buff = current_buffer;
 	uint8_t next_buff = this_buff ^ 0x01U;
 	samples_number[this_buff] = 0;
 	if (samples_number[next_buff] != 0) {
 		current_buffer = next_buff;
 		// todo request to load data
-		return {.samples = samples_buffer[next_buff], .samplesLength = samples_number[next_buff]};
+		samples = samples_buffer[next_buff];
+		size = samples_number[next_buff];
 	} else {
 		// end of file or next data is still not loaded
 		if (end_of_wav) {
@@ -136,13 +129,14 @@ speaker::Data get_samples() {
 			// todo request to load both and start again
 		}
 		// todo how to yield from ISR??
-		return speaker::DATA_END;
+		samples = nullptr;
+		size = 0;
 	}
 }
 
 static inline void play_next(void (* finished)()) {
 	on_finished = finished;
-	speaker::playOnDac(63U, get_samples, nullptr);
+	speaker::start_playing(samples_buffer[0], samples_number[0], get_samples);
 }
 
 bool player::play_via_speaker(const char * file, void (* finished)()) {
@@ -150,13 +144,14 @@ bool player::play_via_speaker(const char * file, void (* finished)()) {
 	if (!load_wav(file)) {
 		return false;
 	}
-	speaker::selectDac();
-	speaker::unmute();
+	speaker::connect_speaker_to_dac();
+	speaker::unmute_speaker();
 	play_next(finished);
+	return true;
 }
 
 bool player::play_for_gsm(const char * file, void (* finished)()) {
-
+	return false;
 }
 
 void player::stop_play() {
@@ -164,7 +159,7 @@ void player::stop_play() {
 }
 
 bool player::is_playing() {
-
+	return false;
 }
 
 static void service_task(void * args) {
