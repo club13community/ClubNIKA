@@ -227,7 +227,7 @@ extern uint32_t SystemCoreClock;
  * task, so its priority is set like any other task.  See
  * https://www.freertos.org/RTOS-software-timer-service-daemon-task.html  Only used
  * if configUSE_TIMERS is set to 1. */
-#define configTIMER_TASK_PRIORITY       ( 5 )
+#define configTIMER_TASK_PRIORITY       ( 6 )
 
 /* configTIMER_TASK_STACK_DEPTH sets the size of the stack allocated to the
  * timer task (in words, not in bytes!).  The timer task is a standard FreeRTOS

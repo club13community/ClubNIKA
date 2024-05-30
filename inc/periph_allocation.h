@@ -35,8 +35,8 @@
 #define SIM900_UART_IRQ_PRIORITY	3U
 #define SIM900_DMA_IRQ_PRIORITY		14U
 #define SIM900_EXTI_IRQ_PRIORITY	14U
-// for DMA
-#define DAC_IRQ_PRIORITY	4U
+// for DMA transfer completed
+#define DAC_IRQ_PRIORITY	12U
 #define FLASH_IRQ_PRIORITY	6U
 
 #define SD_IRQ_PRIORITY			11U
@@ -52,14 +52,16 @@
 #define SD_DMA_PRIORITY				DMA_Priority_High
 
 #define TASK_NORMAL_PRIORITY		1U
-// mounts and unmounts SD card
+/** Mounts and unmounts SD card. */
 #define SD_SERVICE_PRIORITY			2U
-// parses received messages, handles timeouts, etc.
+/** Parses received messages, handles timeouts, etc. */
 #define SIM900_DRIVER_PRIORITY		2U
-// detects what was pressed
-#define KEYBOARD_SERVICE_PRIORITY	3U
-// starts application(mounts flash, loads settings, etc.); should have higher priority, than normal task
-#define APP_STARTER_PRIORITY		4U
+/** Loads next samples to play. */
+#define PLAYER_TASK_PRIORITY		3U
+/** Detects what was pressed. */
+#define KEYBOARD_SERVICE_PRIORITY	4U
+/** Starts application(mounts flash, loads settings, etc.); should have higher priority, than normal task. */
+#define APP_STARTER_PRIORITY		5U
 
 #if configTIMER_TASK_PRIORITY <= KEYBOARD_SERVICE_PRIORITY || configTIMER_TASK_PRIORITY <= KEYBOARD_SERVICE_PRIORITY
 // highest priority guaranties that timer control commands are executed right after issuing

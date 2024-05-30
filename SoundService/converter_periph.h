@@ -17,7 +17,7 @@
 
 #define DMA_IFCR_CTCIFx		DMA_IFCR_CTCIF3
 
-namespace speaker {
+namespace player {
 
 	/** Timer triggers DAC */
 	void init_timer() {

@@ -16,7 +16,6 @@ namespace player {
 	void start();
 	bool play_via_speaker(const char * file, void (* finished)());
 	bool play_for_gsm(const char * file, void (* finished)());
-	void stop_play();
-	bool is_playing();
+	void stop_playing();
 }
 

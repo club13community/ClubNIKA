@@ -16,7 +16,7 @@
 #define SIM900_MIC_SELECT_PORT		GPIOE
 #define SIM900_MIC_SELECT_PIN		GPIO_Pin_11
 
-namespace speaker {
+namespace player {
 
 	inline void mute_speaker() {
 		GPIO_SetBits(MUTE_PORT, MUTE_PIN);

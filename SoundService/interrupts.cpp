@@ -4,5 +4,5 @@
 #include "./converter.h"
 
 extern "C" void DMA2_Channel3_IRQHandler() {
-	speaker::dma_isr();
+	player::dma_isr();
 }
