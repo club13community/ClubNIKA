@@ -15,11 +15,15 @@
 #include "periph_allocation.h"
 
 static FIL wav;
+/** If true - reached end and closed wav-file. */
+static volatile bool end_of_wav = true;
+/** For debug. */
+static volatile FRESULT last_error;
+
 #define MAX_SAMPLE_NUM	256U
 static uint8_t samples_buffer[2][MAX_SAMPLE_NUM];
 static volatile uint16_t samples_number[2];
 static volatile uint8_t current_buffer;
-static volatile bool end_of_wav = true;
 static void (* volatile on_finished)() = nullptr;
 
 static volatile TaskHandle_t task;
@@ -66,19 +70,49 @@ namespace player {
 	}
 }
 
+static inline bool open_wav(const char * path) {
+	FRESULT res = f_open(&wav, path, FA_READ);
+	if (res == FR_OK) {
+		end_of_wav = false;
+		return true;
+	} else {
+		last_error = res;
+		end_of_wav = true;
+		return false;
+	}
+}
+
+static inline UINT read_wav(void * buff, UINT size) {
+	UINT read_size;
+	FRESULT res = f_read(&wav, buff, size, &read_size);
+	if (res != FR_OK) {
+		last_error = res;
+	}
+	if (read_size != size) {
+		end_of_wav = true;
+		f_close(&wav);
+	}
+	return read_size;
+}
+
+static inline void close_wav() {
+	if (!end_of_wav) {
+		end_of_wav = true;
+		f_close(&wav);
+	}
+}
+
+static bool load_wav(const char * file);
+
 static inline void stop_now() {
 	using namespace player;
 	stop_conversion();
 	mute_speaker();
 	disconnect_dac_from_sim900();
-	if (!end_of_wav) {
-		end_of_wav = true;
-		f_close(&wav);
-	}
+	close_wav();
 	ulTaskNotifyValueClear(task, 0xFF'FF'FF'FF);
 }
 
-static bool load_wav(const char * file);
 static void provide_samples(uint8_t * & samples, uint16_t & size, BaseType_t & task_woken);
 
 bool player::play_via_speaker(const char * file, void (* finished)()) {
@@ -117,53 +151,42 @@ void player::stop_playing() {
 }
 
 static bool parse_headers(uint32_t & sample_rate);
-volatile FRESULT wav_err;
+/** Loads samples and closes file if EOF or error while read.
+ * @returns true if loaded any sample. */
+static bool load_samples(uint8_t buff_ind);
+
 static bool load_wav(const char * file) {
 	using namespace player;
-	if ( (wav_err = f_open(&wav, file, FA_READ)) != FR_OK) {
+
+	if (!open_wav(file)) {
 		return false;
 	}
+
 	uint32_t sample_rate;
-	UINT actual_samples;
-	if (!parse_headers(sample_rate)
-		|| ( wav_err = f_read(&wav, samples_buffer, MAX_SAMPLE_NUM * 2U, &actual_samples) ) != FR_OK
-		|| actual_samples == 0) {
-		f_close(&wav);
+	if (!parse_headers(sample_rate)) {
+		close_wav();
 		return false;
 	}
-	set_sample_rate(sample_rate);
-	if (actual_samples < MAX_SAMPLE_NUM) {
-		samples_number[0] = actual_samples;
-		samples_number[1] = 0;
-		end_of_wav = true;
-		f_close(&wav);
-	} else {
-		samples_number[0] = MAX_SAMPLE_NUM;
-		samples_number[1] = actual_samples - MAX_SAMPLE_NUM;
-		end_of_wav = false;
+
+	if (!load_samples(0)) {
+		return false;
 	}
+	load_samples(1U);
 	current_buffer = 0;
+	set_sample_rate(sample_rate);
 	return true;
 }
 
 /** @returns false if error occurred while reading a file or file contains not supported props. */
 static bool parse_headers(uint32_t & sample_rate) {
 	using namespace player;
-	UINT read_count;
 
 	Riff riff;
-	if ( (wav_err = f_read(&wav, &riff, sizeof (Riff), &read_count) ) != FR_OK) {
+	if (read_wav(&riff, sizeof (Riff)) != sizeof (Riff) || !riff.is_riff() || !riff.is_wave()) {
 		return false;
 	}
-	if (read_count != sizeof (Riff) || !riff.is_riff() || !riff.is_wave()) {
-		return false;
-	}
-
 	Format format;
-	if ( (wav_err = f_read(&wav, &format, sizeof (Format), &read_count) ) != FR_OK) {
-		return false;
-	}
-	if (read_count != sizeof (Format) || !format.is_fmt()) {
+	if (read_wav(&format, sizeof (Format)) != sizeof (Format) || !format.is_fmt()) {
 		return false;
 	}
 	if (format.get_sample_format() != Format::SampleType::INT
@@ -171,15 +194,10 @@ static bool parse_headers(uint32_t & sample_rate) {
 		|| format.get_sample_rate() < min_sample_rate || format.get_sample_rate() > max_sample_rate) {
 		return false;
 	}
-
 	Data data;
-	if( ( wav_err = f_read(&wav, &data, sizeof(Data), &read_count) ) != FR_OK) {
+	if (read_wav(&data, sizeof (Data)) != sizeof (Data) || !data.is_data() || data.get_samples_size() == 0) {
 		return false;
 	}
-	if (read_count != sizeof (Data) || !data.is_data() || data.get_samples_size() == 0) {
-		return false;
-	}
-
 	sample_rate = format.get_sample_rate();
 	return true;
 }
@@ -218,7 +236,6 @@ static void service_task(void * args) {
 	}
 }
 
-static volatile void load_samples(uint8_t buff_ind);
 static volatile uint16_t reloads = 0;
 static void service_task() {
 	using namespace player;
@@ -235,11 +252,10 @@ static void service_task() {
 	if (bits & flag_of(Request::LOAD_AND_RESUME)) { reloads++;
 		uint8_t this_buff = current_buffer;
 		uint8_t next_buf = this_buff ^ 1U;
-		if (samples_number[next_buf] == 0) { // may be already loaded(just a little late)
-			load_samples(next_buf);
-		}
-		load_samples(this_buff);
-		if (samples_number[next_buf] > 0) {
+		// next buffer may be already loaded(just a little late)
+		bool not_end = samples_number[next_buf] > 0 || load_samples(next_buf);
+		if (not_end) {
+			load_samples(this_buff);
 			current_buffer = next_buf;
 			set_samples(samples_buffer[next_buf], samples_number[next_buf]);
 		} else {
@@ -261,20 +277,13 @@ static void service_task() {
 	}
 }
 
-static volatile void load_samples(uint8_t buff_ind) {
+static bool load_samples(uint8_t buff_ind) {
+	using namespace player;
 	if (end_of_wav) {
-		return;
+		return false;
 	}
-	UINT read_num;
-	if ( ( wav_err = f_read(&wav, samples_buffer[buff_ind], MAX_SAMPLE_NUM, &read_num) ) != FR_OK || read_num == 0) {
-		end_of_wav = true;
-		f_close(&wav);
-		return;
-	}
+	UINT read_num = read_wav(samples_buffer[buff_ind], MAX_SAMPLE_NUM);
+	shift_zero_level(samples_buffer[buff_ind], read_num);
 	samples_number[buff_ind] = read_num;
-	if (read_num < MAX_SAMPLE_NUM) {
-		end_of_wav = true;
-		f_close(&wav);
-	}
+	return read_num > 0;
 }
-

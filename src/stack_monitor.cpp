@@ -30,7 +30,7 @@ static void monitor_stack(void * args) {
 			size_t total_stack = status.pxEndOfStack - status.pxStackBase + 1;
 			size_t used_stack = total_stack - status.usStackHighWaterMark;
 			uint8_t stack_usage = (uint32_t)used_stack * 100U / total_stack;
-			log("'{0}' uses {1}% of stack", {status.pcTaskName, s(stack_usage)});
+			//log("'{0}' uses {1}% of stack", {status.pcTaskName, s(stack_usage)});
 		}
 		vTaskDelay(pdMS_TO_TICKS(MONITORING_PERIOD_s * 1000U));
 	}

@@ -51,29 +51,25 @@ void sd::cancel_receive() {
 
 void sd::handle_data_irq(uint32_t sta) {
 	sta &= DATA_PATH_FLAGS;
+	if (sta == 0) {
+		return;
+	}
+	SDIO->DCTRL = 0;
 	SDIO->ICR = DATA_PATH_FLAGS;
+	stop_dma();
+	Error error;
 	if (sta & SDIO_STA_DTIMEOUT) {
 		// data was not received
-		stop_dma();
-		on_done(Error::DATA_TIMEOUT);
-		return;
-	}
-	if (sta & (SDIO_STA_RXOVERR | SDIO_STA_TXUNDERR)) {
+		error = Error::DATA_TIMEOUT;
+	} else if (sta & (SDIO_STA_RXOVERR | SDIO_STA_TXUNDERR)) {
 		// FIFO over/under ran
-		stop_dma();
-		on_done(Error::FIFO_ERROR);
-		return;
-	}
-	if (sta & SDIO_STA_DCRCFAIL) {
+		error = Error::FIFO_ERROR;
+	} else if (sta & SDIO_STA_DCRCFAIL) {
 		// CRC failed
-		stop_dma();
-		on_done(Error::DATA_CRC_ERROR);
-		return;
-	}
-	if (sta & SDIO_STA_DATAEND) {
+		error = Error::DATA_CRC_ERROR;
+	} else { //sta & SDIO_STA_DATAEND) != 0
 		// Block sent received
-		stop_dma();
-		on_done(Error::NONE);
-		return;
+		error = Error::NONE;
 	}
+	on_done(error);
 }

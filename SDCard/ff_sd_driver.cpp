@@ -15,6 +15,8 @@
 
 static StaticEventGroup_t events_ctrl;
 static EventGroupHandle_t events;
+/** For debug. */
+static volatile sd::Error last_read_write_error = sd::Error::NONE;
 
 #define RW_DONE					(1U<<0)
 #define RW_FAILED_PROTECTION	(1U<<1)
@@ -44,19 +46,17 @@ DSTATUS sd::disk_status () {
 static void read_write_done(uint32_t block_count, sd::Error error) {
 	using namespace sd;
 	EventBits_t event;
-	switch (error) {
-		case Error::NONE:
-			event = RW_DONE;
-			break;
-		case Error::ADDRESS_ERROR:
-		case Error::ARG_OUT_OF_RANGE:
+	if (error == Error::NONE) {
+		event = RW_DONE;
+	} else {
+		last_read_write_error = error;
+		if (error == Error::ADDRESS_ERROR || error == Error::ARG_OUT_OF_RANGE) {
 			event = RW_FAILED_ADDRESS;
-			break;
-		case Error::WP_VIOLATION:
+		} else if (error == Error::WP_VIOLATION) {
 			event = RW_FAILED_PROTECTION;
-			break;
-		default:
+		} else {
 			event = RW_FAILED;
+		}
 	}
 	BaseType_t task_woken = pdFALSE;
 	xEventGroupSetBitsFromISR(events, event, &task_woken);

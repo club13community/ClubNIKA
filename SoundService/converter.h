@@ -22,5 +22,9 @@ namespace player {
 	 * Last sample from prev. chunk is played during all this time. */
 	void set_samples(uint8_t * samples, uint16_t size);
 
+	/** Converter output can not be rail to rail(HW limitation). Code which loads samples should use this method
+	 * to shift 0-level of samples before passing to be played. Assumed, that current 0-level is 127. */
+	void shift_zero_level(uint8_t * samples, uint16_t size);
+
 	void dma_isr();
 }
