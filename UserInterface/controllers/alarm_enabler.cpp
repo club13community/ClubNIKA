@@ -13,8 +13,6 @@ namespace user_interface {
 	private:
 		static constexpr uint8_t timer_pos = 9;
 		uint16_t delay;
-	private:
-		void print_delay();
 	protected:
 		void activate(bool init) override;
 		void handle(keyboard::Button button, keyboard::Event event) override;
@@ -37,8 +35,8 @@ void AlarmEnabler::activate(bool init) {
 	disp.clear()
 			.define('\1', symbol::ua_D).define('\2', symbol::ua_U)
 			.set_cursor(0, 0).print("\1O AKT\2B.")
+			.set_cursor(0, timer_pos).print((int)delay).print('c')
 			.set_cursor(1, 3).print("A:BI\1MIHA");
-	print_delay();
 }
 
 void AlarmEnabler::handle(keyboard::Button button, keyboard::Event event) {
@@ -55,18 +53,7 @@ void AlarmEnabler::delay_elapsed() {
 		alarm::arm();
 		user_interface::alarm_armed(); // this will change controller
 	} else {
-		print_delay();
+		disp.set_cursor(0, timer_pos).clear(4).print((int)delay).print('c');
 		start_delay(1000);
 	}
-}
-
-void AlarmEnabler::print_delay() {
-	char text[5] = "   c";
-	char * dig = text + 2;
-	uint16_t val = delay;
-	do {
-		*dig-- = 0x30 | val % 10;
-		val /= 10;
-	} while (val);
-	disp.set_cursor(0, timer_pos).print(text);
 }

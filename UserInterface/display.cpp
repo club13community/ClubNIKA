@@ -21,6 +21,19 @@ Display & Display::clear() {
 	return *this;
 }
 
+Display & Display::clear(uint8_t positions) {
+	uint8_t line = lcd::get_line();
+	uint8_t pos = lcd::get_position();
+	if (15 - pos + 1 < positions) {
+		positions = 15 - pos + 1;
+	}
+	while (positions-- > 0) {
+		lcd::print(' ');
+	}
+	lcd::set_cursor(line, pos);
+	return *this;
+}
+
 Display & Display::set_cursor(uint8_t line, uint8_t pos) {
 	lcd::set_cursor(line, pos);
 	return *this;

@@ -32,7 +32,6 @@ namespace user_interface {
 		void on_activity_timer();
 
 		void on_delay_timer() {
-			on_ui_activity();
 			delay_elapsed();
 		}
 
@@ -46,9 +45,7 @@ namespace user_interface {
 		/** Invoke this in handler of anything which is assumed UI activity */
 		void on_ui_activity();
 	protected:
-		/** Invoked by controller.
-		 * @param do_handle if true - put out backlight when no button is pressed (or no other activity reported)
-		 * for a long time; if false - controller handles everything it self. */
+		/** Invoked by controller to enable/disable default UI inactivity handling(put out backlight, block keyboard). */
 		void handle_ui_inactivity(bool do_handle);
 		void start_delay(uint16_t delay_ms);
 		void cancel_delay();
