@@ -13,6 +13,6 @@ namespace sim900 {
 	void on_call_end(CallEnd end);
 	/** Invoked when interlocutor presses key during a call. */
 	void on_key_pressed(char key);
-	void on_timestamp(rtc::Timestamp & timestamp);
+	void on_timestamp(rtc::DateTime & timestamp);
 	void on_sms_received(uint16_t id);
 }

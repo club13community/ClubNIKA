@@ -34,23 +34,23 @@ bool sim900::timestamp_listener(rx_buffer_t & rx) {
 	char param[5];
 	using namespace rtc;
 
+	Date date;
 	rx.get_param(0, param, 4);
-	uint16_t year = atoi(param);
+	date.year= atoi(param);
 	rx.get_param(1, param, 4);
-	Month month = Month(atoi(param));
+	date.month = Month(atoi(param));
 	rx.get_param(2, param, 4);
-	uint8_t day = atoi(param);
-	Date date = Date(year, month, day);
+	date.day = atoi(param);
 
+	Time time;
 	rx.get_param(3, param, 4);
-	uint8_t hour = atoi(param);
+	time.hour = atoi(param);
 	rx.get_param(4, param, 4);
-	uint8_t minute = atoi(param);
+	time.minute = atoi(param);
 	rx.get_param(5, param, 4);
-	uint8_t second = atoi(param);
-	Time time = Time(hour, minute, second);
+	time.second = atoi(param);
 
-	Timestamp timestamp = Timestamp(date, time);
+	DateTime timestamp = {.date = date, .time = time};
 	on_timestamp(timestamp);
 	return true;
 }

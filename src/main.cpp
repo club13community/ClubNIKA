@@ -35,6 +35,7 @@
 #include "sd_driver.h"
 #include "stack_monitor.h"
 #include "logging.h"
+#include "rtc.h"
 #include "drives.h"
 #include "settings.h"
 #include "periph_allocation.h"
@@ -82,9 +83,9 @@ static void do_test_task(void * args) {
 	});
 
 	while(true) {
-		while (!sd::is_card_present());
+		/*while (!sd::is_card_present());
 		play_via_speaker();
-		while (sd::is_card_present());
+		while (sd::is_card_present());*/
 	}
 }
 
@@ -117,6 +118,7 @@ extern "C" int main(void)
 
 	ClockControl_Launch(getMessageBuffer_ClockControlDataIn(), getMessageBuffer_ClockControlDataOut());
 	SupplySystem_Launch(getMessageBuffer_SupplySystemDataIn(), getMessageBuffer_SupplySystemDataOut());
+	rtc::start();
 	vmeter::start();
 	user_interface::start();
 	wired_zones::start();

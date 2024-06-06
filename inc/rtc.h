@@ -8,74 +8,61 @@
 namespace rtc {
 	enum class Month : uint8_t {JAN = 1, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV, DEC};
 
-	class Time {
-	private:
-		inline char * add(uint8_t val, char * buf) const {
-			char d2 = char(0x30U | val % 10U);
-			char d1 = char(0x30U | val / 10);
-			*buf++ = d1;
-			*buf++ = d2;
-			return buf;
-		}
-	public:
-		const uint8_t hour;
-		const uint8_t minute;
-		const uint8_t second;
-
-		Time(uint8_t hour, uint8_t minute, uint8_t second) : hour(hour), minute(minute), second(second) {}
-
-		/** Format: "hh:mm:ss"
-		 * @param buf should contain at least 9 positions
-		 * @return pointer to tailing '\0'*/
-		inline char * to_string(char * buf) const {
-			char * tail = add(hour, buf);
-			*tail++ = ':';
-			tail = add(minute, tail);
-			*tail++ = ':';
-			tail = add(second, tail);
-			*tail = '\0';
-			return tail;
-		}
+	struct Time {
+		uint8_t hour;
+		uint8_t minute;
+		uint8_t second;
 	};
 
-	class Date {
-	private:
-		inline char * add(uint8_t val, char * buf) const {
-			char d2 = char(0x30U | val % 10U);
-			char d1 = char(0x30U | val / 10);
-			*buf++ = d1;
-			*buf++ = d2;
-			return buf;
-		}
-	public:
-		const uint16_t year;
-		const Month month;
-		const uint8_t day;
-
-		Date(uint16_t year, Month month, uint8_t day) : year(year), month(month), day(day) {}
-
-		/** Format dd/mm/yy.
-		 * @returns pointer to tailing '\0' */
-		inline char * to_string(char * buf) const {
-			char * tail = add(day, buf);
-			*tail++ = '/';
-			tail = add((uint8_t)month, tail);
-			*tail++ = '/';
-			tail = add(year % 100, tail);
-			*tail = '\0';
-			return tail;
-		}
+	struct Date {
+		uint16_t year;
+		Month month;
+		uint8_t day;
 	};
 
+	/** Timestamp which holds local time and date. */
+	struct DateTime {
+		Date date;
+		Time time;
+	};
+
+	/** Timestamp which holds amount of time since system started. */
+	struct RunTime {
+		uint8_t seconds;
+		uint8_t minutes;
+		uint8_t hours;
+		uint16_t days;
+	};
+
+	/** Helper which enables polymorphic return without dynamic memory allocation. */
 	class Timestamp {
+	private:
+		union {
+			RunTime run_time;
+			DateTime date_time;
+		} value;
+		bool runtime;
 	public:
-		const Date date;
-		const Time time;
+		Timestamp(RunTime time) : value({.run_time = time}), runtime(true) {}
+		Timestamp(DateTime time) : value({.date_time = time}), runtime(false) {}
 
-		Timestamp(Date & date, Time & time) : date(date), time(time) {}
+		inline bool is_runtime() {
+			return runtime;
+		}
 
-		/** Format "dd/mm/yy hh:mm:ss".
-		 * @param buf should contain 18 positions*/
-		char * to_string(char * buf) const;
+		inline RunTime & as_runtime() {
+			return value.run_time;
+		}
+
+		inline DateTime & as_datetime() {
+			return value.date_time;
+		}
 	};
+
+	void start();
+	/** System does not have real RTC IC. Use this to init/update date and time entered by user
+	 * or retrieved from other source. */
+	void set(DateTime & timestamp);
+	/** @returns DateTime if it was set otherwise RunTime. */
+	Timestamp now();
 }

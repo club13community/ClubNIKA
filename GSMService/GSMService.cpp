@@ -46,8 +46,8 @@ gsm::Controls & gsm::get_ctrl() {
 	return Controls::inst;
 }
 
-void sim900::on_timestamp(rtc::Timestamp & timestamp) {
-
+void sim900::on_timestamp(rtc::DateTime & timestamp) {
+	rtc::set(timestamp);
 }
 
 gsm::Controls gsm::Controls::inst;
