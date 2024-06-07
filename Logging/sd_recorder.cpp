@@ -29,7 +29,8 @@ static inline bool rotate_logs() {
 }
 
 static inline bool open_current_log() {
-	return f_open(&log_file, CURRENT_LOG_PATH, FA_OPEN_APPEND | FA_WRITE) == FR_OK;
+	return f_open(&log_file, CURRENT_LOG_PATH, FA_OPEN_APPEND | FA_WRITE) == FR_OK
+		&& (normal_log_size() || rotate_logs());
 }
 
 void rec::init_card_recorder() {
@@ -39,7 +40,11 @@ void rec::init_card_recorder() {
 void rec::write_to_card(const char * message, uint16_t len) {
 	UINT written;
 	file_opened = (file_opened || open_current_log())
-				  && (normal_log_size() || rotate_logs())
-				  && f_write(&log_file, message, len, &written) == FR_OK
-				  && f_sync(&log_file) == FR_OK;
+				  && f_write(&log_file, message, len, &written) == FR_OK;
+}
+
+void rec::flush_to_card() {
+	file_opened = file_opened
+			&& f_sync(&log_file) == FR_OK
+			&& (normal_log_size() || rotate_logs());
 }

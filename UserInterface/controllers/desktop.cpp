@@ -72,4 +72,5 @@ void Desktop::delay_elapsed() {
 		// will put out display automatically on inactivity
 	}
 	gsm_signal = new_signal;
+	start_delay(SIGNAL_REFRESH_TIME_s * 1000U);
 }

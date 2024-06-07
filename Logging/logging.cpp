@@ -12,7 +12,7 @@
 #include "rtc.h"
 
 namespace rec {
-	typedef Buffer<9, MAX_MESSAGE_LENGTH + 1> LogBuffer;
+	typedef Buffer<10, BULK_SIZE, MAX_MESSAGE_LENGTH + 1> LogBuffer;
 }
 
 static rec::LogBuffer buffer;
@@ -23,17 +23,31 @@ static StackType_t stack[STACK_SIZE];
 static StaticTask_t task_ctrl;
 
 static void record_logs(void * args) {
-	// todo: log bulk of messages, not each message
 	rec::init_card_recorder();
 	while (true) {
-		auto slot = buffer.start_read();
-		uint16_t len = slot.copy_to(message);
-		message[len++] = '\n';
-		message[len] = '\0';
-
-		rec::write_to_card(message, len);
-
-		buffer.end_read();
+		// todo what if reopen already opened file
+		constexpr uint32_t wait_bulk_ms = WAIT_BULK_TIMEOUT_min * 60U * 1000U;
+		if (!buffer.wait_bulk_ready(wait_bulk_ms)) {
+			continue; // nothing to write
+		}
+		uint16_t data_size = 0;
+		while (true) {
+			auto slot = buffer.try_read();
+			if (slot.is_empty()) {
+				break;
+			}
+			uint16_t len = slot.copy_to(message);
+			message[len++] = '\n';
+			message[len] = '\0';
+			uint16_t new_data_size = data_size + len;
+			if (new_data_size > BULK_SIZE) {
+				break;
+			}
+			data_size = new_data_size;
+			buffer.end_read();
+			rec::write_to_card(message, len);
+		}
+		rec::flush_to_card();
 	}
 }
 
@@ -68,9 +82,8 @@ rec::s::s(int32_t val) {
 
 /** Check's if buff points to '{n}'. If yes - returns n, otherwise - -1 */
 static inline int8_t get_arg_index(const char * buff) {
-	if (buff[0] == '{' && buff[2] == '}') {
-		char n = buff[1];
-		return n >= '0' && n <= '9' ? n & 0x0F : -1;
+	if (buff[0] == '{' && buff[1] >= '0' && buff[1] <= '9' && buff[2] == '}') {
+		return buff[1] & 0x0FU;
 	} else {
 		return -1;
 	}
@@ -89,23 +102,30 @@ static uint16_t set(rtc::Timestamp & time, uint16_t index, rec::LogBuffer::Slot 
 
 void rec::log(const char * msg, std::initializer_list<const char *> args) {
 	rtc::Timestamp timestamp = rtc::now();
-	// message format: "<timestamp>: <msg with args>"
-	uint16_t msg_len = len_of(timestamp) + 2U + strlen(msg) + len_of(args);
-	LogBuffer::Slot slot = buffer.start_write(msg_len + 1);
+	// record format: "<timestamp>: <msg with args>"
+	// message length is incorrect if arg. is used several times in msg or msg uses non-existing arg.
+	// - do not cover these corner cases for performance, just take them into account while copying data.
+	uint16_t ph_len = 3U * args.size(); // total length of placeholders
+	uint16_t msg_len = strlen(msg) + len_of(args);
+	if (msg_len > ph_len) {
+		msg_len -= ph_len;
+	}
+	uint16_t rec_len = len_of(timestamp) + 2U + msg_len;
+	LogBuffer::Slot slot = buffer.start_write(rec_len + 1);
 	if (slot.is_empty()) {
 		return;
 	}
 	uint16_t dst_ind = set(timestamp, 0, slot);
 	dst_ind = slot.set(dst_ind, ": ");
 	const char * src = msg;
-	while (*src != '\0') {
+	while (*src != '\0' && dst_ind < rec_len) {
 		int8_t arg_index = get_arg_index(src);
 		if (arg_index < 0 || arg_index >= args.size()) {
 			// usual char or non-existing argument
 			slot.set(dst_ind++, *src++);
 		} else {
 			// start of message argument
-			dst_ind = slot.set(dst_ind, args.begin()[arg_index]);
+			dst_ind = slot.try_set(dst_ind, args.begin()[arg_index]);
 			src += 3;
 		}
 	}
@@ -115,9 +135,9 @@ void rec::log(const char * msg, std::initializer_list<const char *> args) {
 
 void rec::log(const char * msg) {
 	rtc::Timestamp timestamp = rtc::now();
-	// message format: "<timestamp>: <msg>"
-	uint16_t msg_len = len_of(timestamp) + 2U + strlen(msg);
-	LogBuffer::Slot slot = buffer.start_write(msg_len + 1);
+	// record format: "<timestamp>: <msg>"
+	uint16_t rec_len = len_of(timestamp) + 2U + strlen(msg);
+	LogBuffer::Slot slot = buffer.start_write(rec_len + 1);
 	if (slot.is_empty()) {
 		return;
 	}
@@ -192,8 +212,9 @@ static uint16_t set(rtc::RunTime & timestamp, uint16_t index, rec::LogBuffer::Sl
 		index = set(timestamp.minutes, index, slot);
 		index = slot.set(index, "m ");
 	}
-	set(timestamp.seconds, index, slot);
+	index = set(timestamp.seconds, index, slot);
 	slot.set(index++, 's');
+	slot.set(index, '\0');
 	return index;
 }
 
@@ -204,6 +225,7 @@ static uint16_t set(rtc::DateTime & timestamp, uint16_t index, rec::LogBuffer::S
 	index = set(timestamp.time, index, slot);
 	slot.set(index++, ' ');
 	index = set(timestamp.date, index, slot);
+	slot.set(index, '\0');
 	return index;
 }
 
@@ -240,7 +262,7 @@ static uint16_t set(uint16_t val, uint16_t index, rec::LogBuffer::Slot & slot) {
 		*dig++ = val % 10U | 0x30U;
 		val /= 10U;
 	} while (val > 0);
-	uint16_t end = index + (buf - dig);
+	uint16_t end = index + (dig - buf);
 	// buf[] contains digits in rev. order, put them to slot starting from tail
 	uint16_t head = index;
 	do {

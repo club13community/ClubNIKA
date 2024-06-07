@@ -8,4 +8,5 @@
 namespace rec {
 	void init_card_recorder();
 	void write_to_card(const char * message, uint16_t len);
+	void flush_to_card();
 }
