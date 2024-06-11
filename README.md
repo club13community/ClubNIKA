@@ -34,7 +34,6 @@ Firmware requires:
 - no command echo - send 'ATE0&W'
 - enable network time request - send 'AT+CLTS=1'
 - SMS functions in "Text mode" - send 'AT+CMGF=1'
-- enabled DTMF - send 'AT+DDET=1,0,0'
 - used IRA charset - send 'AT+CSCS="IRA"'
 - short present. of incoming SMS - send 'AT+CNMI=2,1,0,0,0'
 - report call state changes - send 'AT+CLCC=1'

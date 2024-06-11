@@ -11,34 +11,29 @@
 
 using namespace sim900;
 
-static void (* volatile call_callback)(Result);
-
-static void call_done(Result res) {
-	end_command();
-	call_callback(res);
-}
+static void (* volatile result_handler)(Result); // keeps callback, which requires only Result
 
 static bool call_listener(rx_buffer_t & rx) {
 	if (!is_sent()) {
 		return false;
 	}
 	if (rx.is_message_corrupted()) {
-		call_done(Result::CORRUPTED_RESPONSE);
+		end_with<result_handler>(Result::CORRUPTED_RESPONSE);
 		return true;
 	} else if (rx.equals("OK")) {
-		call_done(Result::OK);
+		end_with<result_handler>(Result::OK);
 		return true;
 	} else if (rx.equals("ERROR") || rx.equals("NO DIALTONE")
 			// haven't seen this, but may be according to spec.
 			|| rx.equals("NO CARRIER") || rx.equals("BUSY") || rx.equals("NO ANSWER") || rx.starts_with("+CME ERROR:")) {
-		call_done(Result::ERROR);
+		end_with<result_handler>(Result::ERROR);
 		return true;
 	}
 	return false; // not a message for this handler
 }
 
 void sim900::call(const char * phone, void (* callback)(Result result)) {
-	call_callback = callback;
+	result_handler = callback;
 
 	// prepare command
 	char * tail = copy("ATD", tx_buffer);
@@ -48,35 +43,39 @@ void sim900::call(const char * phone, void (* callback)(Result result)) {
 	uint16_t len = tail - tx_buffer;
 
 	begin_command(call_listener);
-	send_with_timeout(tx_buffer, len, RESP_TIMEOUT_ms, end_on_timeout<call_done>);
-}
-
-static void (* volatile accept_callback)(Result);
-
-static void accept_done(Result res) {
-	end_command();
-	accept_callback(res);
+	send_with_timeout(tx_buffer, len, RESP_TIMEOUT_ms, end_on_timeout<end_with<result_handler>>);
 }
 
 void sim900::accept_call(void (* callback)(Result result)) {
 	constexpr const char * cmd = "ATA\r";
 
-	accept_callback = callback;
-	start_execute<accept_done>(cmd, length(cmd), RESP_TIMEOUT_ms);
-}
-
-static void (* volatile end_callback)(Result);
-
-static void end_done(Result res) {
-	end_command();
-	end_callback(res);
+	result_handler = callback;
+	start_execute<end_with<result_handler>>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }
 
 void sim900::end_call(void (* callback)(Result result)) {
 	constexpr const char * cmd = "ATH\r";
 
-	end_callback = callback;
-	start_execute<end_done>(cmd, length(cmd), RESP_TIMEOUT_ms);
+	result_handler = callback;
+	start_execute<end_with<result_handler>>(cmd, length(cmd), RESP_TIMEOUT_ms);
+}
+
+void sim900::enable_dtmf(uint16_t debounce_ms, void (* callback)(Result result)) {
+	result_handler = callback;
+	// prepare command
+	char * tail = copy("AT+DDET=1,", tx_buffer); // command + enable arg.
+	tail = to_string(debounce_ms, tail); // debounce arg.
+	tail = copy(",0\r", tail); // "report only key" arg.
+	uint16_t len = tail - tx_buffer;
+
+	start_execute<end_with<result_handler>>(tx_buffer, len, RESP_TIMEOUT_ms);
+}
+
+void sim900::disable_dtmf(void (* callback)(Result result)) {
+	constexpr const char * cmd = "AT+DDET=0\r";
+
+	result_handler = callback;
+	start_execute<end_with<result_handler>>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }
 
 /** @param number should have at least MAX_PHONE_LENGTH + 6 items. */
@@ -112,12 +111,6 @@ static void parse_call_info(rx_buffer_t & rx, volatile uint8_t & index, volatile
 }
 
 static void (* volatile call_info_data_callback)(uint8_t, CallState, CallDirection, char *);
-static void (* volatile call_info_result_callback)(Result);
-
-static void call_info_done(Result res) {
-	end_command();
-	call_info_result_callback(res);
-}
 
 static void parse_call_info(rx_buffer_t & rx) {
 	uint8_t index;
@@ -132,9 +125,9 @@ void sim900::get_call_info(void (* data_callback)(uint8_t index, CallState state
 	constexpr const char * cmd = "AT+CLCC\r";
 	static const char * CLCC = "+CLCC:";
 	call_info_data_callback = data_callback;
-	call_info_result_callback = result_callback;
+	result_handler = result_callback;
 
-	start_get_info<CLCC, parse_call_info, call_info_done>(cmd, length(cmd), RESP_TIMEOUT_ms);
+	start_get_info<CLCC, parse_call_info, end_with<result_handler>>(cmd, length(cmd), RESP_TIMEOUT_ms);
 }
 
 void sim900::wait_call_state(
@@ -228,14 +221,14 @@ void sim900::wait_call_end(uint32_t deadline_ms, void (* callback)(bool ended, C
 		}
 	};
 
-	static constexpr auto timeout = []() {
+	static constexpr auto on_timeout = []() {
 		end_command();
 		end_wait(false, CallEnd::NORMAL);
 	};
 
 	end_wait = callback;
 	begin_command(listener);
-	start_response_timeout(deadline_ms, timeout);
+	start_response_timeout(deadline_ms, on_timeout);
 }
 
 bool sim900::call_end_listener(rx_buffer_t & rx) {

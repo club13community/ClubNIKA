@@ -47,6 +47,24 @@ inline void copy(const char * src, unsigned int start, unsigned int end, char * 
 	*dst = '\0';
 }
 
+/** Does not set tailing '\0'.
+ * @return pointer to dst where '\0' could be set. */
+inline char * to_string(uint16_t num, char * dst) {
+	char * dig = dst;
+	do {
+		*dig++ = num % 10U | 0x30U;
+		num /= 10U;
+	} while (num > 0);
+	char * end = dig--;
+	// reverse string
+	while (dig > dst) {
+		char c = *dst;
+		*dst++ = *dig;
+		*dig-- = c;
+	}
+	return end;
+}
+
 /** @returns length of '\0' terminated string(designed for literal) */
 constexpr uint16_t length(const char * str) {
 	const char * end = str;

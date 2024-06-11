@@ -78,6 +78,10 @@ namespace sim900 {
 	/** If no ongoing call - do not invoke handler(if there was ongoing call,
 	 * but ended before ending - appropriate callback is invoked) */
 	void end_call(void (* callback)(Result result));
+	/** Enables keyboard input detection during a call.
+	 * @param debounce_ms min. time between pressing the same button, should be in range [0, 10'000] */
+	void enable_dtmf(uint16_t debounce_ms, void (* callback)(Result result));
+	void disable_dtmf(void (* callback)(Result result));
 	/** Waits while call reaches desired state.
 	 * @param predicate defines desired state. */
 	void wait_call_state(

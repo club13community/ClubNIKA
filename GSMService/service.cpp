@@ -68,16 +68,26 @@ void gsm::init_service_tasks() {
 void gsm::turn_on() {
 	using namespace sim900;
 
+	static constexpr auto dtmf_enabled = [](Result res) {
+		if (res == Result::ERROR) {
+			// should never happen, even if happened - module is functional
+			rec::log("Failed to enable DTMF");
+		} else if (res != Result::OK) {
+			schedule_reboot();
+		}
+		executed(AsyncTask::TURN_ON);
+	};
+
 	static constexpr auto turned_on = [](bool ok) {
 		if (ok) {
 			powered = true;
 			schedule_module_state_update();
+			sim900::enable_dtmf(0, dtmf_enabled);
 		} else {
 			rec::log("Failed to turn SIM900 on");
 			schedule_reboot();
+			executed(AsyncTask::TURN_ON);
 		}
-
-		executed(AsyncTask::TURN_ON);
 	};
 
 	sim900::turn_on(turned_on);

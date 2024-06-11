@@ -86,4 +86,12 @@ namespace sim900 {
 		begin_command(execute_listener<end>);
 		send_with_timeout(cmd, len, deadline_ms, end_on_timeout<end>);
 	}
+
+	/** Template to end a command, which simply passes a result to callback.
+	 * @tparam end reference to variable which keeps pointer to callback. */
+	template<void (* volatile & end)(Result)>
+	void end_with(Result res) {
+		end_command();
+		end(res);
+	}
 }
