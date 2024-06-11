@@ -5,6 +5,7 @@
 #pragma once
 
 namespace alarm {
+	void start();
 	// todo create wrapper which also notifies UI
 	void arm();
 	void disarm();

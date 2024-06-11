@@ -26,12 +26,9 @@ void gsm::end_call() {
 	using namespace sim900;
 
 	static constexpr auto end_done = [](Result res) {
-		if (res == Result::OK || res == Result::ERROR) {
-			// result is OK event if there is no ongoing call
-			actual_call_phase = CallPhase::ENDED;
-			handled_call_phase = CallPhase::ENDED;
-			// don't issue event - there should be no callback
-		} else {
+		// result is OK event if there is no ongoing call
+		change_call_phase(CallPhase::ENDED);
+		if (res != Result::OK && res != Result::ERROR) {
 			schedule_reboot();
 		}
 		future_result({.call_ended = true});
@@ -44,6 +41,7 @@ void gsm::end_call() {
 }
 
 bool gsm::accept_call() {
+	// todo wait dialed/ended - maybe sim900 may end just accepted call without RING
 	using namespace sim900;
 
 	static constexpr auto end_done = [](Result res) {

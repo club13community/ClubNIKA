@@ -25,27 +25,19 @@ static StaticTask_t task_ctrl;
 static void record_logs(void * args) {
 	rec::init_card_recorder();
 	while (true) {
-		// todo what if reopen already opened file
 		constexpr uint32_t wait_bulk_ms = WAIT_BULK_TIMEOUT_min * 60U * 1000U;
-		if (!buffer.wait_bulk_ready(wait_bulk_ms)) {
-			continue; // nothing to write
-		}
-		uint16_t data_size = 0;
-		while (true) {
-			auto slot = buffer.try_read();
-			if (slot.is_empty()) {
-				break;
-			}
+		buffer.wait_bulk_ready(wait_bulk_ms);
+
+		auto slot = buffer.try_read();
+		while (!slot.is_empty()) {
 			uint16_t len = slot.copy_to(message);
+			buffer.end_read();
+
 			message[len++] = '\n';
 			message[len] = '\0';
-			uint16_t new_data_size = data_size + len;
-			if (new_data_size > BULK_SIZE) {
-				break;
-			}
-			data_size = new_data_size;
-			buffer.end_read();
 			rec::write_to_card(message, len);
+
+			slot = buffer.try_read();
 		}
 		rec::flush_to_card();
 	}

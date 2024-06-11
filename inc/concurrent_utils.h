@@ -22,6 +22,14 @@ inline void atomic_clear(volatile uint8_t * val_ptr, uint8_t clr_msk) {
 	} while (__STREXB(val, const_cast<uint8_t *>(val_ptr)));
 }
 
+inline uint8_t atomic_get_and_clear(volatile uint8_t * val_ptr, uint8_t clr_msk) {
+	uint16_t val;
+	do {
+		val = __LDREXB(const_cast<uint8_t *>(val_ptr));
+	} while (__STREXB(val & clr_msk, const_cast<uint8_t *>(val_ptr)));
+	return val;
+}
+
 inline void atomic_set(volatile uint16_t * val_ptr, uint16_t set_msk) {
 	uint16_t val;
 	do {

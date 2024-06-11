@@ -25,6 +25,11 @@ enum class ZoneActivation : uint8_t {
 	ON_CLOSE
 };
 
+struct ZoneActivationFlags {
+	uint8_t on_open;
+	uint8_t on_close;
+};
+
 inline ZoneActivation next_value(ZoneActivation value) {
 	uint8_t next = (uint8_t)value + 1;
 	return next <= (uint8_t)ZoneActivation::ON_CLOSE ? (ZoneActivation)next : ZoneActivation::NEVER;
@@ -37,6 +42,8 @@ enum class PasswordUpdate : uint8_t  {
 	/** Error during saving new passw. */
 	FAILED_TO_PERSIST
 };
+
+void init_settings();
 
 /** Loads persisted settings.
  * @returns true if successfully */
@@ -51,16 +58,16 @@ bool is_correct_password(const char * pwd);
 PasswordUpdate update_password(const char * curr_pwd, const char * new_pwd);
 
 uint8_t get_phones_count();
-const char * get_phone(uint8_t index);
-const char (* get_phones())[MAX_PHONE_LENGTH + 1];
+bool get_phone(uint8_t index, char * number);
 /** @returns false if failed to store */
 bool set_phone(uint8_t index, const char * phone_number);
 bool add_phone(const char * phone_number);
 bool delete_phone(uint8_t index);
 bool shift_phone(uint8_t old_index, uint8_t new_index);
+bool is_known_phone(const char * number);
 
-/** @returns pointer to array with 8 items */
-const ZoneActivation * get_zone_activations();
+ZoneActivationFlags get_zone_activations_for_isr();
+ZoneActivation get_zone_activation(uint8_t index);
 /** @returns false if failed to save */
 bool set_zone_activation(uint8_t index, ZoneActivation activation);
 

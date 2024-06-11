@@ -10,7 +10,6 @@
 namespace user_interface {
 	class PhoneConfigurer : public Controller {
 	private:
-		const char (*phones)[MAX_PHONE_LENGTH + 1];
 		uint8_t phones_num;
 		uint8_t phone_ind;
 
@@ -20,8 +19,10 @@ namespace user_interface {
 		/** Expects cursor on the 2nd row.*/
 		inline void print_phone() {
 			if (phone_ind < phones_num) {
-				disp[0] << phone_ind + 1 << ") " << phones[phone_ind];
-				uint8_t blank_len = 16 - 3 - strlen(phones[phone_ind]);
+				char number[MAX_PHONE_LENGTH + 1];
+				get_phone(phone_ind, number);
+				disp[0] << phone_ind + 1 << ") " << number;
+				uint8_t blank_len = 16 - 3 - strlen(number);
 				while (blank_len-- > 0) {
 					disp << ' ';
 				}
@@ -47,13 +48,12 @@ namespace user_interface {
 
 	class PhoneEditor : public Controller {
 	private:
-		const char * phone;
 		uint8_t index;
 	protected:
 		void activate(bool init) override ;
 		void handle(keyboard::Button button, keyboard::Event event) override;
 	public:
-		void prepare_to_edit(const char * phone, uint8_t index);
+		void prepare_to_edit(uint8_t index);
 		void number_changed(char * new_number);
 		void priority_changed(uint8_t new_priority);
 	};
@@ -73,7 +73,7 @@ namespace user_interface {
 		void handle(keyboard::Button button, keyboard::Event event) override;
 	public:
 		void prepare_to_add();
-		void prepare_to_edit(const char * number);
+		void prepare_to_edit(uint8_t index);
 
 	};
 
@@ -98,7 +98,6 @@ using namespace user_interface;
 
 void PhoneConfigurer::activate(bool init) {
 	if (init) {
-		phones = get_phones();
 		phones_num = get_phones_count();
 		phone_ind = 0;
 	}
@@ -161,7 +160,7 @@ void PhoneConfigurer::handle(keyboard::Button button, keyboard::Event event) {
 			number_editor.prepare_to_add();
 			invoke(&number_editor);
 		} else {
-			phone_editor.prepare_to_edit(phones[phone_ind], phone_ind);
+			phone_editor.prepare_to_edit(phone_ind);
 			invoke(&phone_editor);
 		}
 	} else if (button == Button::D && event == Event::CLICK) {
@@ -219,7 +218,7 @@ void PhoneEditor::handle(keyboard::Button button, keyboard::Event event) {
 		yield();
 	} else if (button == Button::B && event == Event::CLICK) {
 		// change number
-		number_editor.prepare_to_edit(phone);
+		number_editor.prepare_to_edit(index);
 		invoke(&number_editor);
 	} else if (button == Button::C && event == Event::CLICK) {
 		// change priority
@@ -230,8 +229,7 @@ void PhoneEditor::handle(keyboard::Button button, keyboard::Event event) {
 	}
 }
 
-void PhoneEditor::prepare_to_edit(const char * phone, uint8_t index) {
-	this->phone = phone;
+void PhoneEditor::prepare_to_edit(uint8_t index) {
 	this->index = index;
 }
 
@@ -251,9 +249,9 @@ void NumberEditor::prepare_to_add() {
 	edit = false;
 }
 
-void NumberEditor::prepare_to_edit(const char * number) {
-	strcpy(phone_buf, number);
-	phone_len = strlen(number);
+void NumberEditor::prepare_to_edit(uint8_t index) {
+	get_phone(index, phone_buf);
+	phone_len = strlen(phone_buf);
 	edit = true;
 }
 

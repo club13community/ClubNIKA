@@ -39,6 +39,7 @@
 #include "drives.h"
 #include "settings.h"
 #include "periph_allocation.h"
+#include "alarm.h"
 #include <string.h>
 
 static TaskHandle_t test_task;
@@ -77,10 +78,10 @@ static void play_via_speaker() {
 
 static void do_test_task(void * args) {
 	static volatile uint8_t c = 0;
-
-	gsm::set_on_incoming_call([](char * num) {
+	/*gsm::set_on_incoming_call([](char * num) {
 		gsm::get_ctrl().accept_call();
-	});
+	});*/
+	while (!sd::is_card_present());
 
 	while(true) {
 		/*while (!sd::is_card_present());
@@ -118,6 +119,7 @@ extern "C" int main(void)
 
 	ClockControl_Launch(getMessageBuffer_ClockControlDataIn(), getMessageBuffer_ClockControlDataOut());
 	SupplySystem_Launch(getMessageBuffer_SupplySystemDataIn(), getMessageBuffer_SupplySystemDataOut());
+	init_settings();
 	rtc::start();
 	vmeter::start();
 	user_interface::start();
@@ -126,6 +128,7 @@ extern "C" int main(void)
 	rec::start();
 	gsm::start();
 	player::start();
+	alarm::start();
 
 	//wireless
 	//File system

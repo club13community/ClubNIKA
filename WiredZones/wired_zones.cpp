@@ -36,14 +36,13 @@ void wired_zones::init_periph() {
 	}
 }
 
-static const ZoneActivation * activations;
-static volatile uint8_t measured_zone;
+static volatile uint8_t zone_index;
+static volatile ZoneActivation zone_activation;
 static volatile uint8_t active_zones;
 
 void wired_zones::start() {
-	measured_zone = 0;
+	zone_index = 0;
 	active_zones = 0;
-	activations = get_zone_activations();
 	service = xTaskCreateStatic(main_task, "wire sense.", STACK_SIZE, nullptr,
 								TASK_NORMAL_PRIORITY, service_stack, &service_ctrl);
 }
@@ -58,43 +57,54 @@ static inline uint16_t to_mA(uint16_t value_mV) {
 
 void wired_zones::process_measurement(uint16_t value) {
 	uint16_t current = to_mA(value);
-	uint8_t index = measured_zone;
+	uint8_t index = zone_index;
+	ZoneActivation activation = zone_activation;
+	uint8_t mask = 1U << index;
 	uint8_t active_now = active_zones;
-	uint8_t zone_mask = 1U << index;
-	ZoneActivation activation = activations[index];
 	if (activation == ZoneActivation::ON_OPEN) {
 		// activates by low current
-		uint16_t active_threshold = active_now & zone_mask ? HIGHER_THRESHOLD : LOWER_THRESHOLD;
+		uint16_t active_threshold = active_now & mask ? HIGHER_THRESHOLD : LOWER_THRESHOLD;
 		if (current < active_threshold) {
-			active_zones = active_now | zone_mask;
+			active_zones = active_now | mask;
 		} else {
-			active_zones = active_now & ~zone_mask;
+			active_zones = active_now & ~mask;
 		}
 	} if (activation == ZoneActivation::ON_CLOSE) {
 		// activates by big current
-		uint16_t active_threshold = active_now & zone_mask ? LOWER_THRESHOLD : HIGHER_THRESHOLD;
+		uint16_t active_threshold = active_now & mask ? LOWER_THRESHOLD : HIGHER_THRESHOLD;
 		if (current > active_threshold) {
-			active_zones = active_now | zone_mask;
+			active_zones = active_now | mask;
 		} else {
-			active_zones = active_now & ~zone_mask;
+			active_zones = active_now & ~mask;
 		}
 	}
+	zone_index = index + 1U & INDEX_MASK; // check that enabled is done when selecting measurement
 }
 
 wired_zones::Measurement wired_zones::select_measurement() {
-	uint8_t zone = measured_zone + 1 & INDEX_MASK;
-	bool skip = true;
-	for (uint8_t i = 0; i < 8; i++, zone = zone + 1 & INDEX_MASK) {
-		if (activations[zone] != ZoneActivation::NEVER) {
-			skip = false;
+	ZoneActivationFlags activations = get_zone_activations_for_isr();
+	uint8_t enabled = activations.on_close | activations.on_open;
+	active_zones &= enabled; // to 'deactivate' zones which were disabled between measurements
+
+	uint8_t index = zone_index;
+	ZoneActivation activation = ZoneActivation::NEVER;
+	for (uint8_t i = 0; i < 8; i++, index = index + 1 & INDEX_MASK) {
+		uint8_t mask = 1U << index;
+		if (activations.on_open & mask) {
+			activation = ZoneActivation::ON_OPEN;
+			break;
+		} else if (activations.on_close & mask) {
+			activation = ZoneActivation::ON_CLOSE;
 			break;
 		}
 	}
-	if (skip) {
+	if (activation == ZoneActivation::NEVER) {
+		// all zones disabled - skip measurement
 		return Measurement::NONE;
 	} else {
-		measured_zone = zone;
-		select_channel(zone);
+		zone_index = index;
+		zone_activation = activation;
+		select_channel(index);
 		return POLARITY;
 	}
 }

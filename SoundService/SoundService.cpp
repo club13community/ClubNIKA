@@ -49,7 +49,7 @@ void player::start() {
 	task = xTaskCreateStatic(service_task, "sound", STACK_SIZE, (void *)0, PLAYER_TASK_PRIORITY, stack, &task_ctrl);
 
 	static StaticSemaphore_t mutex_ctrl;
-	mutex = xSemaphoreCreateBinaryStatic(&mutex_ctrl);
+	mutex = xSemaphoreCreateRecursiveMutexStatic(&mutex_ctrl);
 	give_mutex();
 }
 
@@ -266,7 +266,6 @@ static void service_task() {
 			bits |= flag_of(Request::HANDLE_END);
 		}
 	}
-	give_mutex();
 
 	if (bits & flag_of(Request::HANDLE_END)) {
 		void (* finished)() = on_finished;
@@ -275,6 +274,7 @@ static void service_task() {
 			finished();
 		}
 	}
+	give_mutex();
 }
 
 static bool load_samples(uint8_t buff_ind) {

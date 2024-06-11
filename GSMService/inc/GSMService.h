@@ -46,9 +46,9 @@ namespace gsm {
 	void set_on_incoming_call(void (* callback)(char * phone));
 	/** Order of callbacks for both incoming and outgoing: "on call dialed" -> "on call ended". */
 	void set_on_call_dialed(void (* callback)(Direction direction));
-	/** @param callback is invoked between "on call dialed" and "on call dialed" */
+	/** @param callback is invoked between "on call dialed" and "on call ended" */
 	void set_on_key_pressed(void (* callback)(char key));
 	/** Order of callbacks for both incoming and outgoing: "on call dialed" -> "on call ended".
-	 * If call is ended by method end_call() - this callback is not invoked. */
+	 * If call was not dialed - this callback is not invoked. */
 	void set_on_call_ended(void (* callback)());
 }

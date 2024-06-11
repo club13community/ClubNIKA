@@ -12,13 +12,18 @@ namespace user_interface {
 	class ZoneConfigurer : public Controller {
 	private:
 		uint8_t zone;
+		ZoneActivation activation;
 		const uint8_t first_zone = 0, last_zone = ZONES_COUNT - 1;
 		const uint8_t up_pos = 0, down_pos = 4;
-		const ZoneActivation * activation;
+
+		inline void set_zone(uint8_t index) {
+			zone = index;
+			activation = get_zone_activation(index);
+		}
 
 		/** Expects, that cursor is on the 2nd row. 'Overflows' row, so cursor is on the 1st line after return */
 		inline void show_activation() {
-			switch (activation[zone]) {
+			switch (activation) {
 				case ZoneActivation::NEVER:
 					disp[3] << "HE AKT" << U << "BHA   ";
 					break;
@@ -49,8 +54,7 @@ using namespace user_interface;
 
 void ZoneConfigurer::activate(bool init) {
 	if (init) {
-		activation = get_zone_activations();
-		zone = 0;
+		set_zone(0);
 	}
 	disp.clear()
 			.define(up, symbol::up)
@@ -81,7 +85,8 @@ void ZoneConfigurer::handle(keyboard::Button button, keyboard::Event event) {
 		if (zone == first_zone) {
 			return;
 		}
-		uint8_t prev_zone = zone--;
+		uint8_t prev_zone = zone;
+		set_zone(zone - 1);
 		show_zone();
 		if (zone == first_zone) {
 			// hide 'up'
@@ -96,7 +101,8 @@ void ZoneConfigurer::handle(keyboard::Button button, keyboard::Event event) {
 		if (zone == last_zone) {
 			return;
 		}
-		uint8_t prev_zone = zone++;
+		uint8_t prev_zone = zone;
+		set_zone(zone + 1);
 		show_zone();
 		if (zone == last_zone) {
 			// hide 'down'
@@ -108,9 +114,12 @@ void ZoneConfigurer::handle(keyboard::Button button, keyboard::Event event) {
 		disp.set_cursor(1, 0);
 	} else if (button == Button::C && event == Event::CLICK) {
 		// change activation
-		set_zone_activation(zone, next_value(activation[zone]));
-		show_activation();
-		disp.set_cursor(1, 0);
+		ZoneActivation new_activation = next_value(activation);
+		if (set_zone_activation(zone, new_activation)) {
+			activation = new_activation;
+			show_activation();
+			disp.set_cursor(1, 0);
+		}
 	} else if (button == Button::D && event == Event::CLICK) {
 		// exit
 		yield();

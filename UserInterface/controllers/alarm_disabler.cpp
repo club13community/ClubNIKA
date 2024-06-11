@@ -96,8 +96,7 @@ void AlarmDisabler::handle(keyboard::Button button, keyboard::Event event) {
 			return;
 		}
 		if (is_correct_password(passw)) {
-			alarm::disarm();
-			user_interface::alarm_disarmed(); // this will change controller
+			alarm::disarm(); // this will change controller
 		} else {
 			invoke(&notifier);
 		}

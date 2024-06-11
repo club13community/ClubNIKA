@@ -50,8 +50,7 @@ void AlarmEnabler::handle(keyboard::Button button, keyboard::Event event) {
 void AlarmEnabler::delay_elapsed() {
 	delay -= 1;
 	if (delay == 0) {
-		alarm::arm();
-		user_interface::alarm_armed(); // this will change controller
+		alarm::arm(); // this will change controller
 	} else {
 		disp.set_cursor(0, timer_pos).clear(4).print((int)delay).print('c');
 		start_delay(1000);

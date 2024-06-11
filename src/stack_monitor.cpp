@@ -6,7 +6,7 @@
 #include "task.h"
 #include "logging.h"
 
-#define MONITORING_PERIOD_s		10U
+#define MONITORING_PERIOD_s		60U
 #define MAX_TASK_NUM			30U
 #define STACK_SIZE				256U
 
