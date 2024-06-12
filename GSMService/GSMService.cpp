@@ -46,8 +46,12 @@ gsm::Controls & gsm::get_ctrl() {
 	return Controls::inst;
 }
 
-void sim900::on_timestamp(rtc::DateTime & timestamp) {
-	rtc::set(timestamp);
+void sim900::on_timestamp(rtc::DateTime & timestamp, uint8_t dst_shift) {
+	rtc::set(timestamp, dst_shift);
+}
+
+void sim900::on_dst_update(uint8_t dst_shift) {
+	rtc::change_dst(dst_shift);
 }
 
 gsm::Controls gsm::Controls::inst;

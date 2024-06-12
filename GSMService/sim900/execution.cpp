@@ -152,7 +152,7 @@ static inline void service_response() {
 		}
 		handled = handled || call_state_listener(rx_buffer) || call_end_listener(rx_buffer)
 				|| pressed_key_listener(rx_buffer) || incoming_sms_listener(rx_buffer)
-				|| timestamp_listener(rx_buffer) || ignoring_listener(rx_buffer);
+				|| timestamp_listener(rx_buffer) || dst_listener(rx_buffer) || ignoring_listener(rx_buffer);
 		if (!handled) {
 			if (rx_buffer.is_message_ok()) {
 				char message_part[11];

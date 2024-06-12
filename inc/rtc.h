@@ -14,17 +14,30 @@ namespace rtc {
 		uint8_t second;
 	};
 
+	/** @return true if started new day. */
+	bool add_second(Time & time);
+	/**@param hours should be in range [-23, 23].
+	 * @returns -1 if underflow to prev. day; +1 if overflow to next day. */
+	int8_t add_hours(int8_t hours, Time & time);
+
 	struct Date {
 		uint16_t year;
 		Month month;
 		uint8_t day;
 	};
 
+	uint8_t days_in_month(Month month, uint16_t year);
+	void add_days(int8_t days, Date & date);
+
 	/** Timestamp which holds local time and date. */
 	struct DateTime {
 		Date date;
 		Time time;
 	};
+
+	void add_second(DateTime & timestamp);
+	/** @param hours should be in range [-23, 23]. */
+	void add_hours(int8_t hours, DateTime & timestamp);
 
 	/** Timestamp which holds amount of time since system started. */
 	struct RunTime {
@@ -45,6 +58,7 @@ namespace rtc {
 	public:
 		Timestamp(RunTime time) : value({.run_time = time}), runtime(true) {}
 		Timestamp(DateTime time) : value({.date_time = time}), runtime(false) {}
+		Timestamp() {}
 
 		inline bool is_runtime() {
 			return runtime;
@@ -61,8 +75,11 @@ namespace rtc {
 
 	void start();
 	/** System does not have real RTC IC. Use this to init/update date and time entered by user
-	 * or retrieved from other source. */
-	void set(DateTime & timestamp);
+	 * or retrieved from other source.
+	 * @param timestamp local time(daylight shift is already applied).
+	 * @param dst_shift "Daylight saving time" shift in hours. */
+	void set(DateTime & timestamp, uint8_t dst_shift);
+	void change_dst(uint8_t dst_shift);
 	/** @returns DateTime if it was set otherwise RunTime. */
 	Timestamp now();
 }

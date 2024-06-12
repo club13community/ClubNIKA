@@ -13,6 +13,9 @@ namespace sim900 {
 	void on_call_end(CallEnd end);
 	/** Invoked when interlocutor presses key during a call. */
 	void on_key_pressed(char key);
-	void on_timestamp(rtc::DateTime & timestamp);
+	/** @param timestamp local time for Ukraine(daylight shift is already applied).
+	 * @param dst_shift "Daylight saving time" shift in hours. */
+	void on_timestamp(rtc::DateTime & timestamp, uint8_t dst_shift);
+	void on_dst_update(uint8_t dst_shift);
 	void on_sms_received(uint16_t id);
 }

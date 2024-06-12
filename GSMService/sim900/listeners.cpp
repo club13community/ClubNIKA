@@ -24,9 +24,6 @@ bool sim900::timestamp_listener(rx_buffer_t & rx) {
 	if (rx.is_message_corrupted()) {
 		return false;
 	}
-	if (rx.starts_with("DST:")) {
-		return true; // related to network time but is not used
-	}
 	if (!rx.starts_with("*PSUTTZ:")) {
 		return false;
 	}
@@ -49,9 +46,27 @@ bool sim900::timestamp_listener(rx_buffer_t & rx) {
 	time.minute = atoi(param);
 	rx.get_param(5, param, 4);
 	time.second = atoi(param);
+	rx.get_param(7, param, 4);
+	uint8_t dst = atoi(param);
 
 	DateTime timestamp = {.date = date, .time = time};
-	on_timestamp(timestamp);
+	add_hours(2U + dst, timestamp); // convert UTC to local Ukrainian
+	on_timestamp(timestamp, dst);
+	return true;
+}
+
+bool sim900::dst_listener(rx_buffer_t & rx) {
+	if (rx.is_message_corrupted()) {
+		return false;
+	}
+	if (!rx.starts_with("DST:")) {
+		return false;
+	}
+	// parse "DST: ..."
+	char param[2];
+	rx.get_param(0, param, 1);
+	uint8_t dst = atoi(param);
+	on_dst_update(dst);
 	return true;
 }
 
@@ -59,5 +74,6 @@ bool sim900::ignoring_listener(rx_buffer_t & rx) {
 	if (rx.is_message_corrupted()) {
 		return false;
 	}
-	return rx.equals("RING") || rx.equals("Call Ready") || rx.starts_with("*PSNWID:") || rx.equals("+CFUN: 1");
+	return rx.equals("RING") || rx.equals("Call Ready") || rx.starts_with("*PSNWID:")
+		|| rx.starts_with("+CFUN:") || rx.starts_with("+CPIN:");
 }
