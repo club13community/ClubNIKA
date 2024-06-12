@@ -17,6 +17,7 @@
 static FIL wav;
 /** If true - reached end and closed wav-file. */
 static volatile bool end_of_wav = true;
+static volatile bool playing_for_gsm = false;
 /** For debug. */
 static volatile FRESULT last_error;
 
@@ -110,21 +111,24 @@ static inline void stop_now() {
 	mute_speaker();
 	disconnect_dac_from_sim900();
 	close_wav();
+	playing_for_gsm = false;
 	ulTaskNotifyValueClear(task, 0xFF'FF'FF'FF);
 }
 
 static void provide_samples(uint8_t * & samples, uint16_t & size, BaseType_t & task_woken);
 
-bool player::play_via_speaker(const char * file, void (* finished)()) {
+bool player::play_via_speaker(const char * file) {
 	take_mutex();
-	stop_now();
 	bool started = false;
-	if (load_wav(file)) {
-		on_finished = finished;
-		connect_speaker_to_dac();
-		unmute_speaker();
-		start_conversion(samples_buffer[0], samples_number[0], provide_samples);
-		started = true;
+	if (!playing_for_gsm) {
+		stop_now();
+		if (load_wav(file)) {
+			on_finished = [](){};
+			connect_speaker_to_dac();
+			unmute_speaker();
+			start_conversion(samples_buffer[0], samples_number[0], provide_samples);
+			started = true;
+		}
 	}
 	give_mutex();
 	return started;
@@ -139,6 +143,7 @@ bool player::play_for_gsm(const char * file, void (* finished)()) {
 		connect_dac_to_sim900();
 		start_conversion(samples_buffer[0], samples_number[0], provide_samples);
 		started = true;
+		playing_for_gsm = true;
 	}
 	give_mutex();
 	return started;
@@ -217,9 +222,6 @@ static void provide_samples(uint8_t * & samples, uint16_t & size, BaseType_t & t
 	} else {
 		// end of file or next data is still not loaded
 		if (end_of_wav) {
-			stop_conversion();
-			mute_speaker();
-			disconnect_dac_from_sim900();
 			request_from_isr(Request::HANDLE_END, task_woken);
 		} else {
 			request_from_isr(Request::LOAD_AND_RESUME, task_woken);
@@ -260,14 +262,15 @@ static void service_task() {
 			set_samples(samples_buffer[next_buf], samples_number[next_buf]);
 		} else {
 			// already reached the end
-			stop_conversion();
-			mute_speaker();
-			disconnect_dac_from_sim900();
 			bits |= flag_of(Request::HANDLE_END);
 		}
 	}
 
 	if (bits & flag_of(Request::HANDLE_END)) {
+		stop_conversion();
+		mute_speaker();
+		disconnect_dac_from_sim900();
+		playing_for_gsm = false;
 		void (* finished)() = on_finished;
 		if (finished != nullptr) {
 			on_finished = nullptr;

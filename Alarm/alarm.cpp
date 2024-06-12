@@ -313,28 +313,12 @@ static void choice_timeout_elapsed(TimerHandle_t timer) {
 	gsm::get_ctrl().end_call();
 }
 
-static FRESULT copy_wav_to_flash(const char * dst_path, FIL * src, FIL * dst);
-
 FRESULT alarm::copy_wav_to_flash(FIL * src, FIL * dst) {
 	FRESULT last_res;
-	void((last_res = copy_wav_to_flash(ARMED_NOTICE_WAV, src, dst)) == FR_OK
-		 && (last_res = copy_wav_to_flash(DISARMED_NOTICE_WAV, src, dst)) == FR_OK
-		 && (last_res = copy_wav_to_flash(ALERT_NOTICE_WAV, src, dst)) == FR_OK
-		 && (last_res = copy_wav_to_flash(CONFIRM_ARMED_WAV, src, dst)) == FR_OK
-		 && (last_res = copy_wav_to_flash(CONFIRM_DISARMED_WAV, src, dst)) == FR_OK);
-	return last_res;
-}
-
-static FRESULT copy_wav_to_flash(const char * dst_path, FIL * src, FIL * dst) {
-	char src_path[FF_LFN_BUF] = "/sd/";
-	copy_filename(dst_path, src_path + 4U);
-
-	uint8_t buf[128];
-	FRESULT last_res;
-	void((last_res = f_open(src, src_path, FA_READ)) == FR_OK
-		 && (last_res = f_open(dst, dst_path, FA_WRITE | FA_OPEN_ALWAYS)) == FR_OK
-		 && (last_res = copy_file(src, dst, buf, 128U))
-		 && (last_res = f_close(src)) == FR_OK
-		 && (last_res = f_close(dst)) == FR_OK);
+	void((last_res = copy_from_sd_to_flash(ARMED_NOTICE_WAV, src, dst)) == FR_OK
+		 && (last_res = copy_from_sd_to_flash(DISARMED_NOTICE_WAV, src, dst)) == FR_OK
+		 && (last_res = copy_from_sd_to_flash(ALERT_NOTICE_WAV, src, dst)) == FR_OK
+		 && (last_res = copy_from_sd_to_flash(CONFIRM_ARMED_WAV, src, dst)) == FR_OK
+		 && (last_res = copy_from_sd_to_flash(CONFIRM_DISARMED_WAV, src, dst)) == FR_OK);
 	return last_res;
 }

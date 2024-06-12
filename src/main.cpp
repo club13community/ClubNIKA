@@ -30,6 +30,7 @@
 #include "flash.h"
 #include "UserInterface.h"
 #include "ff.h"
+#include "ff_utils.h"
 #include "ff_flash_driver.h"
 #include "sd_fs.h"
 #include "sd_driver.h"
@@ -45,7 +46,6 @@
 static TaskHandle_t test_task;
 static StaticTask_t test_task_ctrl;
 static StackType_t test_task_stack[1024];
-static FIL tst_file1, tst_file2;
 
 static void do_test_task(void * args) {
 	while (!sd::is_card_present());
@@ -108,9 +108,12 @@ extern "C" int main(void)
 	vTaskStartScheduler();
 }
 
+#define GREETING_WAV "/flash/greeting.wav"
+
 static void start_app(void * args) {
 	f_mount(&flash_fs, "/flash", 1);
 	load_settings();
+	player::play_via_speaker(GREETING_WAV);
 	vTaskSuspend(NULL);
 }
 
@@ -141,4 +144,13 @@ extern "C" void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBu
 	*ppxTimerTaskTCBBuffer = &xTimerTaskTCB;
 	*ppxTimerTaskStackBuffer = uxTimerTaskStack;
 	*pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
+}
+
+static FIL tmp1, tmp2;
+static void init_flash() {
+	// NOTE: takes a lot of time
+	bool settings_res = save_default_settings();
+	FRESULT greeting_res = copy_from_sd_to_flash(GREETING_WAV, &tmp1, &tmp2);
+	FRESULT alarm_res = alarm::copy_wav_to_flash(&tmp1, &tmp2);
+	__NOP();
 }

@@ -37,3 +37,17 @@ FRESULT copy_file(FIL * src, FIL * dst, uint8_t * buf, uint16_t buf_len) {
 		return last_res;
 	}
 }
+
+FRESULT copy_from_sd_to_flash(const char * dst_path, FIL * src, FIL * dst) {
+	char src_path[FF_LFN_BUF] = "/sd/";
+	copy_filename(dst_path, src_path + 4U);
+
+	uint8_t buf[128];
+	FRESULT last_res;
+	void((last_res = f_open(src, src_path, FA_READ)) == FR_OK
+		 && (last_res = f_open(dst, dst_path, FA_WRITE | FA_OPEN_ALWAYS)) == FR_OK
+		 && (last_res = copy_file(src, dst, buf, 128U))
+		 && (last_res = f_close(src)) == FR_OK
+		 && (last_res = f_close(dst)) == FR_OK);
+	return last_res;
+}

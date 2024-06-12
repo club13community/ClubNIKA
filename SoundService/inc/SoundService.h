@@ -14,7 +14,8 @@
 
 namespace player {
 	void start();
-	bool play_via_speaker(const char * file, void (* finished)());
+	/** Will play if currently not playing for GSM. */
+	bool play_via_speaker(const char * file);
 	bool play_for_gsm(const char * file, void (* finished)());
 	void stop_playing();
 }
