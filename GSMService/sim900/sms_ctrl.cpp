@@ -63,7 +63,8 @@ static bool send_listener(rx_buffer_t & rx) {
 		return false;
 	} else if (rx.equals("> ")) {
 		send_state = SendSmsState::SENDING_TEXT;
-		send_with_timeout(send_text_buf, send_text_len, send_transferred, SEND_SMS_TIMEOUT_ms, end_on_timeout<end_send>);
+		send_with_timeout(send_text_buf, send_text_len, send_transferred,
+						  SEND_SMS_TIMEOUT_s * 1000U, end_on_timeout<end_send>);
 		return true;
 	} else if (rx.starts_with("+CMGS:")) {
 		char param[6];

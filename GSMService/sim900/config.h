@@ -16,4 +16,4 @@
 /** Typical timeout for response from SIM900 */
 #define RESP_TIMEOUT_ms 	2000U
 /** Timeout for obtaining ID */
-#define SEND_SMS_TIMEOUT_ms	10'000U
+#define SEND_SMS_TIMEOUT_s	60U

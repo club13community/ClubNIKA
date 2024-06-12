@@ -84,6 +84,13 @@ struct SupplySystemContext{
   * */
 void SupplySystem_12VChannelsOvercurrent_ProtectionReTry_SubIH();
 
+void turn_on_siren() {
+	enable12VAlarm();
+}
+
+void turn_off_siren() {
+	disable12VAlarm();
+}
 
 void SupplySystem_12VChannelsOvercurrent_Detection_SubIH(){
 	switch(supSys_context.overcurrentDetectState & OVERCURRENT_DETECT_STATE){

@@ -45,7 +45,7 @@
 static TaskHandle_t test_task;
 static StaticTask_t test_task_ctrl;
 static StackType_t test_task_stack[1024];
-static FIL tst_file;
+static FIL tst_file1, tst_file2;
 
 static volatile uint8_t dialied = 0, ended = 0;
 

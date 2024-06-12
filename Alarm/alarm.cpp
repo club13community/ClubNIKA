@@ -3,7 +3,6 @@
 //
 #include "alarm.h"
 #include "./config.h"
-#include "./periph.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "timers.h"
@@ -14,13 +13,16 @@
 #include "concurrent_utils.h"
 #include "wired_zones.h"
 #include "UserInterface.h"
+#include "SupplySystem.h"
+#include "ff_utils.h"
+#include "logging.h"
 
 #if TASK_NORMAL_PRIORITY >= configTIMER_TASK_PRIORITY
 #error Timer API is expected to take effect before return
 #endif
 
 namespace alarm {
-	enum class State {DISARMED, ARMED, TRIGGERED};
+	enum class State : uint8_t {DISARMED = 0, ARMED, TRIGGERED, ALERTING};
 	enum class Request : uint8_t {CHANGE_STATE = 1U << 0, ANSWER_CALL = 1U << 1};
 }
 
@@ -36,14 +38,15 @@ static void call_ended();
 static TimerHandle_t choice_timer; // provides timeout for choosing action during a call
 static void choice_timeout_elapsed(TimerHandle_t timer);
 
-static TimerHandle_t zones_check_timer; // checks if any security zone was activated when alarm is armed
+static TimerHandle_t zones_check_timer; // used to poll security zones when alarm is armed
 static void check_zones(TimerHandle_t timer);
+
+static TimerHandle_t alert_timer; // provides timeout for disarming
+static void start_alerting(TimerHandle_t timer);
 
 static void set_callbacks_for(alarm::State target);
 
 void alarm::start() {
-	init_siren_periph();
-
 	constexpr size_t stack_size = 256;
 	static StackType_t stack[stack_size];
 	static StaticTask_t task_ctrl;
@@ -59,6 +62,10 @@ void alarm::start() {
 	zones_check_timer = xTimerCreateStatic("alarm.zones", pdMS_TO_TICKS(ZONES_CHECK_PERIOD_ms), pdTRUE, nullptr,
 										   check_zones, &zones_timer_ctrl);
 
+	static StaticTimer_t alert_timer_ctrl;
+	alert_timer = xTimerCreateStatic("alarm.alert", 1U /* will be set later*/, pdFALSE, nullptr,
+									 start_alerting, &alert_timer_ctrl);
+
 	state = State::DISARMED;
 	gsm::set_on_incoming_call(filter_incoming_call);
 	set_callbacks_for(State::DISARMED);
@@ -70,30 +77,52 @@ static inline void request(alarm::Request req) {
 	xTaskNotify(service_task, 0, eNoAction);
 }
 
+static inline void set_state(alarm::State target) {
+	state = target;
+	__CLREX();
+}
+
 void alarm::arm() {
-	xTimerReset(zones_check_timer, portMAX_DELAY);
-	state = State::ARMED;
+	set_state(State::ARMED);
 	user_interface::alarm_armed();
 	request(Request::CHANGE_STATE);
 }
 
 void alarm::disarm() {
-	xTimerStop(zones_check_timer, portMAX_DELAY);
-	state = State::DISARMED;
+	set_state(State::DISARMED);
 	user_interface::alarm_disarmed();
 	request(Request::CHANGE_STATE);
 }
 
 bool alarm::is_armed() {
 	State state_now = state;
-	return state_now == State::ARMED || state_now == State::TRIGGERED;
+	return state_now == State::ARMED || state_now == State::TRIGGERED || state_now == State::ALERTING;
+}
+
+static inline bool set_state_if_current(alarm::State target, alarm::State expected) {
+	uint8_t current;
+	do {
+		current = __LDREXB((uint8_t *)&state);
+		if (current != (uint8_t)expected) {
+			__CLREX();
+			return false;
+		}
+	} while (__STREXB((uint8_t)target, (uint8_t *)&state));
+	return true;
 }
 
 static void check_zones(TimerHandle_t timer) {
 	using namespace alarm;
 	if (wired_zones::get_active()) {
-		xTimerStop(zones_check_timer, portMAX_DELAY); // no need to keep polling
-		state = State::TRIGGERED;
+		if (set_state_if_current(State::TRIGGERED, State::ARMED)) {
+			request(Request::CHANGE_STATE);
+		}
+	}
+}
+
+static void start_alerting(TimerHandle_t timer) {
+	using namespace alarm;
+	if (set_state_if_current(State::ALERTING, State::TRIGGERED)) {
 		request(Request::CHANGE_STATE);
 	}
 }
@@ -149,12 +178,22 @@ static void service_alarm(void * args) {
 			if (was_requested(Request::CHANGE_STATE)) {
 				State state_now = state;
 				if (state_now == State::TRIGGERED) {
+					uint32_t delay_ms = get_alarm_delay_s() * 1000U;
+					xTimerStop(zones_check_timer, portMAX_DELAY);
+					xTimerChangePeriod(alert_timer, pdMS_TO_TICKS(delay_ms), portMAX_DELAY); // this starts timer
+				} else if (state_now == State::ALERTING) {
 					turn_on_siren();
 					notify_triggered = true;
 					phone_index = 0;
 				} else { // disarmed or armed
 					turn_off_siren();
 					notify_triggered = false;
+					if (state_now == State::ARMED) {
+						xTimerReset(zones_check_timer, portMAX_DELAY);
+					} else {
+						xTimerStop(zones_check_timer, portMAX_DELAY);
+					}
+					xTimerStop(alert_timer, portMAX_DELAY);
 				}
 				set_callbacks_for(state_now);
 			}
@@ -166,6 +205,11 @@ static void service_alarm(void * args) {
 					notify_triggered = false;
 					continue;
 				}
+				bool connected = gsm::get_signal_strength() > 0;
+				if (!connected) {
+					taskYIELD();
+					continue;
+				}
 
 				bool notified = false;
 				gsm::Dialing dialing = make_call(phone_number);
@@ -174,13 +218,17 @@ static void service_alarm(void * args) {
 					notified = true;
 				} else if (dialing != gsm::Dialing::ERROR) {
 					// user did not pick up a phone - send SMS
-					notified = gsm::get_ctrl().send_sms("", phone_number);
+					notified = gsm::get_ctrl().send_sms(ALERT_TEXT, phone_number);
 				}
+				connected &= gsm::get_signal_strength() > 0;
 
 				if (notified) {
 					phone_index += 1U;
+				} else if (connected) {
+					// maybe no money for calls or mobile provider does not accept SMS from GSM module
+					rec::log("Didn't notify phone ID={0}", {rec::s(phone_index)});
+					phone_index += 1U;
 				} else {
-					// maybe incoming call is waiting to be handled or network connection not established yet
 					// yield and try the same again later
 					taskYIELD();
 				}
@@ -195,14 +243,14 @@ static void armed_menu(char option);
 
 static void set_callbacks_for(alarm::State target) {
 	using namespace alarm;
-	if (target == State::ARMED) {
+	if (target == State::ARMED || target == State::TRIGGERED) {
 		gsm::set_on_call_dialed([](gsm::Direction){
 			play_notice(ARMED_NOTICE_WAV);
 		});
 		gsm::set_on_key_pressed(armed_menu);
-	} else if (target == State::TRIGGERED) {
+	} else if (target == State::ALERTING) {
 		gsm::set_on_call_dialed([](gsm::Direction){
-			play_notice(TRIGGERED_NOTICE_WAV);
+			play_notice(ALERT_NOTICE_WAV);
 		});
 		gsm::set_on_key_pressed(armed_menu);
 	} else { // disarmed
@@ -263,4 +311,30 @@ static void call_ended() {
 
 static void choice_timeout_elapsed(TimerHandle_t timer) {
 	gsm::get_ctrl().end_call();
+}
+
+static FRESULT copy_wav_to_flash(const char * dst_path, FIL * src, FIL * dst);
+
+FRESULT alarm::copy_wav_to_flash(FIL * src, FIL * dst) {
+	FRESULT last_res;
+	void((last_res = copy_wav_to_flash(ARMED_NOTICE_WAV, src, dst)) == FR_OK
+		 && (last_res = copy_wav_to_flash(DISARMED_NOTICE_WAV, src, dst)) == FR_OK
+		 && (last_res = copy_wav_to_flash(ALERT_NOTICE_WAV, src, dst)) == FR_OK
+		 && (last_res = copy_wav_to_flash(CONFIRM_ARMED_WAV, src, dst)) == FR_OK
+		 && (last_res = copy_wav_to_flash(CONFIRM_DISARMED_WAV, src, dst)) == FR_OK);
+	return last_res;
+}
+
+static FRESULT copy_wav_to_flash(const char * dst_path, FIL * src, FIL * dst) {
+	char src_path[FF_LFN_BUF] = "/sd/";
+	copy_filename(dst_path, src_path + 4U);
+
+	uint8_t buf[128];
+	FRESULT last_res;
+	void((last_res = f_open(src, src_path, FA_READ)) == FR_OK
+		 && (last_res = f_open(dst, dst_path, FA_WRITE | FA_OPEN_ALWAYS)) == FR_OK
+		 && (last_res = copy_file(src, dst, buf, 128U))
+		 && (last_res = f_close(src)) == FR_OK
+		 && (last_res = f_close(dst)) == FR_OK);
+	return last_res;
 }
