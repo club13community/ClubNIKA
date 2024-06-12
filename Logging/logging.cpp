@@ -133,7 +133,9 @@ void rec::log(const char * msg) {
 	if (slot.is_empty()) {
 		return;
 	}
-	slot.set(0, msg);
+	uint16_t dst_ind = set(timestamp, 0, slot);
+	dst_ind = slot.set(dst_ind, ": ");
+	slot.set(dst_ind, msg);
 	buffer.end_write(slot);
 }
 

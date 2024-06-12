@@ -47,46 +47,11 @@ static StaticTask_t test_task_ctrl;
 static StackType_t test_task_stack[1024];
 static FIL tst_file1, tst_file2;
 
-static volatile uint8_t dialied = 0, ended = 0;
-
-volatile gsm::Dialing d1, d2;
-
-volatile uint8_t play_tries = 0;
-static void play_via_speaker() {
-	/*static auto play8k = []() {
-		player::play_via_speaker("/sd/8k.wav", nullptr);
-	};
-
-	static auto play4k = []() {
-		player::play_via_speaker("/sd/4k.wav", play8k);
-	};
-
-	static auto play2k = []() {
-		player::play_via_speaker("/sd/2k.wav", play4k);
-	};*/
-	uint8_t tries = 0;
-	//while (++tries < 10 && !player::play_via_speaker("/sd/4k.wav", play_via_speaker));
-	while (++tries < 10 && !player::play_for_gsm("/sd/4k.wav", play_via_speaker));
-	if (play_tries < tries) {
-		play_tries = tries;
-	}
-	if (tries == 10) {
-		__NOP();
-	}
-
-}
-
 static void do_test_task(void * args) {
-	static volatile uint8_t c = 0;
-	/*gsm::set_on_incoming_call([](char * num) {
-		gsm::get_ctrl().accept_call();
-	});*/
 	while (!sd::is_card_present());
 
 	while(true) {
-		/*while (!sd::is_card_present());
-		play_via_speaker();
-		while (sd::is_card_present());*/
+
 	}
 }
 
