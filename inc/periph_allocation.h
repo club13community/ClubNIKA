@@ -36,8 +36,10 @@
 #define SIM900_DMA_IRQ_PRIORITY		14U
 #define SIM900_EXTI_IRQ_PRIORITY	14U
 // for DMA transfer completed
-#define DAC_IRQ_PRIORITY	12U
-#define FLASH_IRQ_PRIORITY	6U
+#define DAC_IRQ_PRIORITY		12U
+#define FLASH_IRQ_PRIORITY		6U
+// priority for EXTIs and Timer
+#define SUP_SYS_IRQ_PRIORITY	5U
 
 #define SD_IRQ_PRIORITY			11U
 // for EXTI
