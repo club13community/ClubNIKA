@@ -182,11 +182,11 @@ static void service_alarm(void * args) {
 					xTimerStop(zones_check_timer, portMAX_DELAY);
 					xTimerChangePeriod(alert_timer, pdMS_TO_TICKS(delay_ms), portMAX_DELAY); // this starts timer
 				} else if (state_now == State::ALERTING) {
-					turn_on_siren();
+					supply::turn_on_siren();
 					notify_triggered = true;
 					phone_index = 0;
 				} else { // disarmed or armed
-					turn_off_siren();
+					supply::turn_off_siren();
 					notify_triggered = false;
 					if (state_now == State::ARMED) {
 						xTimerReset(zones_check_timer, portMAX_DELAY);

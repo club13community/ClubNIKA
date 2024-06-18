@@ -5,8 +5,6 @@
 #pragma once
 #include <stdint.h>
 
-namespace supply_system {
-	inline void process_battery_measurement(uint16_t value) {
-		uint16_t voltage = value * 6; // battery voltage in mV
-	}
+namespace supply {
+	void process_battery_measurement(uint16_t value);
 }

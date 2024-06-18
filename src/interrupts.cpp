@@ -19,19 +19,11 @@
 
 //used by SupplySystem
 extern "C" void TIM2_IRQHandler(){
-	if(SET == TIM_GetITStatus(TIM2, TIM_IT_CC1)){
-		SupplySystem_12VChannelsOvercurrent_Timer_IH();
-		TIM_ClearITPendingBit(TIM2, TIM_IT_CC1);
-	}
-
-	if(SET == TIM_GetITStatus(TIM2, TIM_IT_Update)){
-		__NOP();
-		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
-	}
+	supply::timer_isr();
 }
 
 extern "C" void EXTI9_5_IRQHandler() {
-
+	supply::exti_isr();
 }
 
 extern "C" void TIM3_IRQHandler() {

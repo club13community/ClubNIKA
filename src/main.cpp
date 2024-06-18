@@ -61,7 +61,6 @@ static void create_test_task() {
 
 static void create_app_starter();
 
-// float div = 170u, mult = 60u, sub = 75u
 extern "C" int main(void)
 {
 	SystemInit();
@@ -69,6 +68,7 @@ extern "C" int main(void)
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
+	supply::init();
 
 	timing::config_coarse_timer();
 	timing::config_fine_timer();
@@ -83,7 +83,7 @@ extern "C" int main(void)
 	MessageRouter_StartUpInit();
 
 	ClockControl_Launch(getMessageBuffer_ClockControlDataIn(), getMessageBuffer_ClockControlDataOut());
-	SupplySystem_Launch(getMessageBuffer_SupplySystemDataIn(), getMessageBuffer_SupplySystemDataOut());
+	supply::start();
 	init_settings();
 	rtc::start();
 	vmeter::start();
@@ -94,6 +94,7 @@ extern "C" int main(void)
 	gsm::start();
 	player::start();
 	alarm::start();
+
 
 	//wireless
 	//File system

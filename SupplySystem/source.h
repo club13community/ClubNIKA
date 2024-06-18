@@ -4,8 +4,10 @@
 //
 
 #pragma once
+#include "SupplySystem.h"
+
 namespace supply {
-	void init_source();
+	Source init_source();
 	void source_exti_isr();
 	void source_timer_isr();
 }

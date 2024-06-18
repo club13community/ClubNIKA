@@ -7,6 +7,7 @@
 
 namespace user_interface::symbol {
 	extern const uint8_t battery[];
+	extern const uint8_t socket[];
 	extern const uint8_t charging_battery[];
 	extern const uint8_t signal_level[];
 	extern const uint8_t up[];

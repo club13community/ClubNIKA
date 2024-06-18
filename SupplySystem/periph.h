@@ -20,7 +20,7 @@
 #define CHRG_BAT_PIN	GPIO_Pin_2
 
 // Enables 12V supply source(channel 1 on sch.)
-#define EN_12V_SRC_PORT	GPIOB
+#define EN_12V_SRC_PORT	GPIOE
 #define EN_12V_SRC_PIN	GPIO_Pin_14
 // Enables siren(channel 2 on sch.)
 #define EN_SIREN_PORT	GPIOE
@@ -67,20 +67,18 @@ namespace supply {
 	inline void start_source_timeout(uint16_t ticks) {
 		uint16_t ccr = TIMER->CNT + ticks;
 		TIMER->CCR1 = ccr;
+		// note: IRQs of supply system have high priority and delays are > 1ms
+		// - timer will not reach CCR if something preempts current ISR here
 		TIMER->SR = ~TIM_SR_CC1IF;
-		if (TIMER->CNT >= ccr) {
-			TIMER->EGR = TIM_EGR_CC1G;
-		}
 		TIMER->DIER |= TIM_DIER_CC1IE;
 	}
 
 	inline void start_fuse_timeout(uint16_t ticks) {
 		uint16_t ccr = TIMER->CNT + ticks;
 		TIMER->CCR2 = ccr;
+		// note: IRQs of supply system have high priority and delays are > 1ms
+		// - timer will not reach CCR if something preempts current ISR here
 		TIMER->SR = ~TIM_SR_CC2IF;
-		if (TIMER->CNT >= ccr) {
-			TIMER->EGR = TIM_EGR_CC2G;
-		}
 		TIMER->DIER |= TIM_DIER_CC2IE;
 	}
 
@@ -127,46 +125,5 @@ namespace supply {
 
 	inline bool is_fuse_exti() {
 		return EXTI->PR & DET_12V_SC_PIN;
-	}
-
-	inline void init_12V_switches() {
-		GPIO_InitTypeDef io_conf;
-		// enablers of siren and 12V source
-		io_conf.GPIO_Mode = GPIO_Mode_Out_PP;
-		io_conf.GPIO_Speed = GPIO_Speed_2MHz;
-
-		enable_periph_clock(EN_12V_SRC_PORT);
-		io_conf.GPIO_Pin = EN_12V_SRC_PIN;
-		GPIO_Init(EN_12V_SRC_PORT, &io_conf);
-
-		enable_periph_clock(EN_SIREN_PORT);
-		io_conf.GPIO_Pin = EN_SIREN_PIN;
-		GPIO_Init(EN_SIREN_PORT, &io_conf);
-	}
-	
-	inline void enable_siren() {
-		GPIO_WriteBit(EN_SIREN_PORT, EN_SIREN_PIN, Bit_SET);
-	}
-
-	inline void enable_siren_if(volatile uint8_t * allowed) {
-		do {
-			uint8_t may_en = __LDREXB((uint8_t *) allowed);
-			if (!may_en) {
-				__CLREX();
-				return;
-			}
-		} while (__STREXW(EN_SIREN_PIN, EN_SIREN_PORT->BSRR));
-	}
-
-	inline void enable_12V() {
-		GPIO_WriteBit(EN_12V_SRC_PORT, EN_12V_SRC_PIN, Bit_SET);
-	}
-
-	inline void disable_siren() {
-		GPIO_WriteBit(EN_SIREN_PORT, EN_SIREN_PIN, Bit_RESET);
-	}
-
-	inline void disable_12V() {
-		GPIO_WriteBit(EN_12V_SRC_PORT, EN_12V_SRC_PIN, Bit_RESET);
 	}
 }

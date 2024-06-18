@@ -17,6 +17,17 @@ namespace user_interface::symbol {
 			0b11111
 	};
 
+	const uint8_t socket[] = {
+			0b00000,
+			0b01010,
+			0b01010,
+			0b11111,
+			0b10001,
+			0b10001,
+			0b01110,
+			0b00000
+	};
+
 	const uint8_t charging_battery[] = {
 			0b01110,
 			0b11111,

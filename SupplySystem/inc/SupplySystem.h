@@ -5,29 +5,20 @@
  *      Author: MaxCm
  */
 
-#ifndef _SUPPLYSYSTEM_H_
-#define _SUPPLYSYSTEM_H_
-
+#pragma once
 #include <stdint.h>
-#include "FreeRTOS.h"
-#include "task.h"
-#include "message_buffer.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace supply {
+	enum class Source : uint8_t {SOCKET = 0, BATTERY};
 
-extern const char SupplySystem_mainTaskName[];
+	void init();
+	void start();
+	void turn_on_siren();
+	void turn_off_siren();
+	Source get_source();
+	uint16_t get_battery_mV();
+	uint8_t get_battery_pct();
 
-void SupplySystem_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut);
-void SupplySystem_12VChannelsOvercurrent_IH();
-void SupplySystem_12VChannelsOvercurrent_Timer_IH();
-
-void turn_on_siren();
-void turn_off_siren();
-
-#ifdef __cplusplus
+	void exti_isr();
+	void timer_isr();
 }
-#endif
-
-#endif /* INC_SUPPLYSYSTEM_H_ */

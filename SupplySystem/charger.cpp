@@ -2,37 +2,38 @@
 // Created by independent-variable on 6/16/2024.
 //
 #include "./charger.h"
-#include "./periph.h"
+#include "./charger_periph.h"
 
-namespace supply {
-	volatile bool charging;
-}
+static volatile bool charging;
+static volatile uint8_t battery_source;
 
-void supply::init_charger() {
-	enable_periph_clock(CHRG_BAT_PORT);
-	GPIO_InitTypeDef io_conf;
-	io_conf.GPIO_Pin = CHRG_BAT_PIN;
-	io_conf.GPIO_Mode = GPIO_Mode_Out_PP;
-	io_conf.GPIO_Speed = GPIO_Speed_2MHz;
-	GPIO_Init(CHRG_BAT_PORT, &io_conf);
-
+void supply::init_charger(Source source) {
+	init_charger_pins();
 	charging = false;
+	battery_source = source == Source::BATTERY ? 1U : 0;
 }
 
-void supply::enable_charging() {
-	GPIO_WriteBit(CHRG_BAT_PORT, CHRG_BAT_PIN, Bit_SET);
+void supply::charger_source_changed(Source new_source) {
+	if (new_source == Source::BATTERY) {
+		battery_source = 1U;
+		__CLREX();
+		disable_charging();
+	} else {
+		battery_source = 0U;
+		__CLREX();
+		if (charging) {
+			enable_charging();
+		}
+	}
 }
 
-void supply::enable_charging_if(volatile uint8_t * allowed) {
+static void safe_enable_charging() {
+	using namespace supply;
 	do {
-		uint8_t may_en = __LDREXB((uint8_t *)allowed);
-		if (!may_en) {
+		uint8_t dont_en = __LDREXB(const_cast<uint8_t *>(&battery_source));
+		if (dont_en) {
 			__CLREX();
 			return;
 		}
-	} while (__STREXW(CHRG_BAT_PIN, (uint32_t *)&CHRG_BAT_PORT->BSRR));
-}
-
-void supply::disable_charging() {
-	GPIO_WriteBit(CHRG_BAT_PORT, CHRG_BAT_PIN, Bit_RESET);
+	} while (enable_charging_excl());
 }

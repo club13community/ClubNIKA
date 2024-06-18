@@ -4,10 +4,9 @@
 
 #pragma once
 #include <stdint.h>
+#include "SupplySystem.h"
 
 namespace supply {
-	void init_charger();
-	void enable_charging();
-	void enable_charging_if(volatile uint8_t * allowed);
-	void disable_charging();
+	void init_charger(Source source);
+	void charger_source_changed(Source new_source);
 }

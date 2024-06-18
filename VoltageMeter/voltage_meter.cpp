@@ -72,7 +72,7 @@ void vmeter::isr() {
 	battery_samples_acc += to_mV(get_battery_measurement());
 	battery_samples_count--;
 	if (!battery_samples_count) {
-		supply_system::process_battery_measurement(battery_samples_acc >> AVERAGING_pow2);
+		supply::process_battery_measurement(battery_samples_acc >> AVERAGING_pow2);
 		battery_samples_acc = 0;
 		battery_samples_count = AVERAGING_COUNT;
 	}
