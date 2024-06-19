@@ -37,3 +37,17 @@ static void safe_enable_charging() {
 		}
 	} while (enable_charging_excl());
 }
+
+void supply::charger_battery_measured(uint16_t bat_mV) {
+	if (charging) {
+		if (bat_mV >= STOP_CHARGING_mV) {
+			charging = false;
+			disable_charging();
+		}
+	} else {
+		if (bat_mV <= START_CHARGING_mV) {
+			charging = true;
+			safe_enable_charging();
+		}
+	}
+}

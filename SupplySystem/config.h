@@ -15,3 +15,7 @@
 #define NO_OVER_CURRENT_TIME_s	5U
 /** Measured battery voltage - real battery voltage. Device specific value. */
 #define BATTERY_OFFSET_mV	(-150)
+/** Start charging if battery voltage is below this level. */
+#define START_CHARGING_mV		12'800U
+/** Stop charging if battery voltage is above this level. */
+#define STOP_CHARGING_mV		13'000U

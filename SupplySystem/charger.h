@@ -9,4 +9,5 @@
 namespace supply {
 	void init_charger(Source source);
 	void charger_source_changed(Source new_source);
+	void charger_battery_measured(uint16_t bat_mV);
 }

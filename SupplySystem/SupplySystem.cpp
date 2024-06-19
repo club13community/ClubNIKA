@@ -51,7 +51,9 @@ void supply::timer_isr() {
 }
 
 void supply::process_battery_measurement(uint16_t value) {
-	battery_mV = value * 6 - BATTERY_OFFSET_mV; // battery voltage in mV
+	uint16_t bat_mV = value * 6 - BATTERY_OFFSET_mV; // battery voltage in mV
+	battery_mV = bat_mV;
+	charger_battery_measured(bat_mV);
 }
 
 uint16_t supply::get_battery_mV() {
@@ -59,6 +61,7 @@ uint16_t supply::get_battery_mV() {
 }
 
 static constexpr uint8_t mV_to_pct_size = 12;
+/** For Pb-AGM 12V battery. */
 static const uint16_t mV_to_pct[mV_to_pct_size][2] = {
 		{12'850, 100},
 		{12'800, 99},
