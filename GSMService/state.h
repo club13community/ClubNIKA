@@ -13,7 +13,6 @@ namespace gsm {
 
 	union FutureResult {
 		Dialing dialing;
-		bool call_ended;
 		bool call_accepted;
 		bool sms_sent;
 	};

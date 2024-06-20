@@ -10,6 +10,8 @@ namespace sim900 {
 	/** Invoked when problem with UART occurs. */
 	void on_hw_malfunction();
 	void on_call_update(uint8_t index, CallState state, CallDirection direction, char * number);
+	/** Is invoked on every "RING". */
+	void on_ring();
 	void on_call_end(CallEnd end);
 	/** Invoked when interlocutor presses key during a call. */
 	void on_key_pressed(char key);

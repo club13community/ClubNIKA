@@ -9,10 +9,15 @@
 
 namespace gsm {
 	enum class CallPhase {
+		/** No ongoing calls. */
+		NONE,
+		/** Received phone number of incoming call. */
+		// added because if to accept a call right after "call info"(+CLCC:...) message
+		// - SIM900 may respond with "ERROR"; now "on incoming call" callback is invoked after "RING" message
+		STARTED,
 		RINGING,
 		/** Interlocutor picked up a phone. */
 		SPEAKING,
-		/** No ongoing calls(all previous are ended). */
 		ENDED
 	};
 
@@ -30,7 +35,11 @@ namespace gsm {
 	 * Will emulate ending of any ongoing call. */
 	void terminate_calls();
 
-	inline bool one_of(CallPhase val, CallPhase var1, CallPhase var2) {
-		return val == var1 || val == var2;
+	inline bool is_ongoing(CallPhase phase) {
+		return phase == CallPhase::STARTED || phase == CallPhase::RINGING || phase == CallPhase::SPEAKING;
+	}
+
+	inline bool is_dialing(CallPhase phase) {
+		return phase == CallPhase::STARTED || phase == CallPhase::RINGING;
 	}
 }

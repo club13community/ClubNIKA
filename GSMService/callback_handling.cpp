@@ -9,7 +9,7 @@
 #include "./state.h"
 
 namespace gsm {
-	volatile CallPhase handled_call_phase = CallPhase::ENDED;
+	volatile CallPhase handled_call_phase = CallPhase::NONE;
 }
 
 static volatile TaskHandle_t task;
@@ -59,21 +59,23 @@ static void handle_events() {
 	}
 
 	if (bits & flag_of(Event::CALL_STATE_CHANGED)) {
-		if (handled_now == CallPhase::ENDED && actual_now == CallPhase::RINGING) {
+		if (actual_now == CallPhase::RINGING && handled_now != CallPhase::RINGING) {
 			handled_call_phase = CallPhase::RINGING;
 			if (direction_now == Direction::INCOMING) {
 				safe_on_incoming_call(phone_number);
 			}
-		} else if (one_of(handled_now, CallPhase::ENDED, CallPhase::RINGING) && actual_now == CallPhase::SPEAKING) {
+		} else if (actual_now == CallPhase::SPEAKING && handled_now != CallPhase::SPEAKING) {
 			handled_call_phase = CallPhase::SPEAKING;
 			safe_on_call_dialed(call_direction);
-		} else if (handled_now == CallPhase::RINGING && actual_call_phase == CallPhase::ENDED) {
-			// do not invoke on_call_ended() because on_call_dialed() was not invoked
-			handled_call_phase = CallPhase::ENDED;
-		} else if (handled_now == CallPhase::SPEAKING && actual_now == CallPhase::ENDED) {
-			handled_call_phase = CallPhase::ENDED;
-			safe_on_call_ended();
-		} // else handled_now == actual_now
+		} else if (actual_call_phase == CallPhase::ENDED) {
+			handled_call_phase = CallPhase::NONE; // jump over "ENDED"(as it is used only for "actual phase")
+			actual_call_phase = CallPhase::NONE; // nobody writes to this var. after phase "ENDED"
+			if (handled_now == CallPhase::SPEAKING) {
+				safe_on_call_ended();
+			} // else - don't invoke "on call ended" because "on call dialed" was not invoked
+		} else {
+			handled_call_phase = actual_now;
+		}
 	}
 }
 

@@ -74,6 +74,6 @@ bool sim900::ignoring_listener(rx_buffer_t & rx) {
 	if (rx.is_message_corrupted()) {
 		return false;
 	}
-	return rx.equals("RING") || rx.equals("Call Ready") || rx.starts_with("*PSNWID:")
+	return rx.equals("Call Ready") || rx.starts_with("*PSNWID:")
 		|| rx.starts_with("+CFUN:") || rx.starts_with("+CPIN:");
 }

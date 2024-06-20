@@ -170,6 +170,9 @@ void sim900::wait_call_state(
 }
 
 bool sim900::call_state_listener(rx_buffer_t & rx) {
+	if (rx.is_message_corrupted()) {
+		return false;
+	}
 	if (!rx.starts_with("+CLCC:")) {
 		return false;
 	}
@@ -181,6 +184,17 @@ bool sim900::call_state_listener(rx_buffer_t & rx) {
 	parse_call_info(rx, index, state, direction, number);
 
 	on_call_update(index, state, direction, number);
+	return true;
+}
+
+bool sim900::ring_listener(rx_buffer_t & rx) {
+	if (rx.is_message_corrupted()) {
+		return false;
+	}
+	if (!rx.equals("RING")) {
+		return false;
+	}
+	on_ring();
 	return true;
 }
 
