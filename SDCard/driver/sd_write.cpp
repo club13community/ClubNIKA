@@ -1,11 +1,9 @@
 //
 // Created by independent-variable on 4/28/2024.
 //
-#include "sd_driver.h"
+#include "./sd_read_write.h"
 #include "./cmd_execution.h"
 #include "./data_exchange.h"
-#include "./sd_info.h"
-#include "./sd_read_write_state.h"
 #include "./periph.h"
 #include "./sd_ctrl.h"
 
@@ -18,10 +16,7 @@ static inline uint32_t to_addr(uint32_t block) {
 }
 
 static void write_block(uint32_t block_addr);
-static void write_cmd_sent(CSR_t csr, Error error);
-static void card_state_received(CSR_t csr, Error error);
 static void data_sent(Error error);
-static void prog_status_received(CSR_t csr, Error error);
 static void block_write_done();
 static void write_done();
 static void write_failed(Error error);
@@ -44,67 +39,62 @@ void sd::write(uint32_t block_addr, uint32_t block_count, const uint8_t * buff, 
 	}
 }
 
+static void write_cmd_sent(CSR_t csr, Error error);
+
 static void write_block(uint32_t block_addr) {
 	// send command
 	rw::cmd_attempts = ATTEMPTS;
 	exe_cmd24(to_addr(block_addr), write_cmd_sent);
 }
 
+static inline void retry_write_cmd(Error cause) {
+	if (--rw::cmd_attempts > 0) {
+		exe_cmd24(to_addr(rw::block_address), write_cmd_sent);
+	} else {
+		write_failed(cause);
+	}
+}
+
+static void card_state_received(State state, Error error); // will be needed if response CRC fails
+
 static void write_cmd_sent(CSR_t csr, Error error) {
 	if (error == Error::NONE) {
 		// send data
 		send((uint8_t *) rw::buffer, data_sent);
-	} else if (error == Error::CMD_CRC_ERROR) {
+	} else if (error == Error::CMD_CRC_ERROR || error == Error::NO_RESPONSE) {
 		// card did not recognise command - send again
-		if (--rw::cmd_attempts > 0) {
-			write_failed(error);
-		} else {
-			write_failed(Error::CMD_CRC_ERROR);
-		}
+		retry_write_cmd(error);
 	} else if (error == Error::RESP_CRC_ERROR) {
 		// not clear if card recognized command - check state of a card
-		rw::status_attempts = ATTEMPTS;
-		exe_cmd13(RCA, card_state_received);
+		rw::get_state(card_state_received, ATTEMPTS);
 	} else {
 		write_failed(error);
 	}
 }
 
-static void card_state_received(CSR_t csr, Error error) {
-	if (error == Error::NONE || is_from_response(error)) {
-		// no problems with communication, response is valid
-		State state = csr.state();
-		if (state == State::TRAN) {
-			// card did not recognize command and stayed in 'tran' state - send command again
-			if (--rw::cmd_attempts > 0) {
-				exe_cmd24(to_addr(rw::block_address), write_cmd_sent);
-			} else {
-				write_failed(Error::CMD_CRC_ERROR);
-			}
-		} else if (state == State::RCV) {
-			// card recognized command and is already in 'receive data' state - send data
-			send((uint8_t *) rw::buffer, data_sent);
-		} else {
-			// unexpected state
-			write_failed(Error::GENERAL_ERROR);
-		}
-	} else if (error == Error::RESP_CRC_ERROR) {
-		// request state again
-		if (--rw::status_attempts > 0) {
-			exe_cmd13(RCA, card_state_received);
-		} else {
-			write_failed(Error::RESP_CRC_ERROR);
-		}
-	} else {
+static void card_state_received(State state, Error error) {
+	if (error != Error::NONE) {
 		write_failed(error);
+		return;
+	}
+
+	if (state == State::TRAN) {
+		// card did not recognize command and stayed in 'tran' state - send command again
+		retry_write_cmd(Error::CMD_CRC_ERROR);
+	} else if (state == State::RCV) {
+		// card recognized command and is already in 'receive data' state - send data
+		send((uint8_t *) rw::buffer, data_sent);
+	} else {
+		// unexpected state
+		write_failed(Error::GENERAL_ERROR);
 	}
 }
+
+static void wait_programmed();
 
 static void data_sent(Error error) {
 	if (error == Error::NONE) {
-		// check status of programming
-		rw::status_attempts = READ_WRITE_TIME_ms;
-		exe_cmd13(RCA, prog_status_received);
+		wait_programmed();
 	} else if (error == Error::DATA_CRC_ERROR) {
 		// try to write the same block again
 		if (--rw::data_attempts > 0) {
@@ -117,32 +107,28 @@ static void data_sent(Error error) {
 	}
 }
 
-static void prog_status_received(CSR_t csr, Error error) {
-	auto send_cmd13 = []() {
-		exe_cmd13(RCA, prog_status_received);
-	};
-	if (error == Error::NONE) {
-		if (csr.state() == State::TRAN) {
-			// block programmed
-			block_write_done();
-		} else {
-			// check again in 1ms
-			if (--rw::status_attempts > 0) {
-				TIMER.invoke_in_ms(1, send_cmd13);
-			} else {
-				write_failed(Error::DATA_TIMEOUT);
-			}
+static void wait_programmed() {
+	static volatile uint16_t attempts;
+
+	static constexpr void (* state_received)(State, Error) = [](State state, Error error) {
+		if (error != Error::NONE) {
+			write_failed(error);
+			return;
 		}
-	} else if (error == Error::CMD_CRC_ERROR || error == Error::RESP_CRC_ERROR) {
-		// check again in 1 ms
-		if (--rw::status_attempts > 0) {
-			TIMER.invoke_in_ms(1, send_cmd13);
+
+		if (state == State::TRAN) {
+			block_write_done();
+		} else if (--attempts > 0) {
+			TIMER.invoke_in_ms(1, []() {
+				rw::get_state(state_received, ATTEMPTS);
+			});
 		} else {
 			write_failed(Error::DATA_TIMEOUT);
 		}
-	} else {
-		write_failed(error);
-	}
+	};
+
+	attempts = READ_WRITE_TIME_ms;
+	rw::get_state(state_received, ATTEMPTS);
 }
 
 static void block_write_done() {
