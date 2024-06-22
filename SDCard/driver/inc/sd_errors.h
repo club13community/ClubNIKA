@@ -27,7 +27,7 @@ namespace sd {
 		CARD_CONTROLLER_ERROR = 20,
 		/** General or unknown error */
 		GENERAL_ERROR = 19,
-		CSD_OVERWRITE = 18,
+		CSD_OVERWRITE = 16,
 		/** Error in the sequence of authentication process */
 		AKE_SEQ_ERROR = 3,
 		/** Response to a command was not received */

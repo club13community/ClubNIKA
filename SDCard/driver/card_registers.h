@@ -104,6 +104,9 @@ namespace sd {
 			return csr & 1U << 5;
 		}
 
+		/** Order of error flag checking: 1) flags of errors which are cleared by read;
+		 * 2) flags of errors which are related to prev. command; 3) the rest.
+		 * @returns first discovered error. */
 		static inline Error any_error(uint32_t error_flags) {
 			if (error_flags & 1U << (uint16_t)Error::ARG_OUT_OF_RANGE) {
 				return Error::ARG_OUT_OF_RANGE;
@@ -126,14 +129,11 @@ namespace sd {
 			if (error_flags & 1U << (uint16_t)Error::LOCK_UNLOCK_FAILED) {
 				return Error::LOCK_UNLOCK_FAILED;
 			}
-			if (error_flags & 1U << (uint16_t)Error::CMD_CRC_ERROR) {
-				return Error::CMD_CRC_ERROR;
-			}
-			if (error_flags & 1U << (uint16_t)Error::ILLEGAL_COMMAND) {
-				return Error::ILLEGAL_COMMAND;
-			}
 			if (error_flags & 1U << (uint16_t)Error::CARD_ECC_FAILED) {
 				return Error::CARD_ECC_FAILED;
+			}
+			if (error_flags & 1U << (uint16_t)Error::CARD_CONTROLLER_ERROR) {
+				return Error::CARD_CONTROLLER_ERROR;
 			}
 			if (error_flags & 1U << (uint16_t)Error::GENERAL_ERROR) {
 				return Error::GENERAL_ERROR;
@@ -143,6 +143,12 @@ namespace sd {
 			}
 			if (error_flags & 1U << (uint16_t)Error::AKE_SEQ_ERROR) {
 				return Error::AKE_SEQ_ERROR;
+			}
+			if (error_flags & 1U << (uint16_t)Error::CMD_CRC_ERROR) {
+				return Error::CMD_CRC_ERROR;
+			}
+			if (error_flags & 1U << (uint16_t)Error::ILLEGAL_COMMAND) {
+				return Error::ILLEGAL_COMMAND;
 			}
 			return Error::NONE;
 		}
