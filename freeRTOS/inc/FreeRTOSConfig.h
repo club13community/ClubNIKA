@@ -44,6 +44,7 @@
 
 #include <stdint.h>
 #include "stm32f10x.h"
+#include "periph_allocation.h"
 extern uint32_t SystemCoreClock;
 #define configPRIO_BITS         __NVIC_PRIO_BITS
 
@@ -227,7 +228,7 @@ extern uint32_t SystemCoreClock;
  * task, so its priority is set like any other task.  See
  * https://www.freertos.org/RTOS-software-timer-service-daemon-task.html  Only used
  * if configUSE_TIMERS is set to 1. */
-#define configTIMER_TASK_PRIORITY       ( 6 )
+#define configTIMER_TASK_PRIORITY       ( FreeRTOS_TIMERS_PRIORITY )
 
 /* configTIMER_TASK_STACK_DEPTH sets the size of the stack allocated to the
  * timer task (in words, not in bytes!).  The timer task is a standard FreeRTOS
@@ -316,7 +317,7 @@ function. */
 routine that makes calls to interrupt safe FreeRTOS API functions.  DO NOT CALL
 INTERRUPT SAFE FREERTOS API FUNCTIONS FROM ANY INTERRUPT THAT HAS A HIGHER
 PRIORITY THAN THIS! (higher priorities are lower numeric values. */
-#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY 5
+#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY LAST_MASKABLE_IRQ_PRIORITY
 
 /* configKERNEL_INTERRUPT_PRIORITY sets the priority of the tick and context
  * switch performing interrupts.  Not supported by all FreeRTOS ports.  See

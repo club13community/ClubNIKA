@@ -4,9 +4,6 @@
 
 #pragma once
 #include "stm32f10x.h"
-#include "FreeRTOSConfig.h"
-
-// todo add max masked priority
 
 #define SIM900_UART				USART2
 #define SIM900_UART_TX_DMA		DMA1_Channel7
@@ -29,29 +26,35 @@
 
 #define SD_DMA_CHANNEL			DMA2_Channel4
 
-#define FINE_TIMER_IRQ_PRIORITY		13U
-#define COARSE_TIMER_IRQ_PRIORITY	13U
+/* ------------ IRQ priorities ------------ */
 
-#define SIM900_UART_IRQ_PRIORITY	3U
 #define SIM900_DMA_IRQ_PRIORITY		14U
 #define SIM900_EXTI_IRQ_PRIORITY	14U
-// for DMA transfer completed
-#define DAC_IRQ_PRIORITY		12U
-#define FLASH_IRQ_PRIORITY		6U
-// priority for EXTIs and Timer
-#define SUP_SYS_IRQ_PRIORITY	5U
-
-#define SD_IRQ_PRIORITY			11U
+#define FINE_TIMER_IRQ_PRIORITY		13U
+#define COARSE_TIMER_IRQ_PRIORITY	13U
 // for EXTI
-#define KEYBOARD_IRQ_PRIORITY	13U
+#define KEYBOARD_IRQ_PRIORITY		13U
+// for DMA transfer completed
+#define DAC_IRQ_PRIORITY			12U
+#define VMETER_ADC_IRQ_PRIORITY		12U
+// for SDIO interrupts
+#define SD_IRQ_PRIORITY				11U
+#define FLASH_IRQ_PRIORITY			6U
+/** Interrupts, with higher priority than this, are not masked. */
+#define LAST_MASKABLE_IRQ_PRIORITY	6U
+// priority for EXTIs and Timer
+#define SUP_SYS_IRQ_PRIORITY		5U
+#define SIM900_UART_IRQ_PRIORITY	3U
 
-#define VMETER_ADC_IRQ_PRIORITY	12U
+/* ------------ DMA priorities ------------ */
 
 #define SIM900_UART_TX_DMA_PRIORITY	DMA_Priority_Low
 #define DAC_DMA_PRIORITY			DMA_Priority_Medium
 #define FLASH_TX_DMA_PRIORITY		DMA_Priority_Medium
 #define FLASH_RX_DMA_PRIORITY		DMA_Priority_High
 #define SD_DMA_PRIORITY				DMA_Priority_High
+
+/* ------------ Priorities of FreeRTOS tasks ------------ */
 
 #define TASK_NORMAL_PRIORITY		1U
 /** Mounts and unmounts SD card. */
@@ -64,8 +67,4 @@
 #define KEYBOARD_SERVICE_PRIORITY	4U
 /** Starts application(mounts flash, loads settings, etc.); should have higher priority, than normal task. */
 #define APP_STARTER_PRIORITY		5U
-
-#if configTIMER_TASK_PRIORITY <= KEYBOARD_SERVICE_PRIORITY || configTIMER_TASK_PRIORITY <= KEYBOARD_SERVICE_PRIORITY
-// highest priority guaranties that timer control commands are executed right after issuing
-#error "Timer task priority is not the highest"
-#endif
+#define FreeRTOS_TIMERS_PRIORITY	6U

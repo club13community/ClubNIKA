@@ -5,7 +5,7 @@
 #include "./cmd_execution.h"
 #include "./data_exchange.h"
 #include "./sd_ctrl.h"
-#include "stm32f10x.h"
+#include "irq_utils.h"
 
 using namespace sd;
 
@@ -15,16 +15,6 @@ static volatile Error data_error;
 
 static inline uint32_t to_addr(uint32_t block) {
 	return sd::hcs == CapacitySupport::SC ? block << block_len_pwr2 : block;
-}
-
-static inline uint32_t dis_irq() {
-	uint32_t mask = __get_PRIMASK();
-	__set_PRIMASK(1U);
-	return mask;
-}
-
-static inline void en_irq(uint32_t mask) {
-	__set_PRIMASK(mask);
 }
 
 static void read_block(uint32_t block_addr, uint8_t * buff);

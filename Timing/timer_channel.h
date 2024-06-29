@@ -6,6 +6,7 @@
 #include "timing.h"
 #include <stdint.h>
 #include "stm32f10x.h"
+#include "irq_utils.h"
 
 namespace timing {
 	typedef void (* SetterOfCCR)(TIM_TypeDef *, uint16_t);
@@ -32,16 +33,6 @@ namespace timing {
 
 		inline bool is_serving_timeout() {
 			return tim->DIER & TIM_DIER_CCxIE && tim->SR & TIM_SR_CCxIF;
-		}
-
-		inline uint32_t mask_irq() {
-			uint32_t primask = __get_PRIMASK();
-			__set_PRIMASK(1U);
-			return primask;
-		}
-
-		inline void unmask_irq(uint32_t prev_primask) {
-			__set_PRIMASK(prev_primask);
 		}
 
 		inline void set_state(Callback callback, uint16_t period, OnTimeout action) {
@@ -125,18 +116,18 @@ namespace timing {
 		}
 
 		inline void stop() {
-			uint32_t prev_mask = mask_irq();
+			uint32_t prev_mask = dis_irq();
 			if (is_serving_timeout()) {
 				request_state(nullptr, 0, STOP);
 			} else {
 				disable_timeout_irq();
 			}
-			unmask_irq(prev_mask);
+			en_irq(prev_mask);
 		}
 
 		inline void invoke_in_ticks(uint16_t ticks, Callback callback) {
 			uint16_t period = ticks + 1;
-			uint32_t prev_mask = mask_irq();
+			uint32_t prev_mask = dis_irq();
 			if (is_serving_timeout()) {
 				request_state(callback, period, START_SINGLE);
 			} else {
@@ -144,12 +135,12 @@ namespace timing {
 				schedule_timeout(period);
 				enable_timeout_irq();
 			}
-			unmask_irq(prev_mask);
+			en_irq(prev_mask);
 		}
 
 		inline void every_ticks_invoke(uint16_t ticks, Callback callback) {
 			uint16_t period = ticks + 1;
-			uint32_t prev_mask = mask_irq();
+			uint32_t prev_mask = dis_irq();
 			if (is_serving_timeout()) {
 				request_state(callback, period, START_REPETITIVE);
 			} else {
@@ -157,13 +148,13 @@ namespace timing {
 				schedule_timeout(period);
 				enable_timeout_irq();
 			}
-			unmask_irq(prev_mask);
+			en_irq(prev_mask);
 		}
 
 		inline void wait_ticks(uint16_t ticks) {
 			wait_done = false;
 			uint32_t period = ticks + 1;
-			uint32_t prev_mask = mask_irq();
+			uint32_t prev_mask = dis_irq();
 			if (is_serving_timeout()) {
 				request_state(nullptr, period, START_WAIT);
 			} else {
@@ -171,7 +162,7 @@ namespace timing {
 				schedule_timeout(period);
 				enable_timeout_irq();
 			}
-			unmask_irq(prev_mask);
+			en_irq(prev_mask);
 			while (!wait_done);
 		}
 

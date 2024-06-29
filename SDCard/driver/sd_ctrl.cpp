@@ -4,11 +4,11 @@
 #include "sd_driver.h"
 #include "sd_driver_callbacks.h"
 #include "./sd_ctrl.h"
-#include "stm32f10x.h"
 #include "./sd_info.h"
 #include "./card_detection.h"
 #include "./sd_init.h"
 #include "./periph.h"
+#include "irq_utils.h"
 
 using namespace sd;
 
@@ -28,16 +28,6 @@ static void card_inserted();
 static void card_initialized(Error error);
 static void card_removal_detected();
 static void card_removed();
-
-static inline uint32_t dis_irq() {
-	uint32_t mask = __get_PRIMASK();
-	__set_PRIMASK(1U);
-	return mask;
-}
-
-static inline void en_irq(uint32_t mask) {
-	__set_PRIMASK(mask);
-}
 
 void sd::start_driver() {
 	wait_insertion(card_inserted);
