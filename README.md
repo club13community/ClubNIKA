@@ -1,32 +1,22 @@
 # ClubNIKA
+main.cpp is inside directory "system".
+
 ## Functionality
 ### SIM
 - initiate calls(notify about alarm)
-- accept/decline calls(activate/deactivate alarm)
-- talk during a call? respond on key?
-
-### Keyboard+LCD
-- accept password to activate/deactivate
-- show notifications that something is wrong(over-current, state of channels)
-- display battery voltage
-- setup channel normal state?
-- setup phone number of owner?
+- accept/decline calls(to activate/deactivate alarm)
 
 ### Wired channels
-- monitor if closed/opened
-- read current(in current loop configuration)?
-
-### RF extension
-- LoRa
+- configurable activation on short(to ground) or break
+- LCD allows to monitor currently activated zones
 
 ### Speaker
 - give voice instructions
 
 ### Supply system
-- activate alarm
-- activate external 12V
-- over-current protection
-- charge battery
+- activates siren and 12V supply for sensors
+- in case over-current turns off siren and 12V supply, then turns on after several seconds
+- charges battery
 
 ## SIM900 configuration
 Firmware requires:
@@ -35,6 +25,6 @@ Firmware requires:
 - enable network time request - send 'AT+CLTS=1'
 - SMS functions in "Text mode" - send 'AT+CMGF=1'
 - used IRA charset - send 'AT+CSCS="IRA"'
-- short present. of incoming SMS - send 'AT+CNMI=2,1,0,0,0'
+- short presentation of incoming SMS - send 'AT+CNMI=2,1,0,0,0'
 - report call state changes - send 'AT+CLCC=1'
 - send 'AT&W' at the end to save configs

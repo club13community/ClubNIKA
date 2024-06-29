@@ -53,7 +53,7 @@ else ()
     add_compile_options(-O0 -g)
 endif ()
 
-include_directories(ClockControl/inc fatfs/inc freeRTOS/inc freeRTOS/ARM_CM3 I2CExtension/inc inc
+include_directories(system/inc ClockControl/inc fatfs/inc freeRTOS/inc freeRTOS/ARM_CM3 I2CExtension/inc
         GSMService/inc GSMService/sim900/inc Alarm/inc
         SoundService/inc SPIExtension/inc SupplySystem/inc UARTExtension/inc UserInterface/inc
         VoltageMeter/inc WiredZones/inc WirelessInterface/inc Timing/inc Flash/inc
@@ -63,11 +63,11 @@ include_directories(ClockControl/inc fatfs/inc freeRTOS/inc freeRTOS/ARM_CM3 I2C
 
 add_definitions(-DSTM32 -DSTM32F1 -DSTM32F103VETx -DDEBUG -DSTM32F10X_HD -DUSE_HAL_DRIVER -DUSE_STDPERIPH_DRIVER)
 
-file(GLOB_RECURSE SOURCES "CMSIS/*.*" "ClockControl/*.*" "I2CExtension/*.*"
+file(GLOB_RECURSE SOURCES "system/*.*" "CMSIS/*.*" "ClockControl/*.*" "I2CExtension/*.*"
         "GSMService/*.*" "GSMService/sim900/*.*" "Alarm/*.*"
         "SPIExtension/*.*" "SoundService/*.*" "StdPeriph_Driver/*.*" "SupplySystem/*.*"
         "UARTExtension/*.*" "UserInterface/*.*" "UserInterface/controllers/*.*" "VoltageMeter/*.*" "WiredZones/*.*" "WirelessInterface/*.*"
-        "Flash/*.*" "fatfs/*.*" "freeRTOS/*.*" "inc/*.*" "src/*.*" "startup/*.*" "Timing/*.*" "periph_utils/*.*"
+        "Flash/*.*" "fatfs/*.*" "freeRTOS/*.*" "Timing/*.*" "periph_utils/*.*"
         "SDCard/*.*" "SDCard/driver/*.*" "Settings/*.*" "Logging/*.*"
 )
 
