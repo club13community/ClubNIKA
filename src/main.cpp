@@ -17,7 +17,6 @@
 #include "timing.h"
 #include "ClockControl.h"
 #include "SupplySystem.h"
-#include "MessageRouter.h"
 #include "wired_zones.h"
 #include "voltage_meter.h"
 #include "GSMService.h"
@@ -79,8 +78,6 @@ extern "C" int main(void)
 	wired_zones::init_periph();
 
 	flash::init_disk_driver();
-
-	MessageRouter_StartUpInit();
 
 	supply::start();
 	init_settings();
