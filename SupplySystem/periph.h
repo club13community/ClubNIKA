@@ -6,8 +6,8 @@
 #include "./config.h"
 #include "stm32f10x.h"
 #include "periph_allocation.h"
+#include "ClockControl.h"
 #include "rcc_utils.h"
-#include "tim_utils.h"
 #include "concurrent_utils.h"
 
 #define TIMER			SUPPLY_SYSTEM_TIMER
@@ -43,7 +43,7 @@
 
 namespace supply {
 	inline void init_timer() {
-		uint32_t clk_int_MHz = get_int_clock_frequency(TIMER) / 1'000'000U;
+		uint32_t clk_int_MHz = clocks::get_freq(TIMER) / 1'000'000U;
 		enable_periph_clock(TIMER);
 		TIM_TimeBaseInitTypeDef tim_conf = {0};
 		tim_conf.TIM_CounterMode = TIM_CounterMode_Up;

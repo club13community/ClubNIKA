@@ -6,14 +6,6 @@
 #include <exception>
 #include "stm32f10x.h"
 
-inline bool is_APB1_periph(TIM_TypeDef * tim) {
-	return tim == TIM7 || tim == TIM6 || tim == TIM5 || tim == TIM4 || tim == TIM3 || tim == TIM2;
-}
-
-inline bool is_APB2_periph(TIM_TypeDef * tim) {
-	return tim == TIM8 || tim == TIM1;
-}
-
 inline void enable_periph_clock(TIM_TypeDef * tim) {
 	uint32_t enr = 0;
 

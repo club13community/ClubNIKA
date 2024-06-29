@@ -64,10 +64,10 @@ static void create_app_starter();
 extern "C" int main(void)
 {
 	SystemInit();
-	ClockControl_StartUpInit();
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
+	clocks::init();
 	supply::init();
 
 	timing::config_coarse_timer();
@@ -82,7 +82,6 @@ extern "C" int main(void)
 
 	MessageRouter_StartUpInit();
 
-	ClockControl_Launch(getMessageBuffer_ClockControlDataIn(), getMessageBuffer_ClockControlDataOut());
 	supply::start();
 	init_settings();
 	rtc::start();
@@ -147,6 +146,7 @@ extern "C" void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBu
 	*pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
 }
 
+#ifdef DEBUG
 static FIL tmp1, tmp2;
 static void init_flash() {
 	// NOTE: takes a lot of time
@@ -155,3 +155,4 @@ static void init_flash() {
 	FRESULT alarm_res = alarm::copy_wav_to_flash(&tmp1, &tmp2);
 	__NOP();
 }
+#endif

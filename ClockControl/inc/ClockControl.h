@@ -5,25 +5,12 @@
  *      Author: MaxCm
  */
 
-#ifndef _CLOCKCONTROL_H_
-#define _CLOCKCONTROL_H_
+#pragma once
 #include <stdint.h>
-#include "FreeRTOS.h"
-#include "task.h"
-#include "message_buffer.h"
+#include "stm32f10x.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void ClockControl_StartUpInit();
-
-void ClockControl_Launch(MessageBufferHandle_t msgIn, MessageBufferHandle_t msgOut);
-
-int32_t getPeripheralClockFrequencyKHz(uint32_t periphBaseAddr);
-
-#ifdef __cplusplus
+namespace clocks {
+	enum class Generator : uint8_t {HSE, HSI};
+	void init();
+	uint32_t get_freq(TIM_TypeDef * tim);
 }
-#endif
-
-#endif /* INC_CLOCKCONTROL_H_ */

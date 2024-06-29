@@ -2,9 +2,9 @@
 // Created by independent-variable on 3/15/2024.
 //
 #include "periph_allocation.h"
+#include "ClockControl.h"
 #include "timing.h"
 #include "rcc_utils.h"
-#include "tim_utils.h"
 #include "nvic_utils.h"
 #include "./timer_channel.h"
 
@@ -12,7 +12,7 @@
 
 /** Timer resolution is 250us(4kHz) or a little more if "internal clock"/4KHz has remainder */
 void timing::config_coarse_timer() {
-	uint32_t int_clk = get_int_clock_frequency(TIMER);
+	uint32_t int_clk = clocks::get_freq(TIMER);
 	uint32_t ratio = ((int_clk<<1) + 4000U)/(4000U<<1); // int_clk/4kHz + 0.5
 
 	enable_periph_clock(TIMER);

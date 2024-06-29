@@ -4,7 +4,7 @@
 #include "timing.h"
 #include "stm32f10x.h"
 #include "periph_allocation.h"
-#include "tim_utils.h"
+#include "ClockControl.h"
 #include "rcc_utils.h"
 #include "nvic_utils.h"
 #include "./timer_channel.h"
@@ -14,7 +14,7 @@
 #define CR1_STOPPED 0U
 
 void timing::config_fine_timer() {
-	uint32_t int_clk = get_int_clock_frequency(TIMER);
+	uint32_t int_clk = clocks::get_freq(TIMER);
 	uint32_t ratio = int_clk / 1000000U;
 	if (ratio == 0) {
 		throw std::exception();

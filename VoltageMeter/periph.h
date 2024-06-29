@@ -5,7 +5,7 @@
 #pragma once
 #include "stm32f10x.h"
 #include "periph_allocation.h"
-#include "tim_utils.h"
+#include "ClockControl.h"
 
 #define ADC		VMETER_ADC
 #define TIMER	VMETER_ADC_TIMER
@@ -59,7 +59,7 @@ namespace vmeter {
 	inline void init_timer() {
 		RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8, ENABLE);
 
-		uint32_t int_clk = get_int_clock_frequency(TIMER);
+		uint32_t int_clk = clocks::get_freq(TIMER);
 		uint32_t prescaler = int_clk / 1000000;
 		TIM_TimeBaseInitTypeDef tim_base_conf = {0};
 		tim_base_conf.TIM_CounterMode = TIM_CounterMode_Up;

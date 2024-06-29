@@ -5,8 +5,8 @@
 #pragma once
 #include "stm32f10x.h"
 #include "periph_allocation.h"
+#include "ClockControl.h"
 #include "rcc_utils.h"
-#include "tim_utils.h"
 #include "dma_utils.h"
 #include "dac_utils.h"
 #include "nvic_utils.h"
@@ -22,7 +22,7 @@ namespace player {
 	/** Timer triggers DAC */
 	void init_timer() {
 		enable_periph_clock(DAC_TIMER);
-		uint32_t int_clk = get_int_clock_frequency(DAC_TIMER);
+		uint32_t int_clk = clocks::get_freq(DAC_TIMER);
 		uint32_t ratio = int_clk / 1000000;
 		if (ratio == 0) {
 			throw std::exception();
