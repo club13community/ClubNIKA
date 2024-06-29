@@ -47,8 +47,6 @@ namespace player {
 		io_conf.GPIO_Mode = GPIO_Mode_Out_PP;
 		io_conf.GPIO_Speed = GPIO_Speed_2MHz;
 
-		// todo: change schematic to allow 'initial mute'
-		// todo: supply system should wait for 4V settling
 		enable_periph_clock(MUTE_PORT);
 		mute_speaker();
 		io_conf.GPIO_Pin = MUTE_PIN;

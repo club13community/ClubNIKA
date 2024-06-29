@@ -12,7 +12,6 @@ namespace supply {
 	enum class Source : uint8_t {SOCKET = 0, BATTERY};
 
 	void init();
-	void start();
 	void turn_on_siren();
 	void turn_off_siren();
 	Source get_source();

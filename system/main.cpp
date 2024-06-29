@@ -9,9 +9,6 @@
 */
 
 #include "stm32f10x.h"
-#include "stm32f10x_rcc.h"
-#include "stm32f10x_gpio.h"
-
 #include "FreeRTOS.h"
 #include "task.h"
 #include "timing.h"
@@ -20,12 +17,8 @@
 #include "wired_zones.h"
 #include "voltage_meter.h"
 #include "GSMService.h"
-#include "WirelessInterface.h"
 #include "UserInterface.h"
 #include "SoundService.h"
-#include "UARTExtension.h"
-#include "SPIExtension.h"
-#include "I2CExtension.h"
 #include "flash.h"
 #include "UserInterface.h"
 #include "ff.h"
@@ -79,7 +72,6 @@ extern "C" int main(void)
 
 	flash::init_disk_driver();
 
-	supply::start();
 	init_settings();
 	rtc::start();
 	vmeter::start();
@@ -91,11 +83,6 @@ extern "C" int main(void)
 	player::start();
 	alarm::start();
 
-
-	//wireless
-	//File system
-	//idle task
-	//timer task
 	create_test_task();
 	create_app_starter();
 #ifdef DEBUG

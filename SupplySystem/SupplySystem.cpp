@@ -1,7 +1,7 @@
 //
 // Created by independent-variable on 6/16/2024.
 //
-#include "./SupplySystem.h"
+#include "SupplySystem.h"
 #include "supply_system_meas.h"
 #include "./periph.h"
 #include "./source.h"
@@ -24,10 +24,6 @@ void supply::init() {
 	enable_exti_lines();
 
 	battery_mV = 12'000U; // typical value in case requested before first measurement
-}
-
-void supply::start() {
-	// todo create thread or remove method
 }
 
 void supply::exti_isr() {

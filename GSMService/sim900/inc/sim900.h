@@ -4,7 +4,7 @@
 
 #pragma once
 #include <stdint.h>
-// todo reset rx buffer on power_off
+
 namespace sim900 {
 	/** Interrupts should be enabled(uses timer to discharge decoupling cap.)*/
 	void init_periph();
