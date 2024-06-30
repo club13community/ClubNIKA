@@ -15,6 +15,7 @@
 #include "ClockControl.h"
 #include "SupplySystem.h"
 #include "wired_zones.h"
+#include "WirelessInterface.h"
 #include "voltage_meter.h"
 #include "GSMService.h"
 #include "UserInterface.h"
@@ -53,6 +54,7 @@ extern "C" int main(void)
 	gsm::init_periph();
 	user_interface::init_periph();
 	wired_zones::init_periph();
+	wireless::init_periph();
 
 	flash::init_disk_driver();
 
