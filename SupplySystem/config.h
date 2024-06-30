@@ -17,5 +17,7 @@
 #define BATTERY_OFFSET_mV	(-150)
 /** Start charging if battery voltage is below this level. */
 #define START_CHARGING_mV		12'800U
-/** Stop charging if battery voltage is above this level. */
-#define STOP_CHARGING_mV		13'000U
+/** Stop charging if battery voltage is above this level. This is "cycle " */
+#define STOP_CHARGING_mV		14'200U
+/** If battery voltage is lower than this level - it will not be charged. */
+#define DAMAGED_BATTERY_mV		10'000U

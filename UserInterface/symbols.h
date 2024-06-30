@@ -15,6 +15,7 @@ namespace user_interface::symbol {
 	extern const uint8_t enter[];
 	extern const uint8_t exit[];
 	extern const uint8_t card[];
+	extern const uint8_t heart[];
 	extern const uint8_t ua_U[];
 	extern const uint8_t ua_P[];
 	extern const uint8_t ua_F[];

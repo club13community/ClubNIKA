@@ -104,6 +104,17 @@ namespace user_interface::symbol {
 			0b11111,
 			0b00000
 	};
+
+	const uint8_t heart[] = {
+			0b00000,
+			0b01010,
+			0b10101,
+			0b10001,
+			0b10001,
+			0b01010,
+			0b00100,
+			0b00000
+	};
 	/** U from Lupa */
 	const uint8_t ua_U[] = {
 			0b10001,

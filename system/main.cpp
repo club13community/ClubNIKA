@@ -35,22 +35,6 @@
 #include "alarm.h"
 #include <string.h>
 
-static TaskHandle_t test_task;
-static StaticTask_t test_task_ctrl;
-static StackType_t test_task_stack[1024];
-
-static void do_test_task(void * args) {
-	while (!sd::is_card_present());
-
-	while(true) {
-
-	}
-}
-
-static void create_test_task() {
-	test_task = xTaskCreateStatic(do_test_task, "test task", 1024, nullptr, 1U, test_task_stack, &test_task_ctrl);
-}
-
 static void create_app_starter();
 
 extern "C" int main(void)
@@ -83,7 +67,6 @@ extern "C" int main(void)
 	player::start();
 	alarm::start();
 
-	create_test_task();
 	create_app_starter();
 #ifdef DEBUG
 	start_stack_monitor();

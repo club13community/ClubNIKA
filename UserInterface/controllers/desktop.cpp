@@ -27,11 +27,14 @@ namespace user_interface {
 
 using namespace user_interface;
 
-static const char battery = '\0', signal = '\1', card = '\2', U = '\3', socket = '\4';
+// codes of custom symbols
+static const char battery = '\0', signal = '\1', heart = '\2', U = '\3', socket = '\4';
 // place and max. length of "{GSM icon}100%"
 static constexpr uint8_t gsm_pos = 0, gsm_len = 5;
 // place and max. length of "{battery icon}100%" or "{socket icon}230V"
-static constexpr uint8_t src_pos = 7, src_len = 5;
+static constexpr uint8_t src_pos = 11, src_len = 5;
+// place and length of logo: {heart icon}13{heart icon}
+static constexpr uint8_t logo_pos = 6, logo_len = 4;
 
 void Desktop::activate(bool init) {
 	using supply::Source;
@@ -52,7 +55,7 @@ void Desktop::activate(bool init) {
 	disp.clear()
 			.define(battery, symbol::battery)
 			.define(signal, symbol::signal_level)
-			.define(card, symbol::card)
+			.define(heart, symbol::heart)
 			.define(U, symbol::ua_U)
 			.define(socket, symbol::socket)
 			.set_cursor(0, 0);
@@ -63,6 +66,7 @@ void Desktop::activate(bool init) {
 	} else {
 		disp.print(socket).print("230V");
 	}
+	disp.set_cursor(0, logo_pos).print(heart).print("13").print(heart);
 	disp.set_cursor(0, gsm_pos).print(signal).print((int)gsm_signal).print('%');
 
 	disp.set_cursor(1, 0) << "A:AKT" << U << "B.";

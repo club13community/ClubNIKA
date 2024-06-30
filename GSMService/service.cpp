@@ -70,7 +70,7 @@ void gsm::turn_on() {
 
 	static constexpr auto dtmf_enabled = [](Result res) {
 		if (res == Result::ERROR) {
-			// should never happen, even if happened - module is functional
+			// happens when there is no SIM-card
 			rec::log("Failed to enable DTMF");
 		} else if (res != Result::OK) {
 			schedule_reboot();

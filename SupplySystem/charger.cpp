@@ -40,12 +40,12 @@ static void safe_enable_charging() {
 
 void supply::charger_battery_measured(uint16_t bat_mV) {
 	if (charging) {
-		if (bat_mV >= STOP_CHARGING_mV) {
+		if (bat_mV >= STOP_CHARGING_mV || bat_mV < DAMAGED_BATTERY_mV) {
 			charging = false;
 			disable_charging();
 		}
 	} else {
-		if (bat_mV <= START_CHARGING_mV) {
+		if (bat_mV <= START_CHARGING_mV && bat_mV >= DAMAGED_BATTERY_mV) {
 			charging = true;
 			safe_enable_charging();
 		}
