@@ -15,4 +15,4 @@
 #define AHB_FREQ		24'000'000U
 #define APB1_FREQ		12'000'000U
 #define APB2_FREQ		12'000'000U
-#define ADC_FREQ		3'000'000U
+#define ADC_FREQ		2'000'000U

@@ -7,7 +7,7 @@
 #include "supply_system_meas.h"
 
 // how many samples for averaging: 2^val
-#define AVERAGING_pow2	2
+#define AVERAGING_pow2	4
 
 #define AVERAGING_COUNT	(1U << AVERAGING_pow2)
 

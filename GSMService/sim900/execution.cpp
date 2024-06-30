@@ -159,7 +159,7 @@ static inline void service_response() {
 				rx_buffer.copy(message_part, 10);
 				rec::log("Unexpected from SIM900: {0}", {message_part});
 			} else {
-				rec::log("Not executed corrupted msg. from SIM900");
+				rec::log("Not handled corrupted msg. from SIM900");
 				on_hw_malfunction();
 			}
 		}

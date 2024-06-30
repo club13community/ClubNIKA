@@ -16,6 +16,7 @@
 #include "SupplySystem.h"
 #include "ff_utils.h"
 #include "logging.h"
+#include <bit>
 
 #if TASK_NORMAL_PRIORITY >= configTIMER_TASK_PRIORITY
 #error Timer API is expected to take effect before return
@@ -83,12 +84,14 @@ static inline void set_state(alarm::State target) {
 }
 
 void alarm::arm() {
+	rec::log("Arming alarm");
 	set_state(State::ARMED);
 	user_interface::alarm_armed();
 	request(Request::CHANGE_STATE);
 }
 
 void alarm::disarm() {
+	rec::log("Disarming alarm");
 	set_state(State::DISARMED);
 	user_interface::alarm_disarmed();
 	request(Request::CHANGE_STATE);
@@ -113,8 +116,11 @@ static inline bool set_state_if_current(alarm::State target, alarm::State expect
 
 static void check_zones(TimerHandle_t timer) {
 	using namespace alarm;
-	if (wired_zones::get_active()) {
+	uint8_t active_zones = wired_zones::get_active();
+	if (active_zones) {
 		if (set_state_if_current(State::TRIGGERED, State::ARMED)) {
+			uint8_t any_active = 8U - std::__countl_zero(active_zones);
+			rec::log("Zone {0} triggered alarm", {rec::s(any_active)});
 			request(Request::CHANGE_STATE);
 		}
 	}
@@ -267,6 +273,7 @@ static void start_choice_timeout() {
 
 static void play_notice(const char * notice_wav) {
 	if (!player::play_for_gsm(notice_wav, start_choice_timeout)) {
+		rec::log("Failed to play notice while call");
 		start_choice_timeout();
 	}
 }
@@ -299,6 +306,7 @@ static void armed_menu(char option) {
 	option_selected = true;
 	alarm::disarm();
 	if (!player::play_for_gsm(CONFIRM_DISARMED_WAV, end_call)) {
+		rec::log("Failed to play confirm. while call");
 		end_call();
 	}
 }

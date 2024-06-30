@@ -9,8 +9,8 @@
 #define MAX_VDD	(sd::MaxVdd::V3p5)
 
 /** Approximate freq. Real freq. will be <= than this. */
-#define CLK_APP_FREQ	((uint32_t)6000000)
-#define CLK_INIT_FREQ	((uint32_t)400000)
+#define CLK_APP_FREQ	((uint32_t)2'000'000)
+#define CLK_INIT_FREQ	((uint32_t)400'000)
 /** Time for card to 1) start sending requested block; 2) finish programming of received block */
 #define READ_WRITE_TIME_ms	200
 

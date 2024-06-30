@@ -21,12 +21,13 @@
 #define BATTERY_PIN			GPIO_Pin_2
 #define BATTERY_CHANNEL		((uint32_t)ADC_Channel_2)
 
+// Time between measurement triggers(battery & zone do not need separate triggers,
+// both measurements will be done after a single trigger).
+// Note: settling time for zone sensor is theoretically 20us. */
+#define MEASUREMENT_PERIOD_us		1000U
 // how long channel will be sampled
-#define ZONE_SAMPLING_DURATION		((uint32_t)ADC_SampleTime_71Cycles5)
-#define BATTERY_SAMPLING_DURATION	((uint32_t)ADC_SampleTime_71Cycles5)
-
-// time between samples in us. Settling time for zone sensor is theoretically 20us
-#define SAMPLING_PERIOD		1000U
+#define ZONE_SAMPLING_DURATION		((uint32_t)ADC_SampleTime_239Cycles5)
+#define BATTERY_SAMPLING_DURATION	((uint32_t)ADC_SampleTime_239Cycles5)
 
 #define ADC_SMPR2_SMP0_Pos		0U
 #define ADC_SMPR2_SMP1_Pos		3U
@@ -64,7 +65,7 @@ namespace vmeter {
 		TIM_TimeBaseInitTypeDef tim_base_conf = {0};
 		tim_base_conf.TIM_CounterMode = TIM_CounterMode_Up;
 		tim_base_conf.TIM_Prescaler = prescaler - 1; // 1us
-		tim_base_conf.TIM_Period = SAMPLING_PERIOD - 1; // actually any value - appropriate value is set later
+		tim_base_conf.TIM_Period = MEASUREMENT_PERIOD_us - 1; // actually any value - appropriate value is set later
 		tim_base_conf.TIM_RepetitionCounter = 0;
 		tim_base_conf.TIM_ClockDivision = TIM_CKD_DIV1;
 		TIM_TimeBaseInit(TIMER, &tim_base_conf);
@@ -129,7 +130,7 @@ namespace vmeter {
 
 	inline void start_conversions() {
 		TIM_SetCounter(TIMER, 0);
-		TIM_SetAutoreload(TIMER, SAMPLING_PERIOD - 1);
+		TIM_SetAutoreload(TIMER, MEASUREMENT_PERIOD_us - 1);
 		TIM_Cmd(TIMER, ENABLE);
 	}
 

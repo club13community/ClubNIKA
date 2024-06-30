@@ -5,4 +5,4 @@
 #pragma once
 
 /** Target freq. of SPI's SCK, real freq will be smaller or equal */
-#define SPI_FREQ	6000000U
+#define SPI_FREQ	6'000'000U

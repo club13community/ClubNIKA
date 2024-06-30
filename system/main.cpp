@@ -61,9 +61,6 @@ extern "C" int main(void)
 	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
 	clocks::init();
 	supply::init();
-	RCC_ClocksTypeDef clocks;
-	RCC_GetClocksFreq(&clocks);
-	__NOP();
 
 	timing::config_coarse_timer();
 	timing::config_fine_timer();
@@ -98,8 +95,15 @@ extern "C" int main(void)
 #define GREETING_WAV "/flash/greeting.wav"
 
 static void start_app(void * args) {
-	f_mount(&flash_fs, "/flash", 1);
-	load_settings();
+	using rec::log, rec::s;
+	FRESULT mount_res = f_mount(&flash_fs, "/flash", 1);
+	if (mount_res != FR_OK) {
+		log("Failed to mount flash. Error: {0}", {s(mount_res)});
+	}
+	bool setting_res = load_settings();
+	if (!setting_res) {
+		log("Failed to load settings. Use default.");
+	}
 	player::play_via_speaker(GREETING_WAV);
 	vTaskSuspend(NULL);
 }
