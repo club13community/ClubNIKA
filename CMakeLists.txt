@@ -68,7 +68,7 @@ file(GLOB_RECURSE SOURCES "system/*.*" "CMSIS/*.*" "ClockControl/*.*" "I2CExtens
         "SPIExtension/*.*" "SoundService/*.*" "StdPeriph_Driver/*.*" "SupplySystem/*.*"
         "UARTExtension/*.*" "UserInterface/*.*" "UserInterface/controllers/*.*" "VoltageMeter/*.*" "WiredZones/*.*" "WirelessInterface/*.*"
         "Flash/*.*" "fatfs/*.*" "freeRTOS/*.*" "Timing/*.*" "periph_utils/*.*"
-        "SDCard/*.*" "SDCard/driver/*.*" "Settings/*.*" "Logging/*.*"
+        "SDCard/*.*" "SDCard/driver/*.*" "Settings/*.*" "Logging/*.*" "USB/*.*"
 )
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/LinkerScript.ld)
