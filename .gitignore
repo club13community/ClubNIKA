@@ -55,10 +55,5 @@ dkms.conf
 cmake-build-debug/
 cmake-build-release/
 
-#should be present
-!.settings/
-!.cproject
-!.project
-!ClubNIKA Debug Custom.cfg
-!LinkerScript.ld
-
+#CLion settings
+.idea/
