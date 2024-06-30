@@ -61,6 +61,9 @@ extern "C" int main(void)
 	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
 	clocks::init();
 	supply::init();
+	RCC_ClocksTypeDef clocks;
+	RCC_GetClocksFreq(&clocks);
+	__NOP();
 
 	timing::config_coarse_timer();
 	timing::config_fine_timer();

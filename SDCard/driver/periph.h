@@ -5,6 +5,7 @@
 #pragma once
 #include "stm32f10x.h"
 #include "periph_allocation.h"
+#include "ClockControl.h"
 #include "rcc_utils.h"
 #include "dma_utils.h"
 #include "timing.h"
@@ -36,9 +37,7 @@ namespace sd {
 	/** @returns value for CLKCR to achieve desired freq. and real freq.(+/-0.5Hz)
 	 * @throws std::exception if real freq. < 10KHz */
 	inline ClockConf get_clk_div(uint32_t target_freq) {
-		RCC_ClocksTypeDef clk_conf;
-		RCC_GetClocksFreq(&clk_conf);
-		uint32_t input = clk_conf.HCLK_Frequency;
+		uint32_t input = clocks::get_freq(SDIO);
 		uint32_t scale = input / target_freq;
 		uint32_t real_freq = target_freq;
 		if (input % target_freq) {

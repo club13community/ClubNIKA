@@ -5,6 +5,7 @@
 #pragma once
 #include "stm32f10x.h"
 #include "periph_allocation.h"
+#include "ClockControl.h"
 #include "./config.h"
 #include <exception>
 
@@ -23,7 +24,6 @@
 #define RX_DMA_CCR	(FLASH_RX_DMA_PRIORITY | DMA_CCR1_TCIE)
 
 namespace flash {
-	extern volatile uint32_t pclk_freq;
 
 	inline void cs_select() {
 		GPIO_ResetBits(CS_PORT, CS_PIN);
@@ -58,38 +58,37 @@ namespace flash {
 	}
 
 	inline uint16_t select_prescaler(uint32_t pclk_freq) {
-		if (pclk_freq >= SPI_FREQ * 2) {
+		if (pclk_freq <= SPI_FREQ * 2) { // pclk_freq / 2 <= SPI_FREQ
 			return SPI_BaudRatePrescaler_2;
 		}
-		if (pclk_freq >= SPI_FREQ * 4) {
+		if (pclk_freq <= SPI_FREQ * 4) {
 			return SPI_BaudRatePrescaler_4;
 		}
-		if (pclk_freq >= SPI_FREQ * 8) {
+		if (pclk_freq <= SPI_FREQ * 8) {
 			return SPI_BaudRatePrescaler_8;
 		}
-		if (pclk_freq >= SPI_FREQ * 16) {
+		if (pclk_freq <= SPI_FREQ * 16) {
 			return SPI_BaudRatePrescaler_16;
 		}
-		if (pclk_freq >= SPI_FREQ * 32) {
+		if (pclk_freq <= SPI_FREQ * 32) {
 			return SPI_BaudRatePrescaler_32;
 		}
-		if (pclk_freq >= SPI_FREQ * 64) {
+		if (pclk_freq <= SPI_FREQ * 64) {
 			return SPI_BaudRatePrescaler_64;
 		}
-		if (pclk_freq >= SPI_FREQ * 128) {
+		if (pclk_freq <= SPI_FREQ * 128) {
 			return SPI_BaudRatePrescaler_128;
 		}
-		if (pclk_freq >= SPI_FREQ * 256) {
+		if (pclk_freq <= SPI_FREQ * 256) {
 			return SPI_BaudRatePrescaler_256;
 		}
+		// actual clock with max. divider would be still faster, then required
 		throw std::exception();
 	}
 
 	inline void init_spi() {
-		RCC_ClocksTypeDef clocks;
-		RCC_GetClocksFreq(&clocks);
-		pclk_freq = clocks.PCLK2_Frequency;
-		if (clocks.PCLK2_Frequency < 1'000'000U || clocks.PCLK2_Frequency > 48'000'000U) {
+		uint32_t pclk_freq = clocks::get_freq(SPI);
+		if (pclk_freq < 1'000'000U || pclk_freq > 48'000'000U) {
 			throw std::exception();
 		}
 
@@ -100,7 +99,7 @@ namespace flash {
 		spi_conf.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
 		spi_conf.SPI_DataSize = SPI_DataSize_8b;
 		spi_conf.SPI_FirstBit = SPI_FirstBit_MSB;
-		spi_conf.SPI_BaudRatePrescaler = select_prescaler(clocks.PCLK2_Frequency);
+		spi_conf.SPI_BaudRatePrescaler = select_prescaler(pclk_freq);
 		spi_conf.SPI_CPOL = SPI_CPOL_High;
 		spi_conf.SPI_CPHA = SPI_CPHA_2Edge;
 		spi_conf.SPI_NSS = SPI_NSS_Soft;
@@ -161,7 +160,7 @@ namespace flash {
 
 	/** Guaranties 1/10MHz delay. Allows CS to settle between 2 consequent operations */
 	inline void cs_delay() {
-		uint32_t pclk = pclk_freq;
+		uint32_t pclk = clocks::get_freq(SPI);
 		(void)SPI->CR1; // read something via APBx bus of SPI, assume that takes 1 APBx clock(didn't find in spec.)
 		if (pclk <= 10'000'000U) {
 			return;

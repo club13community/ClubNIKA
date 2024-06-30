@@ -39,6 +39,18 @@ uint32_t clocks::get_freq(TIM_TypeDef * tim) {
 	}
 }
 
+uint32_t clocks::get_freq(SPI_TypeDef * spi) {
+	if (spi == SPI1) {
+		return APB2_clock;
+	} else {
+		return APB1_clock;
+	}
+}
+
+uint32_t clocks::get_freq(SDIO_TypeDef * sdio) {
+	return SystemCoreClock;
+}
+
 static bool turn_on_HSE() {
 	RCC_HSEConfig(RCC_HSE_ON);
 	bool done;
@@ -66,7 +78,9 @@ static bool turn_on_HSE() {
 static bool turn_on_PLL(clocks::Generator src) {
 	using namespace clocks;
 
-	uint32_t mul = RCC_PLLMul_2 + (SYSCLK_FREQ / PLL_SRC_FREQ - 2U);
+	// RCC_PLLMul_3 = 1 << {PLL mult. field offset},
+	// so {some value} * RCC_PLLMul_3 is equivalent to {some value} << {PLL mult. field offset}
+	uint32_t mul = RCC_PLLMul_2 + (SYSCLK_FREQ / PLL_SRC_FREQ - 2U) * RCC_PLLMul_3;
 	if (src == Generator::HSE) {
 		RCC_PLLConfig(RCC_PLLSource_HSE_Div2, mul);
 	} else {
@@ -133,9 +147,9 @@ static void set_bus_clocks() {
 #endif
 #if (AHB_FREQ / APB1_FREQ == 1)
 	apb1_div = RCC_HCLK_Div1;
-#elif AHB_FREQ / APB1_FREQ == 2)
+#elif (AHB_FREQ / APB1_FREQ == 2)
 	apb1_div = RCC_HCLK_Div2;
-#elif AHB_FREQ / APB1_FREQ == 4)
+#elif (AHB_FREQ / APB1_FREQ == 4)
 	apb1_div = RCC_HCLK_Div4;
 #elif AHB_FREQ / APB1_FREQ == 8)
 	apb1_div = RCC_HCLK_Div8;
@@ -154,9 +168,9 @@ static void set_bus_clocks() {
 #endif
 #if (AHB_FREQ / APB2_FREQ == 1)
 	apb2_div = RCC_HCLK_Div1;
-#elif AHB_FREQ / APB2_FREQ == 2)
+#elif (AHB_FREQ / APB2_FREQ == 2)
 	apb2_div = RCC_HCLK_Div2;
-#elif AHB_FREQ / APB2_FREQ == 4)
+#elif (AHB_FREQ / APB2_FREQ == 4)
 	apb2_div = RCC_HCLK_Div4;
 #elif AHB_FREQ / APB2_FREQ == 8)
 	apb2_div = RCC_HCLK_Div8;
@@ -172,16 +186,16 @@ static void set_bus_clocks() {
 
 static void set_adc_clock() {
 	uint32_t div;
-#if (AHB_FREQ % ADC_FREQ != 0)
+#if (APB2_FREQ % ADC_FREQ != 0)
 #error No valid divider for ADC
 #endif
-#if (AHB_FREQ / ADC_FREQ == 2)
+#if (APB2_FREQ / ADC_FREQ == 2)
 	div = RCC_PCLK2_Div2;
-#elif (AHB_FREQ / ADC_FREQ == 4)
+#elif (APB2_FREQ / ADC_FREQ == 4)
 	div = RCC_PCLK2_Div4;
-#elif (AHB_FREQ / ADC_FREQ == 6)
+#elif (APB2_FREQ / ADC_FREQ == 6)
 	div = RCC_PCLK2_Div6;
-#elif (AHB_FREQ / ADC_FREQ == 8)
+#elif (APB2_FREQ / ADC_FREQ == 8)
 	div = RCC_PCLK2_Div8;
 #else
 #error No valid divider for ADC
@@ -218,17 +232,19 @@ static void set_emergency_clocks() {
 	APB2_clock = HSI_VALUE;
 	APB2_timer_clock = HSI_VALUE;
 	// set clock for ADC as close to target as possible
-#if (ADC_FREQ * 8 <= HSI_VALUE)
-	RCC_ADCCLKConfig(RCC_PCLK2_Div8);
-	ADC_clock = HSI_VALUE / 8;
-#elif (ADC_FREQ * 6 <= HSI_VALUE)
-	RCC_ADCCLKConfig(RCC_PCLK2_Div6);
-	ADC_clock = HSI_VALUE / 6;
-#elif (ADC_FREQ * 4 <= HSI_VALUE)
-	RCC_ADCCLKConfig(RCC_PCLK2_Div4);
-	ADC_clock = HSI_VALUE / 4;
-#else
+#if (HSI_VALUE <= ADC_FREQ * 2) // HSI_VALUE / 2 <= ADC_FREQ
 	RCC_ADCCLKConfig(RCC_PCLK2_Div2);
 	ADC_clock = HSI_VALUE / 2;
+#elif (HSI_VALUE <= ADC_FREQ * 4)
+	RCC_ADCCLKConfig(RCC_PCLK2_Div4);
+	ADC_clock = HSI_VALUE / 4;
+#elif (HSI_VALUE <= ADC_FREQ * 6)
+	RCC_ADCCLKConfig(RCC_PCLK2_Div6);
+	ADC_clock = HSI_VALUE / 6;
+#elif (HSI_VALUE <= ADC_FREQ * 8)
+	RCC_ADCCLKConfig(RCC_PCLK2_Div8);
+	ADC_clock = HSI_VALUE / 8;
+#else
+#error No valid prescaler for ADC
 #endif
 }
