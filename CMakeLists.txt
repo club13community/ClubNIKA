@@ -50,6 +50,7 @@ elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "MinSizeRel")
     add_compile_options(-Os)
 else ()
     message(STATUS "Minimal optimization, debug info included")
+    add_definitions(-DDEBUG)
     add_compile_options(-O0 -g)
 endif ()
 
@@ -61,7 +62,7 @@ include_directories(system/inc ClockControl/inc fatfs/inc freeRTOS/inc freeRTOS/
         Logging/inc
         CMSIS/core CMSIS/device StdPeriph_Driver/inc periph_utils/inc)
 
-add_definitions(-DSTM32 -DSTM32F1 -DSTM32F103VETx -DDEBUG -DSTM32F10X_HD -DUSE_HAL_DRIVER -DUSE_STDPERIPH_DRIVER)
+add_definitions(-DSTM32 -DSTM32F1 -DSTM32F103VETx -DSTM32F10X_HD -DUSE_HAL_DRIVER -DUSE_STDPERIPH_DRIVER)
 
 file(GLOB_RECURSE SOURCES "system/*.*" "CMSIS/*.*" "ClockControl/*.*" "I2CExtension/*.*"
         "GSMService/*.*" "GSMService/sim900/*.*" "Alarm/*.*"
