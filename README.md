@@ -1,6 +1,11 @@
 # ClubNIKA
 main.cpp is inside directory "system".
 
+To format flash and put there all needed files:
+- put all .wav-files to SD card and insert it into device
+- #define INIT_FLASH in main.cpp and run application
+- after init_flash() task ends - undefine INIT_FLASH and rerun application 
+
 ## Functionality
 ### SIM
 - initiate calls(notify about alarm)

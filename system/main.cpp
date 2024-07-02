@@ -36,7 +36,14 @@
 #include "alarm.h"
 #include <string.h>
 
+// Uncomment to format flash and load files there - needed only during 1st run
+//#define INIT_FLASH
+
 static void create_app_starter();
+
+#ifdef INIT_FLASH
+static void create_flash_initializer();
+#endif
 
 extern "C" int main(void)
 {
@@ -70,6 +77,10 @@ extern "C" int main(void)
 	alarm::start();
 
 	create_app_starter();
+#ifdef INIT_FLASH
+	create_flash_initializer();
+#endif
+
 #ifdef DEBUG
 	start_stack_monitor();
 #endif
@@ -81,10 +92,15 @@ extern "C" int main(void)
 
 static void start_app(void * args) {
 	using rec::log, rec::s;
+#ifdef INIT_FLASH
+	FRESULT mount_res = FR_NO_FILESYSTEM;
+#else
 	FRESULT mount_res = f_mount(&flash_fs, "/flash", 1);
+#endif
 	if (mount_res != FR_OK) {
 		log("Failed to mount flash. Error: {0}", {s(mount_res)});
 	}
+
 	bool setting_res = load_settings();
 	if (!setting_res) {
 		log("Failed to load settings. Use default.");
@@ -122,13 +138,25 @@ extern "C" void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBu
 	*pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
 }
 
-#ifdef DEBUG
+#if defined(INIT_FLASH)
 static FIL tmp1, tmp2;
-static void init_flash() {
+static uint8_t tmp3[512];
+static void init_flash(void * args) {
 	// NOTE: takes a lot of time
+	while(!sd::is_card_present());
+	FRESULT format_res = flash::make_fs(tmp3, 0);
+	FRESULT mount_res = f_mount(&flash_fs, "/flash", 1);
 	bool settings_res = save_default_settings();
 	FRESULT greeting_res = copy_from_sd_to_flash(GREETING_WAV, &tmp1, &tmp2);
 	FRESULT alarm_res = alarm::copy_wav_to_flash(&tmp1, &tmp2);
-	__NOP();
+	FRESULT umount_res = f_unmount("/flash");
+	vTaskSuspend(NULL);
+}
+
+static void create_flash_initializer() {
+	constexpr size_t stack_size = 1024;
+	static StaticTask_t task_ctrl;
+	static StackType_t task_stack[stack_size];
+	xTaskCreateStatic(init_flash, "flash init.", stack_size, nullptr, TASK_NORMAL_PRIORITY, task_stack, &task_ctrl);
 }
 #endif
