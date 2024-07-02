@@ -135,6 +135,7 @@ void gsm::check_module_state() {
 			bool was_ok = prev_reg != Registration::FAILED;
 			bool ok_now = new_reg != Registration::FAILED;
 			if (was_ok && !ok_now) {
+				rec::log("GSM registration lost");
 				schedule_connection_recovery();
 			}
 			check_next = new_reg == Registration::DONE;
@@ -163,6 +164,7 @@ void gsm::check_module_state() {
 			bool is_ok = new_status == CardStatus::READY;
 			if (was_ok && !is_ok) {
 				// card failure
+				rec::log("SIM-card failure");
 				schedule_connection_recovery();
 			}
 			check_next = is_ok;
@@ -195,6 +197,9 @@ static void module_status_timeout(TimerHandle_t timer) {
 static void connection_recovery_timeout(TimerHandle_t timer) {
 	using namespace sim900;
 	if (gsm::card_status != CardStatus::READY || gsm::registration == Registration::FAILED) {
+		rec::log("GSM connection didn't recover");
 		gsm::reboot_asap();
+	} else {
+		rec::log("GSM connection recovered");
 	}
 }

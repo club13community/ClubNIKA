@@ -11,7 +11,7 @@ namespace sim900 {
 	void start();
 
 	enum class Result {
-		OK,
+		OK = 0,
 		/** Received "ERROR" from SIM900 */
 		ERROR,
 		/** Problem with UART communication.

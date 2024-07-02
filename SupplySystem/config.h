@@ -16,7 +16,7 @@
 /** Measured battery voltage - real battery voltage. Device specific value. */
 #define BATTERY_OFFSET_mV	(-150)
 /** Start charging if battery voltage is below this level. */
-#define START_CHARGING_mV		12'800U
+#define START_CHARGING_mV		12'500U
 /** Stop charging if battery voltage is above this level. This is "cycle " */
 #define STOP_CHARGING_mV		14'200U
 /** If battery voltage is lower than this level - it will not be charged. */

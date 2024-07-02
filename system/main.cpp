@@ -47,7 +47,6 @@ static void create_flash_initializer();
 
 extern "C" int main(void)
 {
-	SystemInit();
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
